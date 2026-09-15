@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: discovery_and_domain_definition
+  status: conceptual_modeling_ready
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: fechar regras de negócio e modelagem antes do scaffold definitivo
+  current_priority: ARC-001 — Context Map definitivo
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -36,6 +36,32 @@ control:
     - REVIEW
     - DONE
 ```
+
+## 0.1 MARCO ATUAL
+
+**FASE ATUAL:** Discovery / Domain Definition — COMPLETE
+**MARCO CONCLUÍDO:** M1 — Domínio operacional fechado
+**PRÓXIMO MARCO:** M2 — Modelagem Conceitual Completa
+**PRÓXIMA TAREFA:** ARC-001 — Context Map definitivo
+
+| Domínio | Status |
+|---|---|
+| DOM-011 — People / Patients | DONE — APROVADO PARA MODELAGEM |
+| DOM-012 — CRM | DONE — APROVADO PARA MODELAGEM |
+| DOM-013 — Scheduling / Agenda | DONE — APROVADO PARA MODELAGEM |
+| DOM-014 — Pilates / Turmas | DONE — APROVADO PARA MODELAGEM |
+| DOM-015 — Clinical | DONE — APROVADO PARA MODELAGEM |
+| DOM-016 — Plans / Contracts / Enrollment | DONE — APROVADO PARA MODELAGEM |
+| DOM-017 — Billing / Payments / Delinquency | DONE — APROVADO PARA MODELAGEM |
+| DOM-018 — Finance / Cash / Closing | DONE — APROVADO PARA MODELAGEM |
+
+Sequência oficial imediata:
+
+1. `ARC-001` — Context Map definitivo;
+2. `ARC-002` — Ownership Map;
+3. `MODEL-001` — People/Patients/Staff/Organization.
+
+Modelagem conceitual, máquinas de estado, arquitetura física, modelo lógico e implementação **não** estão concluídos.
 
 ---
 
@@ -361,78 +387,76 @@ Princípios:
 - desligamento remove acesso e preserva autoria;
 - break-glass é excepcional e auditado.
 
+## 8.6 Plans / Contracts / Enrollment
+
+- estrutura: `Plan → PlanVersion → Contract → Enrollment → ClassMembership`;
+- planos mensal, trimestral e semestral; frequências 1x, 2x e 3x por semana;
+- `PlanVersion` preserva preço/condições e `Contract` é snapshot aceito;
+- pró-rata = aulas restantes × H/A da `PlanVersion`;
+- pausa: máximo 15 dias, libera vaga, não cobra o período e não prolonga o contrato;
+- cancelamento: imediato, sem multa, preserva histórico e elimina cobranças futuras;
+- renovação cria novo `Contract`; frequência/unidade mudam com vigência sem recriar paciente.
+
+## 8.7 Billing / Payments / Delinquency
+
+- todos os `Receivables` do contrato são criados no fechamento/ativação da contratação;
+- vencimentos: 5, 10, 15, 20 ou 25; fim de semana/feriado passa ao próximo útil;
+- pagamento parcial e antecipado são permitidos; sem multa e sem juros;
+- tolerância financeira de 5 dias; primeira ação de cobrança em D+2;
+- inadimplência usa `FinancialRestriction`, nunca `Enrollment.PAUSED` como sinônimo;
+- `Payment` confirmado não é apagado; correção usa `PaymentReversal`; estorno parcial e `Refund` são permitidos;
+- conta de recebimento e usuário registrador são obrigatórios.
+
+## 8.8 Finance / Cash / Closing
+
+- duas contas bancárias e um caixa físico compartilhado, sem caixa por unidade;
+- saldo deriva das movimentações; transferências não são receita nem despesa;
+- despesas/contas a pagar usam escopo `UNIT` ou `GLOBAL`;
+- fechamento é mensal, inclui previsto x realizado e pode ocorrer com pendências;
+- reabertura preserva snapshots/versionamento;
+- Secretária e Proprietária podem fechar/reabrir conforme permissão; Desenvolvedor somente com permissão financeira explícita;
+- comissão não existe e está fora do MVP.
+
 ---
 
-# 9. DECISÕES AINDA NÃO FECHADAS
+# 9. PENDÊNCIAS
 
-Estas decisões não podem ser inventadas durante implementação.
+## OPEN QUESTIONS
 
-## 9.1 Plans / Enrollment
+As regras fechadas no Gate M1 estão nos documentos canônicos em `/docs`. As questões abaixo não podem ser resolvidas por inferência de código legado, UI ou acesso técnico.
 
-- [ ] significado exato de plano mensal;
-- [ ] significado exato de trimestral;
-- [ ] significado exato de semestral;
-- [ ] preço representa mensalidade ou valor total do período;
-- [ ] frequência semanal faz parte da versão do plano;
-- [ ] pró-rata;
-- [ ] início no meio do mês;
-- [ ] renovação;
-- [ ] mudança de plano;
-- [ ] pausa;
-- [ ] retomada;
-- [ ] cancelamento;
-- [ ] efeito da pausa sobre turma;
-- [ ] efeito da pausa sobre cobrança;
-- [ ] efeito do cancelamento sobre recebíveis futuros;
-- [ ] retroatividade.
+### BLOCKERS BEFORE CONCEPTUAL MODEL
 
-## 9.2 Billing
+Nenhum blocker conhecido. DOM-011 a DOM-018 estão aprovados para Context Map, Ownership Map e modelagem conceitual.
 
-- [ ] quando nasce um Receivable;
-- [ ] regra do vencimento;
-- [ ] dia inexistente no mês;
-- [ ] fim de semana/feriado;
-- [ ] juros;
-- [ ] multa;
-- [ ] desconto;
-- [ ] pagamento parcial;
-- [ ] pagamento antecipado;
-- [ ] negociação;
-- [ ] inadimplência;
-- [ ] efeito de estorno;
-- [ ] pagador terceiro.
+### BLOCKERS BEFORE IMPLEMENTATION
 
-## 9.3 Finance
+- definir matriz detalhada de permissões e alçadas, inclusive Clinical e Finance;
+- fechar política de autenticação, MFA/step-up, sessão e recuperação antes de implementar Identity/autorização;
+- definir o tratamento de Receivables vencidos no cancelamento: não presumir perdão automático;
+- definir alçadas e limites de desconto/negociação; perdão arbitrário não é permitido;
+- definir o efeito da pausa sobre disponibilidade e expiração de MakeupCredits, sem prolongar o Contract;
+- definir IDs, timezone, precisão/arredondamento monetário e baseline de auditoria antes do modelo lógico/migrations;
+- detalhar precedência de operações financeiras concorrentes, como pausa, cancelamento, reversão e reembolso na mesma data.
 
-- [ ] competência vs caixa;
-- [ ] despesas;
-- [ ] contas a pagar;
-- [ ] caixa físico/digital;
-- [ ] abertura de caixa;
-- [ ] fechamento;
-- [ ] reabertura;
-- [ ] conciliação;
-- [ ] comissão;
-- [ ] necessidade real de comissão no MVP.
+### BLOCKERS BEFORE GO-LIVE
 
-## 9.4 Security
+- validar retenção clínica e documental com responsável técnico e orientação jurídica/regulatória;
+- validar campos clínicos obrigatórios, assinatura/finalização, exportação e regras para menores;
+- concluir inventário LGPD: finalidades, bases, compartilhamentos, legal hold e solicitações de titulares;
+- definir e testar backup, restore, RPO/RTO, resposta a incidente e operação de suporte privilegiado;
+- inventariar fontes legadas, transformação, corte, reconciliação e aceite da migração.
 
-- [ ] MFA por papel;
-- [ ] step-up;
-- [ ] duração de sessão;
-- [ ] refresh;
-- [ ] política de dispositivos;
-- [ ] recuperação de conta.
+### NON-BLOCKING / LATER
 
-## 9.5 Privacy / LGPD
-
-- [ ] inventário de categorias de dados;
-- [ ] finalidades;
-- [ ] compartilhamentos;
-- [ ] retenção;
-- [ ] legal hold;
-- [ ] fluxo de solicitação de titular;
-- [ ] resposta a incidente.
+- provider final de WhatsApp, e-mail, storage e observabilidade;
+- design visual e Design System definitivo;
+- calendário/fonte final de feriados;
+- catálogo inicial de categorias de despesas e motivos de ajustes;
+- política avançada de deslocamento entre unidades;
+- comprovantes formais/anexos de Payment e Expense;
+- KPIs e fórmulas gerenciais detalhadas;
+- Commission continua fora do MVP.
 
 ---
 
@@ -450,20 +474,21 @@ Estas decisões não podem ser inventadas durante implementação.
 - [x] decisões iniciais de Pilates;
 - [x] decisões iniciais de Clinical;
 - [x] Project OS criado;
-- [ ] colocar este arquivo na raiz do repositório;
-- [ ] garantir que nenhum outro backlog geral seja usado.
+- [x] colocar este arquivo na raiz do repositório;
+- [x] garantir que nenhum outro backlog geral seja usado;
+- [x] criar baseline canônica de domínio, regras, processos e decisões.
 
 ### Gate
 Project OS na raiz e adotado como ponto de entrada.
 
 ---
 
-## Fase 1 — Fechar regras de negócio restantes
+## Fase 1 — Fechar regras de negócio operacionais
 
 ### P0
-- [ ] capítulo 16 — Plans/Contracts/Enrollment;
-- [ ] capítulo 17 — Billing;
-- [ ] capítulo 18 — Finance;
+- [x] capítulo 16 — Plans/Contracts/Enrollment;
+- [x] capítulo 17 — Billing;
+- [x] capítulo 18 — Finance;
 - [ ] matriz de permissões;
 - [ ] regras de segurança-base.
 
@@ -474,11 +499,13 @@ Project OS na raiz e adotado como ponto de entrada.
 - [ ] migração.
 
 ### Gate
-Nenhum blocker de domínio da primeira vertical slice.
+**CONCLUÍDO PARA MODELAGEM CONCEITUAL:** nenhum blocker de domínio em DOM-011 a DOM-018. Permissões e segurança-base continuam como gates antes da implementação correspondente.
 
 ---
 
-## Fase 2 — Modelagem conceitual
+## Fase 2 — Modelagem conceitual — PRÓXIMA
+
+Começa por `ARC-001` (Context Map), `ARC-002` (Ownership Map) e `MODEL-001` (People/Patients/Staff/Organization). Nenhum item abaixo foi marcado como concluído pelo Gate M1.
 
 ### People / Patients / Staff / Organization
 - [ ] Person
@@ -751,22 +778,27 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| GOV-001 | Adotar PROJECT_OS na raiz do repo | P0 | TODO |
-| GOV-002 | Remover/arquivar backlog geral concorrente | P0 | TODO |
-| GOV-003 | Criar índice de documentos canônicos | P0 | TODO |
-| GOV-004 | Criar Decision Log | P0 | TODO |
+| GOV-001 | Adotar PROJECT_OS na raiz do repo | P0 | DONE |
+| GOV-002 | Remover/arquivar backlog geral concorrente | P0 | DONE |
+| GOV-003 | Criar índice de documentos canônicos | P0 | DONE |
+| GOV-004 | Criar Decision Log | P0 | DONE |
 | GOV-005 | Criar ADR index | P0 | TODO |
-| GOV-006 | Adotar protocolo de handoff | P0 | TODO |
+| GOV-006 | Adotar protocolo de handoff | P0 | DONE |
 
 ---
 
-## EPIC DOM — Regras de domínio pendentes
+## EPIC DOM — Definição de domínio
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| DOM-016 | Fechar Plans/Contracts/Enrollment | P0 | TODO |
-| DOM-017 | Fechar Billing | P0 | TODO |
-| DOM-018 | Fechar Finance | P0 | TODO |
+| DOM-011 | Fechar People/Patients | P0 | DONE |
+| DOM-012 | Fechar CRM | P0 | DONE |
+| DOM-013 | Fechar Scheduling/Agenda | P0 | DONE |
+| DOM-014 | Fechar Pilates/Turmas | P0 | DONE |
+| DOM-015 | Fechar Clinical | P0 | DONE |
+| DOM-016 | Fechar Plans/Contracts/Enrollment | P0 | DONE |
+| DOM-017 | Fechar Billing | P0 | DONE |
+| DOM-018 | Fechar Finance | P0 | DONE |
 | DOM-019 | Fechar Communication | P1 | TODO |
 | DOM-020 | Fechar Staff/Operation | P1 | TODO |
 | DOM-021 | Fechar Reports/KPIs | P1 | TODO |
@@ -777,7 +809,7 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| ARC-001 | Diagrama de contextos | P0 | TODO |
+| ARC-001 | Context Map definitivo | P0 | READY |
 | ARC-002 | Matriz de ownership | P0 | TODO |
 | ARC-003 | Matriz de dependências | P0 | TODO |
 | ARC-004 | ADR monólito modular | P0 | TODO |
@@ -904,13 +936,13 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| PLN-001 | Fechar política comercial | P0 | BLOCKED |
+| PLN-001 | Fechar política comercial | P0 | DONE |
 | PLN-002 | Modelar Plan | P0 | TODO |
 | PLN-003 | Modelar PlanVersion | P0 | TODO |
 | PLN-004 | Modelar Contract | P0 | TODO |
 | PLN-005 | Modelar Enrollment | P0 | TODO |
-| PLN-006 | Modelar pausa/retomada | P0 | BLOCKED |
-| PLN-007 | Modelar cancelamento | P0 | BLOCKED |
+| PLN-006 | Modelar pausa/retomada | P0 | TODO |
+| PLN-007 | Modelar cancelamento | P0 | TODO |
 
 ---
 
@@ -918,7 +950,7 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| BIL-001 | Fechar política de cobrança | P0 | BLOCKED |
+| BIL-001 | Fechar política de cobrança | P0 | DONE |
 | BIL-002 | Modelar Receivable | P0 | TODO |
 | BIL-003 | Modelar Payment | P0 | TODO |
 | BIL-004 | Modelar PaymentAllocation | P0 | TODO |
@@ -933,10 +965,10 @@ Só entra quando Plans/Billing estiverem sem blocker.
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
 | FIN-001 | Modelar Expense | P1 | TODO |
-| FIN-002 | Modelar CashSession | P1 | TODO |
-| FIN-003 | Modelar CashTransaction | P1 | TODO |
-| FIN-004 | Fechar semântica de Closing | P1 | BLOCKED |
-| FIN-005 | Validar comissão | P2 | BLOCKED |
+| FIN-002 | Modelar FinancialAccount | P1 | TODO |
+| FIN-003 | Modelar FinancialTransaction/Transfer | P1 | TODO |
+| FIN-004 | Fechar semântica de Closing | P1 | DONE |
+| FIN-005 | Validar comissão — fora do MVP | P2 | DONE |
 
 ---
 
@@ -968,6 +1000,8 @@ Uma tarefa só pode mudar para `READY` se:
 # 13. DEFINITION OF DONE
 
 Uma tarefa só pode mudar para `DONE` se:
+
+> Para tarefas exclusivamente documentais, de descoberta ou modelagem, itens de código, migrations e testes executáveis são `N/A`; `DONE` significa artefato aprovado e critérios do Gate atendidos. Isso se aplica a DOM-011 a DOM-018 neste marco.
 
 - [ ] critérios de aceitação atendidos;
 - [ ] código implementado;
@@ -1239,6 +1273,19 @@ f​isiofit-crm/
 
 `Git` registra a evolução.
 
+## 19.1 Índice canônico do Gate M1
+
+| Documento | Finalidade |
+|---|---|
+| `docs/domain/GLOSSARY.md` | Vocabulário e ownership terminológico |
+| `docs/domain/BUSINESS_PARAMETERS.md` | Separação entre regra e valor configurável |
+| `docs/domain/01-people-patients.md` a `08-finance.md` | Baseline dos oito domínios aprovados para modelagem |
+| `docs/business-rules/RULES_INDEX.md` | IDs canônicos de regras |
+| `docs/processes/PROCESS_INDEX.md` | IDs e estado dos processos |
+| `docs/decisions/DECISIONS.md` | Decisões oficiais e consequências |
+| `docs/GATE_M1_AUDIT.md` | Conflitos, correções e pendências |
+| `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx` | Fonte de descoberta preservada; consultar a auditoria para decisões superadas |
+
 ---
 
 # 20. PRIMEIRA VERTICAL SLICE
@@ -1336,7 +1383,7 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 | n8n virar core | alto | n8n apenas borda |
 | apagar histórico | crítico | vigência/eventos/auditoria |
 | misturar clínico e administrativo | crítico | boundaries + authorization |
-| modelar plano errado | crítico | fechar capítulos 16–18 antes da slice financeira |
+| reintroduzir regra superada do Caderno | crítico | consultar Decision Log e auditoria do Gate M1 |
 | excesso de arquitetura | médio | monólito modular |
 | código sem handoff | alto | protocolo obrigatório |
 
@@ -1346,59 +1393,92 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. `GOV-001` — colocar este arquivo na raiz do repositório.
-2. `DOM-016` — fechar Planos, Contratos, Matrículas e Benefícios.
-3. `DOM-017` — fechar Billing, Pagamentos e Inadimplência.
-4. `DOM-018` — fechar Financeiro, Caixa e Fechamento.
+1. `ARC-001` — criar Context Map definitivo.
+2. `ARC-002` — criar mapa de ownership.
+3. `MODEL-001` — modelar People/Patients/Staff/Organization.
 
 ## Em seguida
 
-5. `ARC-001` — diagrama de contextos.
-6. `ARC-002` — ownership.
-7. modelar People/Patients/Staff.
-8. modelar Scheduling/Pilates.
-9. modelar Clinical.
-10. matriz de permissões.
-11. máquinas de estado.
-12. deixar VS-01 em READY.
+4. modelar Scheduling/Pilates;
+5. modelar Clinical;
+6. modelar Plans/Billing/Finance;
+7. criar máquinas de estado e catálogo de eventos;
+8. fechar matriz de permissões/dependências;
+9. avançar para arquitetura física e modelo lógico somente após aprovação conceitual.
 
 ---
 
 # 24. ÚLTIMO HANDOFF
 
-## HANDOFF — 2026-09-15
+## HANDOFF — 2026-09-15 — Gate M1
 
 ### Objetivo da sessão
-Criar um sistema central de continuidade do projeto e impedir fragmentação de contexto/checklists.
+Fechar descoberta/requisitos dos domínios operacionais DOM-011 a DOM-018 e preparar o repositório para modelagem conceitual.
 
 ### Status atual
-Discovery e definição de domínio.
+Discovery / Domain Definition — COMPLETE. M1 — Domínio operacional fechado.
 
 ### Concluído
-- visão do produto;
-- princípios;
-- papéis principais;
-- decisões iniciais de People;
-- decisões iniciais de CRM;
-- decisões iniciais de Agenda;
-- decisões iniciais de Pilates;
-- decisões iniciais de Clinical;
-- criação deste Project OS.
+- Caderno Mestre lido por extração textual local não destrutiva; DOCX original preservado;
+- oito documentos de domínio consolidados e aprovados para modelagem;
+- glossário e parâmetros de negócio separados entre regra e valor configurável;
+- 75 regras catalogadas sem IDs equivalentes concorrentes;
+- 37 processos catalogados;
+- 26 decisões registradas;
+- auditoria de consistência criada com conflitos resolvidos e pendências classificadas;
+- DOM-011, DOM-012, DOM-013, DOM-014, DOM-015, DOM-016, DOM-017 e DOM-018 marcados DONE.
 
-### Blockers principais
-- Plans/Enrollment;
-- Billing;
-- Finance;
-- segurança final;
-- LGPD final.
+### Arquivos criados
+
+- `docs/domain/GLOSSARY.md`;
+- `docs/domain/BUSINESS_PARAMETERS.md`;
+- `docs/domain/01-people-patients.md` a `08-finance.md`;
+- `docs/business-rules/RULES_INDEX.md`;
+- `docs/processes/PROCESS_INDEX.md`;
+- `docs/decisions/DECISIONS.md`;
+- `docs/GATE_M1_AUDIT.md`.
+
+### Arquivos alterados
+
+- `PROJECT_OS.md`.
+
+### Documentos consolidados
+
+- `PROJECT_OS.md` anterior;
+- `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx`;
+- decisões oficiais fornecidas para o Gate M1.
+
+### Conflitos encontrados e corrigidos
+
+- pausa sem limite/prorrogação do contrato substituída por máximo de 15 dias sem prorrogação;
+- suspensão por atraso separada de pausa por meio de `FinancialRestriction`;
+- vencimento no dia da contratação substituído pelos dias 5/10/15/20/25;
+- fórmula de pró-rata substituída por aulas restantes × H/A;
+- fechamento/reabertura e autoridade técnica corrigidos para exigir permissão financeira explícita;
+- Commission removida do MVP;
+- capacidade consolidada sob ownership de Pilates;
+- sala/equipamentos confirmados como não bloqueantes no Scheduling.
+
+### Blockers restantes
+
+- nenhum antes da modelagem conceitual;
+- antes da implementação: permissões/alçadas, segurança de Identity, Receivables vencidos no cancelamento, desconto/negociação, MakeupCredits durante pausa e decisões de modelo lógico;
+- antes do go-live: retenção/obrigações clínicas e LGPD, migração/cutover, backup/restore e resposta a incidente.
+
+### Riscos
+
+- reintroduzir decisões superadas do capítulo 46 do Caderno sem consultar o Decision Log/auditoria;
+- misturar Billing e Finance ou Clinical e administrativo;
+- transformar parâmetros operacionais em constantes;
+- iniciar SQL/código antes de Context Map e Ownership Map.
 
 ### Próximas 3 ações
-1. fechar capítulo 16;
-2. fechar capítulo 17;
-3. fechar capítulo 18.
+1. `ARC-001` — criar Context Map definitivo;
+2. `ARC-002` — criar mapa de ownership;
+3. `MODEL-001` — modelar People/Patients/Staff/Organization.
 
 ### Instrução para a próxima IA
-Não comece scaffold definitivo. Comece fechando `DOM-016`, a menos que o usuário explicitamente mude a prioridade.
+Comece por `ARC-001`. Use `docs/GATE_M1_AUDIT.md` para não reintroduzir conflitos e não inicie scaffold, SQL ou entidades de produção.
 
 ---
 

@@ -1,0 +1,33 @@
+# macOS
+.DS_Store
+__MACOSX/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+
+# Node / React
+node_modules/
+dist/
+build/
+coverage/
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
