@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: conceptual_modeling_ready
+  status: conceptual_modeling_in_progress
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: MODEL-001 — People / Patients / Staff / Organization
+  current_priority: MODEL-002 — Scheduling / Pilates
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,10 +39,11 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** Discovery / Domain Definition — COMPLETE
+**FASE ATUAL:** M2 — Modelagem Conceitual — IN PROGRESS
 **MARCO CONCLUÍDO:** M1 — Domínio operacional fechado
 **PRÓXIMO MARCO:** M2 — Modelagem Conceitual Completa
-**PRÓXIMA TAREFA:** MODEL-001 — People / Patients / Staff / Organization
+**ÚLTIMA TAREFA CONCLUÍDA:** MODEL-001 — People / Patients / Staff / Organization
+**PRÓXIMA TAREFA:** MODEL-002 — Scheduling / Pilates
 
 | Domínio | Status |
 |---|---|
@@ -57,9 +58,9 @@ control:
 
 Sequência oficial imediata:
 
-1. `MODEL-001` — People/Patients/Staff/Organization;
-2. `MODEL-002` — Scheduling/Pilates;
-3. `MODEL-003` — Clinical.
+1. `MODEL-002` — Scheduling/Pilates;
+2. `MODEL-003` — Clinical;
+3. `MODEL-004` — Plans/Billing/Finance.
 
 Modelagem conceitual, máquinas de estado, arquitetura física, modelo lógico e implementação **não** estão concluídos.
 
@@ -503,23 +504,30 @@ Project OS na raiz e adotado como ponto de entrada.
 
 ---
 
-## Fase 2 — Modelagem conceitual — PRÓXIMA
+## Fase 2 — Modelagem conceitual — IN PROGRESS
 
-`ARC-001` (Context Map) e `ARC-002` (Ownership Map) foram concluídos. A fase segue por `MODEL-001` (People/Patients/Staff/Organization). Nenhum item de entidade abaixo foi marcado como concluído.
+`ARC-001`, `ARC-002` e `MODEL-001` foram concluídos. A fase segue por `MODEL-002` (Scheduling/Pilates).
 
 ### People / Patients / Staff / Organization
-- [ ] Person
-- [ ] ContactPoint
-- [ ] Address
-- [ ] PersonRelationship
-- [ ] PatientProfile
-- [ ] GuardianLink
-- [ ] ResponsiblePayerLink
-- [ ] ProfessionalProfile
-- [ ] EmploymentLink
-- [ ] Clinic
-- [ ] Unit
-- [ ] Room
+- [x] Person
+- [x] ContactPoint
+- [x] Address
+- [x] PersonRelationship
+- [x] PersonMerge / MergeManifest
+- [x] PatientProfile
+- [x] GuardianLink
+- [x] AdministrativeResponsibleLink
+- [x] ResponsiblePayerLink
+- [x] EmergencyContact
+- [x] ProfessionalProfile
+- [x] EmploymentLink
+- [x] ProfessionalUnitLink
+- [x] Availability
+- [x] ProfessionalLeave
+- [x] Clinic
+- [x] Unit
+- [x] Room
+- [x] InstitutionalCalendar / Holiday
 
 ### Scheduling / Pilates
 - [ ] ScheduleRule/FixedSchedule geral (não-turma)
@@ -806,6 +814,17 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 ---
 
+## EPIC MODEL — Modelagem conceitual
+
+| ID | Tarefa | Prioridade | Status |
+|---|---|---:|---|
+| MODEL-001 | People / Patients / Staff / Organization | P0 | DONE |
+| MODEL-002 | Scheduling / Pilates | P0 | TODO |
+| MODEL-003 | Clinical | P0 | TODO |
+| MODEL-004 | Plans / Billing / Finance | P0 | TODO |
+
+---
+
 ## EPIC ARC — Arquitetura
 
 | ID | Tarefa | Prioridade | Status |
@@ -840,12 +859,12 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| PPL-001 | Modelar Person | P0 | TODO |
-| PPL-002 | Modelar ContactPoint | P0 | TODO |
-| PPL-003 | Modelar Address | P1 | TODO |
-| PPL-004 | Modelar PersonRelationship | P0 | TODO |
-| PPL-005 | Modelar PersonMerge | P1 | TODO |
-| PPL-006 | Definir deduplicação | P1 | TODO |
+| PPL-001 | Modelar Person | P0 | DONE |
+| PPL-002 | Modelar ContactPoint | P0 | DONE |
+| PPL-003 | Modelar Address | P1 | DONE |
+| PPL-004 | Modelar PersonRelationship | P0 | DONE |
+| PPL-005 | Modelar PersonMerge | P1 | DONE |
+| PPL-006 | Definir deduplicação | P1 | DONE |
 
 ---
 
@@ -853,11 +872,12 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| PAC-001 | Modelar PatientProfile | P0 | TODO |
-| PAC-002 | Modelar GuardianLink | P0 | TODO |
-| PAC-003 | Modelar ResponsiblePayerLink | P0 | TODO |
-| PAC-004 | Modelar EmergencyContact | P1 | TODO |
+| PAC-001 | Modelar PatientProfile | P0 | DONE |
+| PAC-002 | Modelar GuardianLink | P0 | DONE |
+| PAC-003 | Modelar ResponsiblePayerLink | P0 | DONE |
+| PAC-004 | Modelar EmergencyContact | P1 | DONE |
 | PAC-005 | Caso de uso criar paciente | P0 | TODO |
+| PAC-006 | Modelar AdministrativeResponsibleLink | P0 | DONE |
 
 ---
 
@@ -865,11 +885,23 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| STF-001 | Modelar ProfessionalProfile | P0 | TODO |
-| STF-002 | Modelar EmploymentLink | P0 | TODO |
-| STF-003 | Modelar unidade de atuação | P0 | TODO |
-| STF-004 | Modelar Availability | P1 | TODO |
-| STF-005 | Modelar Leave | P1 | TODO |
+| STF-001 | Modelar ProfessionalProfile | P0 | DONE |
+| STF-002 | Modelar EmploymentLink | P0 | DONE |
+| STF-003 | Modelar unidade de atuação | P0 | DONE |
+| STF-004 | Modelar Availability | P1 | DONE |
+| STF-005 | Modelar Leave | P1 | DONE |
+
+---
+
+## EPIC ORG — Organization
+
+| ID | Tarefa | Prioridade | Status |
+|---|---|---:|---|
+| ORG-001 | Modelar Clinic | P0 | DONE |
+| ORG-002 | Modelar Unit | P0 | DONE |
+| ORG-003 | Modelar Room informativa | P0 | DONE |
+| ORG-004 | Modelar InstitutionalCalendar | P1 | DONE |
+| ORG-005 | Modelar Holiday | P1 | DONE |
 
 ---
 
@@ -1247,6 +1279,7 @@ f​isiofit-crm/
 │   ├── processes/
 │   ├── business-rules/
 │   ├── architecture/
+│   ├── modeling/
 │   ├── database/
 │   ├── api/
 │   ├── ui-ux/
@@ -1287,6 +1320,7 @@ f​isiofit-crm/
 | `docs/GATE_M1_AUDIT.md` | Conflitos, correções e pendências |
 | `docs/architecture/CONTEXT_MAP.md` | Boundaries, responsabilidades e relações oficiais entre contextos |
 | `docs/architecture/OWNERSHIP_MAP.md` | Owner único, acessos cross-context, snapshots e ownership de eventos |
+| `docs/modeling/MODEL_001_PEOPLE_PATIENTS_STAFF_ORGANIZATION.md` | Modelo conceitual de Organization, People, Patients e Staff |
 | `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx` | Fonte de descoberta preservada; consultar a auditoria para decisões superadas |
 
 ---
@@ -1317,10 +1351,10 @@ Validar a fundação da arquitetura ponta a ponta sem tentar construir o CRM int
 
 ### Checklist de Ready
 
-- [ ] Person modelada;
-- [ ] PatientProfile modelado;
-- [ ] ProfessionalProfile modelado;
-- [ ] Unit modelada;
+- [x] Person modelada;
+- [x] PatientProfile modelado;
+- [x] ProfessionalProfile modelado;
+- [x] Unit modelada;
 - [ ] Class modelada;
 - [ ] ClassSchedule modelado;
 - [ ] ClassMembership modelado;
@@ -1396,55 +1430,55 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. `MODEL-001` — modelar People/Patients/Staff/Organization.
-2. `MODEL-002` — modelar Scheduling/Pilates.
-3. `MODEL-003` — modelar Clinical.
+1. `MODEL-002` — modelar Scheduling/Pilates.
+2. `MODEL-003` — modelar Clinical.
+3. `MODEL-004` — modelar Plans/Billing/Finance.
 
 ## Em seguida
 
-4. modelar Plans/Billing/Finance;
-5. criar máquinas de estado e catálogo de eventos;
-6. fechar matriz de permissões/dependências;
-7. avançar para arquitetura física e modelo lógico somente após aprovação conceitual.
+4. criar máquinas de estado e catálogo de eventos;
+5. fechar matriz de permissões/dependências;
+6. avançar para arquitetura física e modelo lógico somente após aprovação conceitual.
 
 ---
 
 # 24. ÚLTIMO HANDOFF
 
-## HANDOFF — 2026-09-15 — ARC-002
+## HANDOFF — 2026-09-15 — MODEL-001
 
 ### Objetivo da sessão
-Criar o Ownership Map definitivo a partir da baseline `discovery-v1` e do ARC-001.
+Criar o modelo conceitual detalhado de Organization, People, Patients e Staff, preservando os boundaries de ARC-001 e ARC-002.
 
 ### Status atual
-ARC-002 — DONE. Próxima tarefa: MODEL-001 — People / Patients / Staff / Organization.
+MODEL-001 — DONE. Próxima tarefa: MODEL-002 — Scheduling / Pilates.
 
 ### Concluído
-- owner transacional único atribuído aos conceitos principais dos 16 contextos;
-- matriz mestre, acessos cross-context, referências, snapshots e eventos documentados;
-- calendário institucional separado de CalendarException operacional;
-- vínculo vigente de pagador separado dos snapshots de Contract e Receivable;
-- Scheduling/Pilates, Clinical/administrativo e Billing/Finance mantidos sem ownership compartilhado;
-- três resíduos terminológicos corrigidos no glossário, no domínio de Scheduling e no roadmap;
-- ambiguidades residuais classificadas como NON_BLOCKING; nenhum blocker para MODEL-001.
+- classificação de entidades, value objects, child entities, referências externas e aggregate roots candidatos;
+- atributos conceituais, cardinalidades, temporalidade, lifecycles mínimos e invariantes ORG/PPL/PAC/STF;
+- Clinic, Unit e InstitutionalCalendar como roots separados; Room e Holiday como children;
+- Person, PersonRelationship e PersonMerge como roots de People, com MergeManifest imutável;
+- PatientProfile como root de Patients, sem duplicar Person, com responsáveis e pagador por vigência;
+- ProfessionalProfile como root de Staff; Availability e ProfessionalLeave como roots separados candidatos;
+- operações, eventos, cross-context references, cinco diagramas Mermaid e três matrizes de validação;
+- PROC-PPL-001 e PROC-PAC-001 suportados sem escrita cross-context;
+- nenhum aggregate atravessa contextos e nenhum detalhe físico foi introduzido.
 
 ### Arquivos criados
 
-- `docs/architecture/OWNERSHIP_MAP.md`.
+- `docs/modeling/MODEL_001_PEOPLE_PATIENTS_STAFF_ORGANIZATION.md`.
 
 ### Arquivos alterados
 
 - `PROJECT_OS.md`.
-- `docs/domain/GLOSSARY.md`.
-- `docs/domain/03-scheduling.md`.
 
 ### Decisões tomadas
 
-- InstitutionalCalendar/Holiday pertencem a Organization; CalendarException operacional pertence a Scheduling;
-- ScheduleRule/FixedSchedule em Scheduling limita-se à agenda geral não-turma; ClassSchedule pertence a Pilates;
-- Patients possui ResponsiblePayerLink vigente; Plans e Billing possuem snapshots históricos próprios;
-- BreakGlassAccess pertence a Clinical e BreakGlassAudit a Privacy & Audit;
-- CashSession não foi recriado; FinancialAccount(CASH) e FinancialTransaction permanecem em Finance.
+- Address permanece value object de Person enquanto não houver necessidade comprovada de lifecycle próprio;
+- responsabilidade administrativa é separada de GuardianLink por `AdministrativeResponsibleLink`, com ownership em Patients;
+- EmploymentLink e ProfessionalUnitLink ficam sob ProfessionalProfile;
+- Availability e ProfessionalLeave são aggregate roots candidatos separados por volume, concorrência e lifecycle;
+- `Credential` não foi adotado até distinguir licença profissional de credencial de acesso;
+- EmergencyContact permanece com forma externa simplificada como open question non-blocking.
 
 ### Migrations
 
@@ -1452,30 +1486,30 @@ ARC-002 — DONE. Próxima tarefa: MODEL-001 — People / Patients / Staff / Org
 
 ### Testes executados
 
-- validação documental contra `CONTEXT_MAP`, `RULES_INDEX`, `PROCESS_INDEX`, `DECISIONS` e `GATE_M1_AUDIT`;
-- revisão de owner único, escrita cross-context, snapshots, eventos, ciclos, módulo Deus e conceitos sem owner;
-- `git diff --check` e revisão do diff.
+- validação documental contra `CONTEXT_MAP`, `OWNERSHIP_MAP`, `RULES_INDEX`, `PROCESS_INDEX`, `DECISIONS`, `GATE_M1_AUDIT` e Caderno Mestre;
+- revisão das checklists de ownership, processos e critérios de pass de MODEL-001;
+- `git diff --check`, revisão do diff e `git diff --stat`.
 
 ### Blockers restantes
 
-- nenhum para MODEL-001/modelagem conceitual;
+- nenhum para MODEL-002/modelagem conceitual;
 - antes da implementação: permissões/alçadas, segurança de Identity, Receivables vencidos no cancelamento, desconto/negociação, MakeupCredits durante pausa e decisões de modelo lógico;
 - antes do go-live: retenção/obrigações clínicas e LGPD, migração/cutover, backup/restore e resposta a incidente.
 
 ### Riscos
 
-- reintroduzir campos civis duplicados em PatientProfile/ProfessionalProfile;
-- confundir vínculo vigente de pagador com snapshots históricos;
-- levar CalendarException para Organization ou ClassSchedule para Scheduling;
-- escolher IDs/tabelas/SQL antes do modelo conceitual.
+- transformar Room em recurso bloqueante ou fonte de capacidade em MODEL-002;
+- misturar Availability de Staff com conflito/Appointment de Scheduling;
+- tratar feriado institucional como ocorrência/exceção operacional de Organization;
+- reintroduzir Person, Unit ou dados civis duplicados nos próximos modelos.
 
 ### Próximas 3 ações
-1. `MODEL-001` — modelar People/Patients/Staff/Organization;
-2. `MODEL-002` — modelar Scheduling/Pilates;
-3. `MODEL-003` — modelar Clinical.
+1. `MODEL-002` — modelar Scheduling/Pilates;
+2. `MODEL-003` — modelar Clinical;
+3. `MODEL-004` — modelar Plans/Billing/Finance.
 
 ### Instrução para a próxima IA
-Comece por `MODEL-001` usando `docs/architecture/CONTEXT_MAP.md` e `docs/architecture/OWNERSHIP_MAP.md` como boundaries normativos. Modele People/Patients/Staff/Organization sem criar modelo lógico, SQL, código ou arquitetura física.
+Comece por `MODEL-002` usando o Context Map, Ownership Map e `docs/modeling/MODEL_001_PEOPLE_PATIENTS_STAFF_ORGANIZATION.md`. Modele Scheduling/Pilates sem transferir ownership de Unit, Room, PatientProfile, ProfessionalProfile, Availability ou ProfessionalLeave e sem criar modelo lógico, SQL, código ou arquitetura física.
 
 ---
 

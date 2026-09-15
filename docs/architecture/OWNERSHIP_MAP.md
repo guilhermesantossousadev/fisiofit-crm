@@ -70,7 +70,7 @@ Um dado transacional possui exatamente um owner. Contrato público, referência 
 
 ### Patients
 
-- **Owns:** PatientProfile, GuardianLink, ResponsiblePayerLink vigente e EmergencyContact.
+- **Owns:** PatientProfile, GuardianLink, AdministrativeResponsibleLink, ResponsiblePayerLink vigente e EmergencyContact.
 - **May reference:** PersonId para paciente/responsável/pagador e UnitId.
 - **May consume:** fatos de merge/inativação de People.
 - **Must not own:** Person, prontuário, Enrollment, Contract, ClassMembership, Receivable ou Payment.
@@ -194,6 +194,7 @@ Um dado transacional possui exatamente um owner. Contrato público, referência 
 | PersonMerge / MergeManifest | People | People | People | People | consumidores de Person; Privacy & Audit | MergeId + aliases | EVENT_CONSUMER | imutável/auditável |
 | PatientProfile | Patients | Patients | Patients | Patients | Clinical, CRM, Scheduling, Pilates, Plans, Billing | PatientId | REFERENCE_BY_ID | não duplica Person; sem hard delete |
 | GuardianLink | Patients | Patients | Patients | Patients | Clinical autorizado; Plans | GuardianLinkId/PersonIds | REFERENCE_BY_ID | vigência do vínculo |
+| AdministrativeResponsibleLink | Patients | Patients | Patients | Patients | Scheduling, Communication e consumidores autorizados | AdministrativeResponsibleLinkId/PersonIds | REFERENCE_BY_ID | vigência e autorizações administrativas preservadas |
 | ResponsiblePayerLink | Patients | Patients | Patients | Patients | Plans, Billing | PayerLinkId/PersonId | REFERENCE_BY_ID | fonte vigente; snapshots downstream |
 | EmergencyContact | Patients | Patients | Patients | Patients | Scheduling/Clinical quando necessário e autorizado | EmergencyContactId/PersonId opcional | REFERENCE_BY_ID | vigência |
 | ProfessionalProfile | Staff | Staff | Staff | Staff | Identity, Scheduling, Pilates, Clinical | ProfessionalId | REFERENCE_BY_ID | autoria passada preservada |
@@ -420,7 +421,7 @@ Não foi encontrada inconsistência de processo que bloqueie a modelagem. `PROC-
 
 1. Modelar Person como raiz de identidade em People, sem campos duplicados em PatientProfile ou ProfessionalProfile.
 2. PatientProfile e ProfessionalProfile referenciam Person por ID conceitual e têm ciclos próprios.
-3. GuardianLink e ResponsiblePayerLink pertencem a Patients; snapshots de pagador não entram nesses agregados.
+3. GuardianLink, AdministrativeResponsibleLink e ResponsiblePayerLink pertencem a Patients; snapshots de pagador não entram nesses agregados.
 4. ProfessionalUnitLink, Availability e ProfessionalLeave permanecem em Staff, ainda que a granularidade seja refinada.
 5. Clinic, Unit, Room, InstitutionalCalendar e Holiday pertencem a Organization; CalendarException não entra em MODEL-001 de Organization.
 6. Definir vigência/inativação conceitual e eventos públicos necessários, sem escolher PK, FK, UUID/ULID, tabela ou repository.
