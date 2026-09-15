@@ -21,7 +21,7 @@ project:
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: MODEL-004 — Plans / Billing / Finance
+  current_priority: MODEL-005 — Modelo Conceitual Integrado
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -42,8 +42,8 @@ control:
 **FASE ATUAL:** M2 — Modelagem Conceitual — IN PROGRESS
 **MARCO CONCLUÍDO:** M1 — Domínio operacional fechado
 **PRÓXIMO MARCO:** M2 — Modelagem Conceitual Completa
-**ÚLTIMA TAREFA CONCLUÍDA:** MODEL-003 — Clinical
-**PRÓXIMA TAREFA:** MODEL-004 — Plans / Billing / Finance
+**ÚLTIMA TAREFA CONCLUÍDA:** MODEL-004 — Plans / Billing / Finance
+**PRÓXIMA TAREFA:** MODEL-005 — Modelo Conceitual Integrado
 
 | Domínio | Status |
 |---|---|
@@ -58,9 +58,9 @@ control:
 
 Sequência oficial imediata:
 
-1. `MODEL-004` — Plans / Billing / Finance;
-2. `MODEL-005` — Modelo Conceitual Integrado;
-3. `STATE` — Máquinas de Estado.
+1. `MODEL-005` — Modelo Conceitual Integrado;
+2. `STATE-001` — Máquinas de Estado;
+3. `EVT-001` — Catálogo final de Eventos de Domínio.
 
 Modelagem conceitual, máquinas de estado, arquitetura física, modelo lógico e implementação **não** estão concluídos.
 
@@ -506,7 +506,7 @@ Project OS na raiz e adotado como ponto de entrada.
 
 ## Fase 2 — Modelagem conceitual — IN PROGRESS
 
-`ARC-001`, `ARC-002`, `MODEL-001`, `MODEL-002` e `MODEL-003` foram concluídos. A fase segue por `MODEL-004` (Plans / Billing / Finance).
+`ARC-001`, `ARC-002` e `MODEL-001` a `MODEL-004` foram concluídos. A fase segue por `MODEL-005` (Modelo Conceitual Integrado).
 
 ### People / Patients / Staff / Organization
 - [x] Person
@@ -552,20 +552,20 @@ Project OS na raiz e adotado como ponto de entrada.
 - [x] ClinicalExportOperation / ClinicalFinalizationPolicy
 
 ### Plans / Billing / Finance
-- [ ] Plan
-- [ ] PlanVersion
-- [ ] Contract
-- [ ] Enrollment
-- [ ] Benefit/Entitlement
-- [ ] Receivable
-- [ ] Payment
-- [ ] PaymentAllocation
-- [ ] PaymentReversal
-- [ ] Refund
-- [ ] Expense
-- [ ] FinancialAccount (incluindo CASH)
-- [ ] FinancialTransaction
-- [ ] Closing
+- [x] Plan
+- [x] PlanVersion
+- [x] Contract
+- [x] Enrollment
+- [x] Benefit/Entitlement classificados como conceitos deferred
+- [x] Receivable
+- [x] Payment
+- [x] PaymentAllocation
+- [x] PaymentReversal
+- [x] Refund
+- [x] Expense
+- [x] FinancialAccount (incluindo CASH)
+- [x] FinancialTransaction
+- [x] Closing / ClosingSnapshot
 
 ### Gate
 Modelo conceitual aprovado antes de desenhar SQL definitivo.
@@ -823,7 +823,7 @@ Só entra quando Plans/Billing estiverem sem blocker.
 | MODEL-001 | People / Patients / Staff / Organization | P0 | DONE |
 | MODEL-002 | Scheduling / Pilates | P0 | DONE |
 | MODEL-003 | Clinical | P0 | DONE |
-| MODEL-004 | Plans / Billing / Finance | P0 | TODO |
+| MODEL-004 | Plans / Billing / Finance | P0 | DONE |
 | MODEL-005 | Modelo Conceitual Integrado | P0 | TODO |
 
 ---
@@ -973,12 +973,12 @@ Só entra quando Plans/Billing estiverem sem blocker.
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
 | PLN-001 | Fechar política comercial | P0 | DONE |
-| PLN-002 | Modelar Plan | P0 | TODO |
-| PLN-003 | Modelar PlanVersion | P0 | TODO |
-| PLN-004 | Modelar Contract | P0 | TODO |
-| PLN-005 | Modelar Enrollment | P0 | TODO |
-| PLN-006 | Modelar pausa/retomada | P0 | TODO |
-| PLN-007 | Modelar cancelamento | P0 | TODO |
+| PLN-002 | Modelar Plan | P0 | DONE |
+| PLN-003 | Modelar PlanVersion | P0 | DONE |
+| PLN-004 | Modelar Contract | P0 | DONE |
+| PLN-005 | Modelar Enrollment | P0 | DONE |
+| PLN-006 | Modelar pausa/retomada | P0 | DONE |
+| PLN-007 | Modelar cancelamento | P0 | DONE |
 
 ---
 
@@ -987,12 +987,12 @@ Só entra quando Plans/Billing estiverem sem blocker.
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
 | BIL-001 | Fechar política de cobrança | P0 | DONE |
-| BIL-002 | Modelar Receivable | P0 | TODO |
-| BIL-003 | Modelar Payment | P0 | TODO |
-| BIL-004 | Modelar PaymentAllocation | P0 | TODO |
-| BIL-005 | Modelar pagamento parcial | P0 | TODO |
-| BIL-006 | Modelar reversão/estorno | P0 | TODO |
-| BIL-007 | Modelar inadimplência | P1 | TODO |
+| BIL-002 | Modelar Receivable | P0 | DONE |
+| BIL-003 | Modelar Payment | P0 | DONE |
+| BIL-004 | Modelar PaymentAllocation | P0 | DONE |
+| BIL-005 | Modelar pagamento parcial | P0 | DONE |
+| BIL-006 | Modelar reversão/estorno | P0 | DONE |
+| BIL-007 | Modelar inadimplência | P1 | DONE |
 
 ---
 
@@ -1000,9 +1000,9 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| FIN-001 | Modelar Expense | P1 | TODO |
-| FIN-002 | Modelar FinancialAccount | P1 | TODO |
-| FIN-003 | Modelar FinancialTransaction/Transfer | P1 | TODO |
+| FIN-001 | Modelar Expense | P1 | DONE |
+| FIN-002 | Modelar FinancialAccount | P1 | DONE |
+| FIN-003 | Modelar FinancialTransaction/Transfer | P1 | DONE |
 | FIN-004 | Fechar semântica de Closing | P1 | DONE |
 | FIN-005 | Validar comissão — fora do MVP | P2 | DONE |
 
@@ -1326,6 +1326,7 @@ f​isiofit-crm/
 | `docs/modeling/MODEL_001_PEOPLE_PATIENTS_STAFF_ORGANIZATION.md` | Modelo conceitual de Organization, People, Patients e Staff |
 | `docs/modeling/MODEL_002_SCHEDULING_PILATES.md` | Modelo conceitual de Scheduling e Pilates |
 | `docs/modeling/MODEL_003_CLINICAL.md` | Modelo conceitual de Clinical, histórico, acesso excepcional e exportação |
+| `docs/modeling/MODEL_004_PLANS_BILLING_FINANCE.md` | Modelo conceitual de Plans & Enrollment, Billing e Finance, com snapshots, reversões, concorrência e fechamento versionado |
 | `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx` | Fonte de descoberta preservada; consultar a auditoria para decisões superadas |
 
 ---
@@ -1435,9 +1436,9 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. `MODEL-004` — modelar Plans / Billing / Finance.
-2. `MODEL-005` — criar Modelo Conceitual Integrado.
-3. `STATE` — criar Máquinas de Estado.
+1. `MODEL-005` — criar Modelo Conceitual Integrado.
+2. `STATE-001` — criar Máquinas de Estado.
+3. `EVT-001` — criar catálogo final de Eventos de Domínio.
 
 ## Em seguida
 
@@ -1449,47 +1450,47 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 # 24. ÚLTIMO HANDOFF
 
-## HANDOFF — 2026-09-15 — MODEL-003
+## HANDOFF — 2026-09-15 — MODEL-004
 
 ### Objetivo da sessão
-Criar o modelo conceitual detalhado de Clinical, preservando segregação, ownership, autoria, histórico e privacidade.
+Criar o modelo conceitual detalhado de Plans & Enrollment, Billing e Finance, preservando ownership, snapshots, vigência, reversões, concorrência e auditabilidade.
 
 ### Status atual
-MODEL-003 — DONE. Próxima tarefa: MODEL-004 — Plans / Billing / Finance.
+MODEL-004 — DONE. Próxima tarefa: MODEL-005 — Modelo Conceitual Integrado.
 
 ### Concluído
-- CareEpisode, Assessment, ClinicalTemplate/Version, ClinicalEntry, Rectification, Addendum, ClinicalDocumentLink e BreakGlassAccess classificados e detalhados;
-- CareEpisode, Assessment e ClinicalEntry definidos como roots independentes, sem aggregate gigante de prontuário;
-- ClinicalTemplateVersion definida como root imutável diretamente referenciável por registros históricos;
-- lifecycle DRAFT → FINALIZED, data do atendimento separada de criação, registro retroativo e ClinicalFinalizationPolicy documentados;
-- Rectification e Addendum separados como correção e complementação append-only;
-- autoria profissional e prova lógica de finalização preservadas mesmo após desligamento/desativação;
-- Documents mantido como owner do arquivo técnico e Clinical como owner de ClinicalDocumentLink/semântica;
-- acesso contextual, break-glass, exportação sensível, retenção e minimização de eventos/audit logs modelados;
-- operações, eventos, read models, 23 invariantes, hotspots de concorrência, oito diagramas Mermaid e três matrizes;
-- `PROC-CLI-001` a `005` e fluxos por turma/Appointment suportados sem escrita cross-context;
-- nenhum detalhe físico, API, banco, autorização técnica ou UI foi introduzido.
+- Plan, PlanVersion, Contract e Enrollment separados e detalhados, incluindo renovação, pausa, cancelamento e frequência com vigência;
+- PlanVersion definida como root imutável e Contract como snapshot aceito; Enrollment pode continuar por Contracts sucessivos;
+- Receivable, Payment, PaymentAllocation, PaymentReversal, Refund, BillingAdjustment, Negotiation e FinancialRestriction modelados em Billing;
+- PaymentAllocation definida como child de Payment; reversal preserva Payment e Refund é root próprio/devolução real;
+- FinancialAccount, FinancialTransaction, Expense/Category, Transfer, ReconciliationAdjustment, Closing e ClosingSnapshot modelados em Finance;
+- Payment e FinancialTransaction, Expense e FinancialTransaction, previsto e realizado, competência e caixa mantidos distintos;
+- snapshots de Contract, Receivable e Closing explicitados; ClosingSnapshot definido como child imutável/versionado;
+- aggregates pequenos justificados, operações/eventos/read models definidos, invariantes PLN/ENR/BIL/FIN e hotspots concorrentes documentados;
+- processos PLN/ENR/BIL/FIN suportados, onze diagramas Mermaid e matrizes conceitual, de relações e invariantes incluídos;
+- Benefit, Entitlement e ContractAmendment adiados sem invenção; Commission rejeitada no MVP;
+- nenhum detalhe físico, API, banco, provider, algoritmo de conciliação, autorização técnica ou UI foi introduzido.
 
 ### Arquivos criados
 
-- `docs/modeling/MODEL_003_CLINICAL.md`.
+- `docs/modeling/MODEL_004_PLANS_BILLING_FINANCE.md`.
 
 ### Arquivos alterados
 
 - `PROJECT_OS.md`.
-- `docs/domain/GLOSSARY.md`.
 
 ### Decisões tomadas
 
-- CareEpisode relaciona, mas não contém, a coleção crescente de registros;
-- Assessment e ClinicalEntry são roots próprios e ambos admitem DRAFT → FINALIZED conforme a baseline;
-- Rectification/Addendum pertencem ao aggregate do registro finalizado alvo;
-- ClinicalTemplateVersion é root imutável separado do ClinicalTemplate lógico;
-- PatientMedicalRecord é read model/composição, não aggregate;
-- ClinicalExportOperation permanece operação, sem entidade Request ainda;
-- FinalizationMetadata é prova lógica inicial, sem equivalência regulatória afirmada;
-- ClinicalAlert foi rejeitado por falta de sustentação canônica;
-- 24h e 10 MB permanecem parâmetros, não invariantes.
+- PlanVersion é root imutável separado e diretamente referenciável;
+- Contract e Enrollment são roots distintos; renovação cria novo Contract sem necessariamente recriar Enrollment;
+- PaymentAllocation e PaymentReversal pertencem ao aggregate Payment;
+- Refund, Negotiation e FinancialRestriction são roots próprios em Billing;
+- BillingAdjustment é child imutável de Receivable;
+- FinancialTransaction é root independente de FinancialAccount por volume/concorrência/histórico;
+- Expense, ExpenseCategory, Transfer e ReconciliationAdjustment são roots candidatos separados;
+- ClosingSnapshot é child imutável do Closing mensal;
+- OVERDUE é condição derivada de saldo, vencimento e tolerância;
+- Benefit, Entitlement e ContractAmendment permanecem deferred; Commission permanece fora do MVP.
 
 ### Migrations
 
@@ -1497,31 +1498,32 @@ MODEL-003 — DONE. Próxima tarefa: MODEL-004 — Plans / Billing / Finance.
 
 ### Testes executados
 
-- leitura e validação documental integral contra `PROJECT_OS`, último handoff, `GATE_M1_AUDIT`, `CONTEXT_MAP`, `OWNERSHIP_MAP`, MODEL-001, MODEL-002, glossário, parâmetros, domínio Clinical, regras, processos e decisões;
-- revisão das checklists de ownership, histórico, segurança, processos e critérios de pass de MODEL-003;
+- leitura e validação documental integral contra `PROJECT_OS`, último handoff, `GATE_M1_AUDIT`, `CONTEXT_MAP`, `OWNERSHIP_MAP`, MODEL-001 a MODEL-003, glossário, parâmetros, domínios Plans/Billing/Finance, regras, processos e decisões;
+- revisão das checklists de ownership, snapshots, reversibilidade, processos, concorrência e critérios de pass de MODEL-004;
 - `git diff --check`, revisão do diff e `git diff --stat`.
 
 ### Blockers restantes
 
-- nenhum para MODEL-004/modelagem conceitual;
-- antes da implementação clínica: matriz de permissões/alçadas, MFA/step-up, schemas clínicos mínimos, policy de anexos/exportação e tratamento de concorrência;
-- antes do go-live: retenção, campos obrigatórios, assinatura, exigências regulatórias/RT, disclosure/exportação, menores/representantes e inventário LGPD.
+- nenhum para MODEL-005/modelagem conceitual integrada;
+- antes da implementação financeira: alçadas de desconto/negociação, tratamento de vencidos no cancelamento, precedência de operações concorrentes, matriz de permissões e definições físicas de Money/idempotência;
+- integração bancária/provider, pagamento parcial de Expense e granularidade física de ClosingSnapshot permanecem futuras e não bloqueiam MODEL-005.
 
 ### Riscos
 
-- transformar prontuário em aggregate único ou permitir sobrescrita de FINALIZED;
-- usar UserAccount/nome textual como substituto de autoria profissional;
-- vazar conteúdo clínico em eventos, logs, relatórios administrativos ou AuditLog;
-- tratar break-glass como papel administrativo permanente;
-- permitir que Documents decida semântica/autorização clínica ou que Clinical altere Appointment/ClassOccurrence.
+- fundir Contract, Receivable, Payment e FinancialTransaction ou criar aggregate financeiro gigante;
+- reescrever snapshots/versões históricos ou apagar Payment/Closing em correções;
+- tratar FinancialRestriction como Enrollment.PAUSED;
+- permitir allocations, reversals, refunds, transfers ou closings concorrentes violarem limites/cutoffs;
+- conceder alçada financeira a Developer por autoridade técnica;
+- transformar valores configuráveis ou categorias em constantes estruturais.
 
 ### Próximas 3 ações
-1. `MODEL-004` — Plans / Billing / Finance;
-2. `MODEL-005` — Modelo Conceitual Integrado;
-3. `STATE` — Máquinas de Estado.
+1. `MODEL-005` — Modelo Conceitual Integrado;
+2. `STATE-001` — Máquinas de Estado;
+3. `EVT-001` — Catálogo final de Eventos de Domínio.
 
 ### Instrução para a próxima IA
-Comece por `MODEL-004` usando Context Map, Ownership Map e MODEL-001 a MODEL-003. Modele Plans / Billing / Finance sem misturar Contract, Receivable, Payment e FinancialTransaction e sem iniciar máquinas de estado, modelo lógico ou implementação.
+Comece por `MODEL-005` usando Context Map, Ownership Map e MODEL-001 a MODEL-004. Integre referências, cardinalidades e eventos sem fundir aggregates ou contexts e sem iniciar STATE-001, modelo lógico ou implementação.
 
 ---
 
