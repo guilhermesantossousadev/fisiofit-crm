@@ -21,7 +21,7 @@ project:
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: MODEL-002 — Scheduling / Pilates
+  current_priority: MODEL-003 — Clinical
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -42,8 +42,8 @@ control:
 **FASE ATUAL:** M2 — Modelagem Conceitual — IN PROGRESS
 **MARCO CONCLUÍDO:** M1 — Domínio operacional fechado
 **PRÓXIMO MARCO:** M2 — Modelagem Conceitual Completa
-**ÚLTIMA TAREFA CONCLUÍDA:** MODEL-001 — People / Patients / Staff / Organization
-**PRÓXIMA TAREFA:** MODEL-002 — Scheduling / Pilates
+**ÚLTIMA TAREFA CONCLUÍDA:** MODEL-002 — Scheduling / Pilates
+**PRÓXIMA TAREFA:** MODEL-003 — Clinical
 
 | Domínio | Status |
 |---|---|
@@ -58,9 +58,9 @@ control:
 
 Sequência oficial imediata:
 
-1. `MODEL-002` — Scheduling/Pilates;
-2. `MODEL-003` — Clinical;
-3. `MODEL-004` — Plans/Billing/Finance.
+1. `MODEL-003` — Clinical;
+2. `MODEL-004` — Plans/Billing/Finance;
+3. modelo conceitual integrado.
 
 Modelagem conceitual, máquinas de estado, arquitetura física, modelo lógico e implementação **não** estão concluídos.
 
@@ -506,7 +506,7 @@ Project OS na raiz e adotado como ponto de entrada.
 
 ## Fase 2 — Modelagem conceitual — IN PROGRESS
 
-`ARC-001`, `ARC-002` e `MODEL-001` foram concluídos. A fase segue por `MODEL-002` (Scheduling/Pilates).
+`ARC-001`, `ARC-002`, `MODEL-001` e `MODEL-002` foram concluídos. A fase segue por `MODEL-003` (Clinical).
 
 ### People / Patients / Staff / Organization
 - [x] Person
@@ -530,16 +530,16 @@ Project OS na raiz e adotado como ponto de entrada.
 - [x] InstitutionalCalendar / Holiday
 
 ### Scheduling / Pilates
-- [ ] ScheduleRule/FixedSchedule geral (não-turma)
-- [ ] Appointment
-- [ ] CalendarException
-- [ ] Class
-- [ ] ClassSchedule
-- [ ] ClassMembership
-- [ ] ClassOccurrence
-- [ ] Attendance
-- [ ] MakeupCredit
-- [ ] MakeupReservation
+- [x] ScheduleRule/FixedSchedule geral (não-turma)
+- [x] Appointment
+- [x] CalendarException
+- [x] Class
+- [x] ClassSchedule
+- [x] ClassMembership
+- [x] ClassOccurrence
+- [x] Attendance
+- [x] MakeupCredit
+- [x] MakeupReservation
 
 ### Clinical
 - [ ] CareEpisode
@@ -819,7 +819,7 @@ Só entra quando Plans/Billing estiverem sem blocker.
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
 | MODEL-001 | People / Patients / Staff / Organization | P0 | DONE |
-| MODEL-002 | Scheduling / Pilates | P0 | TODO |
+| MODEL-002 | Scheduling / Pilates | P0 | DONE |
 | MODEL-003 | Clinical | P0 | TODO |
 | MODEL-004 | Plans / Billing / Finance | P0 | TODO |
 
@@ -909,13 +909,13 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| AGD-001 | Modelar grade fixa | P0 | TODO |
-| AGD-002 | Modelar Appointment | P0 | TODO |
-| AGD-003 | Modelar CalendarException | P1 | TODO |
-| AGD-004 | Regra conflito de profissional | P0 | TODO |
-| AGD-005 | Regra conflito de paciente | P0 | TODO |
-| AGD-006 | Visão por unidade | P0 | TODO |
-| AGD-007 | Visão por profissional | P0 | TODO |
+| AGD-001 | Modelar grade fixa | P0 | DONE |
+| AGD-002 | Modelar Appointment | P0 | DONE |
+| AGD-003 | Modelar CalendarException | P1 | DONE |
+| AGD-004 | Regra conflito de profissional | P0 | DONE |
+| AGD-005 | Regra conflito de paciente | P0 | DONE |
+| AGD-006 | Visão por unidade | P0 | DONE |
+| AGD-007 | Visão por profissional | P0 | DONE |
 
 ---
 
@@ -923,15 +923,15 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| PIL-001 | Modelar Class | P0 | TODO |
-| PIL-002 | Modelar ClassSchedule | P0 | TODO |
-| PIL-003 | Modelar ClassMembership | P0 | TODO |
-| PIL-004 | Modelar ClassOccurrence | P0 | TODO |
-| PIL-005 | Modelar Attendance | P0 | TODO |
-| PIL-006 | Regra de capacidade | P0 | TODO |
-| PIL-007 | Transferência de turma | P0 | TODO |
-| PIL-008 | Modelar MakeupCredit | P1 | TODO |
-| PIL-009 | Modelar MakeupReservation | P1 | TODO |
+| PIL-001 | Modelar Class | P0 | DONE |
+| PIL-002 | Modelar ClassSchedule | P0 | DONE |
+| PIL-003 | Modelar ClassMembership | P0 | DONE |
+| PIL-004 | Modelar ClassOccurrence | P0 | DONE |
+| PIL-005 | Modelar Attendance | P0 | DONE |
+| PIL-006 | Regra de capacidade | P0 | DONE |
+| PIL-007 | Transferência de turma | P0 | DONE |
+| PIL-008 | Modelar MakeupCredit | P1 | DONE |
+| PIL-009 | Modelar MakeupReservation | P1 | DONE |
 
 ---
 
@@ -1321,6 +1321,7 @@ f​isiofit-crm/
 | `docs/architecture/CONTEXT_MAP.md` | Boundaries, responsabilidades e relações oficiais entre contextos |
 | `docs/architecture/OWNERSHIP_MAP.md` | Owner único, acessos cross-context, snapshots e ownership de eventos |
 | `docs/modeling/MODEL_001_PEOPLE_PATIENTS_STAFF_ORGANIZATION.md` | Modelo conceitual de Organization, People, Patients e Staff |
+| `docs/modeling/MODEL_002_SCHEDULING_PILATES.md` | Modelo conceitual de Scheduling e Pilates |
 | `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx` | Fonte de descoberta preservada; consultar a auditoria para decisões superadas |
 
 ---
@@ -1430,9 +1431,9 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. `MODEL-002` — modelar Scheduling/Pilates.
-2. `MODEL-003` — modelar Clinical.
-3. `MODEL-004` — modelar Plans/Billing/Finance.
+1. `MODEL-003` — modelar Clinical.
+2. `MODEL-004` — modelar Plans/Billing/Finance.
+3. criar modelo conceitual integrado.
 
 ## Em seguida
 
@@ -1444,28 +1445,28 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 # 24. ÚLTIMO HANDOFF
 
-## HANDOFF — 2026-09-15 — MODEL-001
+## HANDOFF — 2026-09-15 — MODEL-002
 
 ### Objetivo da sessão
-Criar o modelo conceitual detalhado de Organization, People, Patients e Staff, preservando os boundaries de ARC-001 e ARC-002.
+Criar o modelo conceitual detalhado de Scheduling e Pilates, preservando os boundaries de ARC-001 e ARC-002.
 
 ### Status atual
-MODEL-001 — DONE. Próxima tarefa: MODEL-002 — Scheduling / Pilates.
+MODEL-002 — DONE. Próxima tarefa: MODEL-003 — Clinical.
 
 ### Concluído
-- classificação de entidades, value objects, child entities, referências externas e aggregate roots candidatos;
-- atributos conceituais, cardinalidades, temporalidade, lifecycles mínimos e invariantes ORG/PPL/PAC/STF;
-- Clinic, Unit e InstitutionalCalendar como roots separados; Room e Holiday como children;
-- Person, PersonRelationship e PersonMerge como roots de People, com MergeManifest imutável;
-- PatientProfile como root de Patients, sem duplicar Person, com responsáveis e pagador por vigência;
-- ProfessionalProfile como root de Staff; Availability e ProfessionalLeave como roots separados candidatos;
-- operações, eventos, cross-context references, cinco diagramas Mermaid e três matrizes de validação;
-- PROC-PPL-001 e PROC-PAC-001 suportados sem escrita cross-context;
-- nenhum aggregate atravessa contextos e nenhum detalhe físico foi introduzido.
+- separação estrita de Scheduling (Appointment, conflito e agenda geral) e Pilates (turma, recorrência, ocorrência, capacidade, presença e reposição);
+- classificação de entidades, value objects, policies, read models, referências externas e aggregate roots candidatos;
+- Class, ClassSchedule e ClassMembership como roots separados; ClassOccurrence como root da chamada e MakeupCredit como root da reserva;
+- recorrência, vigência, ocorrência, substituição, Attendance auditável, capacidade e reposição detalhadas;
+- ScheduleRule geral separado de ClassSchedule; FixedSchedule tratado como alias, não entidade paralela;
+- AgendaView como projeção de Scheduling sem ownership compartilhado;
+- invariantes `INV-AGD-*` e `INV-PIL-*`, operações, eventos, hotspots de concorrência, seis diagramas Mermaid e três matrizes;
+- `PROC-AGD-001/002` e `PROC-PIL-001` a `005` suportados sem escrita cross-context;
+- nenhum detalhe físico, algoritmo, API, banco ou UI foi introduzido.
 
 ### Arquivos criados
 
-- `docs/modeling/MODEL_001_PEOPLE_PATIENTS_STAFF_ORGANIZATION.md`.
+- `docs/modeling/MODEL_002_SCHEDULING_PILATES.md`.
 
 ### Arquivos alterados
 
@@ -1473,12 +1474,14 @@ MODEL-001 — DONE. Próxima tarefa: MODEL-002 — Scheduling / Pilates.
 
 ### Decisões tomadas
 
-- Address permanece value object de Person enquanto não houver necessidade comprovada de lifecycle próprio;
-- responsabilidade administrativa é separada de GuardianLink por `AdministrativeResponsibleLink`, com ownership em Patients;
-- EmploymentLink e ProfessionalUnitLink ficam sob ProfessionalProfile;
-- Availability e ProfessionalLeave são aggregate roots candidatos separados por volume, concorrência e lifecycle;
-- `Credential` não foi adotado até distinguir licença profissional de credencial de acesso;
-- EmergencyContact permanece com forma externa simplificada como open question non-blocking.
+- `FixedSchedule` é alias operacional de ScheduleRule geral não-turma, não entidade paralela;
+- recorrência de turma é exclusivamente ClassSchedule em Pilates;
+- Class, ClassSchedule e ClassMembership não formam aggregate gigante;
+- ClassOccurrence governa participantes esperados, Attendance e correções; MakeupCredit governa MakeupReservation;
+- capacidade efetiva pertence ao ClassSchedule e é snapshotada na ocorrência, nunca derivada de Room;
+- reposição em turma usa MakeupReservation; reposição ad-hoc usa Appointment, sem duplicar o mesmo assento;
+- AgendaView é composição/read model de Scheduling; Reports não se torna owner;
+- efeito da pausa sobre MakeupCredit permanece NON_BLOCKING e não recebeu política inventada.
 
 ### Migrations
 
@@ -1486,30 +1489,30 @@ MODEL-001 — DONE. Próxima tarefa: MODEL-002 — Scheduling / Pilates.
 
 ### Testes executados
 
-- validação documental contra `CONTEXT_MAP`, `OWNERSHIP_MAP`, `RULES_INDEX`, `PROCESS_INDEX`, `DECISIONS`, `GATE_M1_AUDIT` e Caderno Mestre;
-- revisão das checklists de ownership, processos e critérios de pass de MODEL-001;
+- validação documental contra `CONTEXT_MAP`, `OWNERSHIP_MAP`, MODEL-001, `RULES_INDEX`, `PROCESS_INDEX`, `DECISIONS`, `GATE_M1_AUDIT` e parâmetros de negócio;
+- revisão das checklists de ownership, histórico, conflitos, processos e critérios de pass de MODEL-002;
 - `git diff --check`, revisão do diff e `git diff --stat`.
 
 ### Blockers restantes
 
-- nenhum para MODEL-002/modelagem conceitual;
+- nenhum para MODEL-003/modelagem conceitual;
 - antes da implementação: permissões/alçadas, segurança de Identity, Receivables vencidos no cancelamento, desconto/negociação, MakeupCredits durante pausa e decisões de modelo lógico;
 - antes do go-live: retenção/obrigações clínicas e LGPD, migração/cutover, backup/restore e resposta a incidente.
 
 ### Riscos
 
-- transformar Room em recurso bloqueante ou fonte de capacidade em MODEL-002;
-- misturar Availability de Staff com conflito/Appointment de Scheduling;
-- tratar feriado institucional como ocorrência/exceção operacional de Organization;
-- reintroduzir Person, Unit ou dados civis duplicados nos próximos modelos.
+- implementar check de conflito sem proteção contra concorrência;
+- duplicar reposição como Appointment e MakeupReservation para o mesmo assento;
+- transformar Room em fonte de capacidade ou recorrência de turma em Scheduling;
+- confundir Attendance operacional com ClinicalEntry em MODEL-003.
 
 ### Próximas 3 ações
-1. `MODEL-002` — modelar Scheduling/Pilates;
-2. `MODEL-003` — modelar Clinical;
-3. `MODEL-004` — modelar Plans/Billing/Finance.
+1. `MODEL-003` — modelar Clinical;
+2. `MODEL-004` — modelar Plans/Billing/Finance;
+3. criar modelo conceitual integrado.
 
 ### Instrução para a próxima IA
-Comece por `MODEL-002` usando o Context Map, Ownership Map e `docs/modeling/MODEL_001_PEOPLE_PATIENTS_STAFF_ORGANIZATION.md`. Modele Scheduling/Pilates sem transferir ownership de Unit, Room, PatientProfile, ProfessionalProfile, Availability ou ProfessionalLeave e sem criar modelo lógico, SQL, código ou arquitetura física.
+Comece por `MODEL-003` usando Context Map, Ownership Map, MODEL-001 e MODEL-002. Modele Clinical sem absorver Appointment, ClassOccurrence, Attendance, PatientProfile, ProfessionalProfile ou arquivo binário e sem criar modelo lógico, SQL, código ou arquitetura física.
 
 ---
 
