@@ -21,7 +21,7 @@ project:
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: ARC-001 — Context Map definitivo
+  current_priority: MODEL-001 — People / Patients / Staff / Organization
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -42,7 +42,7 @@ control:
 **FASE ATUAL:** Discovery / Domain Definition — COMPLETE
 **MARCO CONCLUÍDO:** M1 — Domínio operacional fechado
 **PRÓXIMO MARCO:** M2 — Modelagem Conceitual Completa
-**PRÓXIMA TAREFA:** ARC-001 — Context Map definitivo
+**PRÓXIMA TAREFA:** MODEL-001 — People / Patients / Staff / Organization
 
 | Domínio | Status |
 |---|---|
@@ -57,9 +57,9 @@ control:
 
 Sequência oficial imediata:
 
-1. `ARC-001` — Context Map definitivo;
-2. `ARC-002` — Ownership Map;
-3. `MODEL-001` — People/Patients/Staff/Organization.
+1. `MODEL-001` — People/Patients/Staff/Organization;
+2. `MODEL-002` — Scheduling/Pilates;
+3. `MODEL-003` — Clinical.
 
 Modelagem conceitual, máquinas de estado, arquitetura física, modelo lógico e implementação **não** estão concluídos.
 
@@ -505,7 +505,7 @@ Project OS na raiz e adotado como ponto de entrada.
 
 ## Fase 2 — Modelagem conceitual — PRÓXIMA
 
-Começa por `ARC-001` (Context Map), `ARC-002` (Ownership Map) e `MODEL-001` (People/Patients/Staff/Organization). Nenhum item abaixo foi marcado como concluído pelo Gate M1.
+`ARC-001` (Context Map) e `ARC-002` (Ownership Map) foram concluídos. A fase segue por `MODEL-001` (People/Patients/Staff/Organization). Nenhum item de entidade abaixo foi marcado como concluído.
 
 ### People / Patients / Staff / Organization
 - [ ] Person
@@ -522,7 +522,7 @@ Começa por `ARC-001` (Context Map), `ARC-002` (Ownership Map) e `MODEL-001` (Pe
 - [ ] Room
 
 ### Scheduling / Pilates
-- [ ] FixedSchedule
+- [ ] ScheduleRule/FixedSchedule geral (não-turma)
 - [ ] Appointment
 - [ ] CalendarException
 - [ ] Class
@@ -550,10 +550,11 @@ Começa por `ARC-001` (Context Map), `ARC-002` (Ownership Map) e `MODEL-001` (Pe
 - [ ] Receivable
 - [ ] Payment
 - [ ] PaymentAllocation
-- [ ] Refund/Reversal
+- [ ] PaymentReversal
+- [ ] Refund
 - [ ] Expense
-- [ ] CashSession
-- [ ] CashTransaction
+- [ ] FinancialAccount (incluindo CASH)
+- [ ] FinancialTransaction
 - [ ] Closing
 
 ### Gate
@@ -809,8 +810,8 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| ARC-001 | Context Map definitivo | P0 | READY |
-| ARC-002 | Matriz de ownership | P0 | TODO |
+| ARC-001 | Context Map definitivo | P0 | DONE |
+| ARC-002 | Matriz de ownership | P0 | DONE |
 | ARC-003 | Matriz de dependências | P0 | TODO |
 | ARC-004 | ADR monólito modular | P0 | TODO |
 | ARC-005 | Definir application/domain/infrastructure | P0 | TODO |
@@ -1284,6 +1285,8 @@ f​isiofit-crm/
 | `docs/processes/PROCESS_INDEX.md` | IDs e estado dos processos |
 | `docs/decisions/DECISIONS.md` | Decisões oficiais e consequências |
 | `docs/GATE_M1_AUDIT.md` | Conflitos, correções e pendências |
+| `docs/architecture/CONTEXT_MAP.md` | Boundaries, responsabilidades e relações oficiais entre contextos |
+| `docs/architecture/OWNERSHIP_MAP.md` | Owner único, acessos cross-context, snapshots e ownership de eventos |
 | `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx` | Fonte de descoberta preservada; consultar a auditoria para decisões superadas |
 
 ---
@@ -1393,92 +1396,86 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. `ARC-001` — criar Context Map definitivo.
-2. `ARC-002` — criar mapa de ownership.
-3. `MODEL-001` — modelar People/Patients/Staff/Organization.
+1. `MODEL-001` — modelar People/Patients/Staff/Organization.
+2. `MODEL-002` — modelar Scheduling/Pilates.
+3. `MODEL-003` — modelar Clinical.
 
 ## Em seguida
 
-4. modelar Scheduling/Pilates;
-5. modelar Clinical;
-6. modelar Plans/Billing/Finance;
-7. criar máquinas de estado e catálogo de eventos;
-8. fechar matriz de permissões/dependências;
-9. avançar para arquitetura física e modelo lógico somente após aprovação conceitual.
+4. modelar Plans/Billing/Finance;
+5. criar máquinas de estado e catálogo de eventos;
+6. fechar matriz de permissões/dependências;
+7. avançar para arquitetura física e modelo lógico somente após aprovação conceitual.
 
 ---
 
 # 24. ÚLTIMO HANDOFF
 
-## HANDOFF — 2026-09-15 — Gate M1
+## HANDOFF — 2026-09-15 — ARC-002
 
 ### Objetivo da sessão
-Fechar descoberta/requisitos dos domínios operacionais DOM-011 a DOM-018 e preparar o repositório para modelagem conceitual.
+Criar o Ownership Map definitivo a partir da baseline `discovery-v1` e do ARC-001.
 
 ### Status atual
-Discovery / Domain Definition — COMPLETE. M1 — Domínio operacional fechado.
+ARC-002 — DONE. Próxima tarefa: MODEL-001 — People / Patients / Staff / Organization.
 
 ### Concluído
-- Caderno Mestre lido por extração textual local não destrutiva; DOCX original preservado;
-- oito documentos de domínio consolidados e aprovados para modelagem;
-- glossário e parâmetros de negócio separados entre regra e valor configurável;
-- 75 regras catalogadas sem IDs equivalentes concorrentes;
-- 37 processos catalogados;
-- 26 decisões registradas;
-- auditoria de consistência criada com conflitos resolvidos e pendências classificadas;
-- DOM-011, DOM-012, DOM-013, DOM-014, DOM-015, DOM-016, DOM-017 e DOM-018 marcados DONE.
+- owner transacional único atribuído aos conceitos principais dos 16 contextos;
+- matriz mestre, acessos cross-context, referências, snapshots e eventos documentados;
+- calendário institucional separado de CalendarException operacional;
+- vínculo vigente de pagador separado dos snapshots de Contract e Receivable;
+- Scheduling/Pilates, Clinical/administrativo e Billing/Finance mantidos sem ownership compartilhado;
+- três resíduos terminológicos corrigidos no glossário, no domínio de Scheduling e no roadmap;
+- ambiguidades residuais classificadas como NON_BLOCKING; nenhum blocker para MODEL-001.
 
 ### Arquivos criados
 
-- `docs/domain/GLOSSARY.md`;
-- `docs/domain/BUSINESS_PARAMETERS.md`;
-- `docs/domain/01-people-patients.md` a `08-finance.md`;
-- `docs/business-rules/RULES_INDEX.md`;
-- `docs/processes/PROCESS_INDEX.md`;
-- `docs/decisions/DECISIONS.md`;
-- `docs/GATE_M1_AUDIT.md`.
+- `docs/architecture/OWNERSHIP_MAP.md`.
 
 ### Arquivos alterados
 
 - `PROJECT_OS.md`.
+- `docs/domain/GLOSSARY.md`.
+- `docs/domain/03-scheduling.md`.
 
-### Documentos consolidados
+### Decisões tomadas
 
-- `PROJECT_OS.md` anterior;
-- `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx`;
-- decisões oficiais fornecidas para o Gate M1.
+- InstitutionalCalendar/Holiday pertencem a Organization; CalendarException operacional pertence a Scheduling;
+- ScheduleRule/FixedSchedule em Scheduling limita-se à agenda geral não-turma; ClassSchedule pertence a Pilates;
+- Patients possui ResponsiblePayerLink vigente; Plans e Billing possuem snapshots históricos próprios;
+- BreakGlassAccess pertence a Clinical e BreakGlassAudit a Privacy & Audit;
+- CashSession não foi recriado; FinancialAccount(CASH) e FinancialTransaction permanecem em Finance.
 
-### Conflitos encontrados e corrigidos
+### Migrations
 
-- pausa sem limite/prorrogação do contrato substituída por máximo de 15 dias sem prorrogação;
-- suspensão por atraso separada de pausa por meio de `FinancialRestriction`;
-- vencimento no dia da contratação substituído pelos dias 5/10/15/20/25;
-- fórmula de pró-rata substituída por aulas restantes × H/A;
-- fechamento/reabertura e autoridade técnica corrigidos para exigir permissão financeira explícita;
-- Commission removida do MVP;
-- capacidade consolidada sob ownership de Pilates;
-- sala/equipamentos confirmados como não bloqueantes no Scheduling.
+- N/A — tarefa documental; nenhuma migration criada.
+
+### Testes executados
+
+- validação documental contra `CONTEXT_MAP`, `RULES_INDEX`, `PROCESS_INDEX`, `DECISIONS` e `GATE_M1_AUDIT`;
+- revisão de owner único, escrita cross-context, snapshots, eventos, ciclos, módulo Deus e conceitos sem owner;
+- `git diff --check` e revisão do diff.
 
 ### Blockers restantes
 
-- nenhum antes da modelagem conceitual;
+- nenhum para MODEL-001/modelagem conceitual;
 - antes da implementação: permissões/alçadas, segurança de Identity, Receivables vencidos no cancelamento, desconto/negociação, MakeupCredits durante pausa e decisões de modelo lógico;
 - antes do go-live: retenção/obrigações clínicas e LGPD, migração/cutover, backup/restore e resposta a incidente.
 
 ### Riscos
 
-- reintroduzir decisões superadas do capítulo 46 do Caderno sem consultar o Decision Log/auditoria;
-- misturar Billing e Finance ou Clinical e administrativo;
-- transformar parâmetros operacionais em constantes;
-- iniciar SQL/código antes de Context Map e Ownership Map.
+- reintroduzir campos civis duplicados em PatientProfile/ProfessionalProfile;
+- confundir vínculo vigente de pagador com snapshots históricos;
+- levar CalendarException para Organization ou ClassSchedule para Scheduling;
+- escolher IDs/tabelas/SQL antes do modelo conceitual.
 
 ### Próximas 3 ações
-1. `ARC-001` — criar Context Map definitivo;
-2. `ARC-002` — criar mapa de ownership;
-3. `MODEL-001` — modelar People/Patients/Staff/Organization.
+1. `MODEL-001` — modelar People/Patients/Staff/Organization;
+2. `MODEL-002` — modelar Scheduling/Pilates;
+3. `MODEL-003` — modelar Clinical.
 
 ### Instrução para a próxima IA
-Comece por `ARC-001`. Use `docs/GATE_M1_AUDIT.md` para não reintroduzir conflitos e não inicie scaffold, SQL ou entidades de produção.
+Comece por `MODEL-001` usando `docs/architecture/CONTEXT_MAP.md` e `docs/architecture/OWNERSHIP_MAP.md` como boundaries normativos. Modele People/Patients/Staff/Organization sem criar modelo lógico, SQL, código ou arquitetura física.
 
 ---
 

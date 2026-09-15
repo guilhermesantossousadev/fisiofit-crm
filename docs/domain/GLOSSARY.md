@@ -15,7 +15,7 @@ Este glossário fixa o sentido dos termos usados na modelagem conceitual. Nomes 
 | ProfessionalProfile | Perfil profissional e vínculos de atuação da Person. | UserAccount ou autoria clínica apagável. | Staff |
 | UserAccount | Conta usada para autenticação e acesso, vinculada a uma Person. | Person, ProfessionalProfile ou autoridade de negócio. | Identity & Access |
 | Guardian | Person ligada a um paciente por responsabilidade legal. | Responsável administrativo ou pagador, embora uma mesma Person possa acumular papéis. | Patients |
-| ResponsiblePayer | Person responsável financeiramente por contrato/obrigações de um paciente. | Patient; podem ser pessoas diferentes. | Patients / Billing |
+| ResponsiblePayer | Person ligada ao paciente como pagador vigente; Contract e Receivable preservam snapshots históricos próprios. | Patient; podem ser pessoas diferentes. | Patients |
 | Opportunity | Ciclo comercial concreto associado a uma Person. | Lead como cadastro separado ou PatientProfile. | CRM |
 | Class | Identidade operacional de uma turma recorrente. | ClassSchedule ou aula de uma data específica. | Pilates |
 | ClassSchedule | Regra recorrente vigente de dias, horário, profissional e capacidade de uma Class. | ClassOccurrence. | Pilates |

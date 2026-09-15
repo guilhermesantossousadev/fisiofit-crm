@@ -6,11 +6,11 @@ DOM-013 — DONE — APROVADO PARA MODELAGEM CONCEITUAL.
 
 ## Objetivo
 
-Representar a grade fixa recorrente, compromissos ad-hoc, conflitos e exceções das duas unidades, sem reescrever o histórico.
+Representar regras recorrentes da agenda geral que não sejam turmas, compromissos ad-hoc, conflitos e exceções das duas unidades, sem reescrever o histórico. A recorrência de turmas pertence a Pilates.
 
 ## Responsabilidades
 
-Grade recorrente, Appointment, calendário, alterações permanentes/pontuais, conflitos temporais e visões por unidade, profissional e paciente.
+ScheduleRule/FixedSchedule da agenda geral não-turma, Appointment, calendário operacional, alterações permanentes/pontuais, conflitos temporais e visões por unidade, profissional e paciente.
 
 ## Fora de escopo
 
@@ -74,4 +74,3 @@ Fonte do calendário de feriados; eventual intervalo mínimo futuro entre unidad
 - Caderno Mestre, capítulo 13.
 - `docs/domain/BUSINESS_PARAMETERS.md`.
 - `docs/business-rules/RULES_INDEX.md`.
-
