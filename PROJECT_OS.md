@@ -21,7 +21,7 @@ project:
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: ARC-001 — Context Map definitivo
+  current_priority: ARC-002 — Ownership Map
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -42,7 +42,7 @@ control:
 **FASE ATUAL:** Discovery / Domain Definition — COMPLETE
 **MARCO CONCLUÍDO:** M1 — Domínio operacional fechado
 **PRÓXIMO MARCO:** M2 — Modelagem Conceitual Completa
-**PRÓXIMA TAREFA:** ARC-001 — Context Map definitivo
+**PRÓXIMA TAREFA:** ARC-002 — Ownership Map
 
 | Domínio | Status |
 |---|---|
@@ -57,9 +57,9 @@ control:
 
 Sequência oficial imediata:
 
-1. `ARC-001` — Context Map definitivo;
-2. `ARC-002` — Ownership Map;
-3. `MODEL-001` — People/Patients/Staff/Organization.
+1. `ARC-002` — Ownership Map;
+2. `MODEL-001` — People/Patients/Staff/Organization;
+3. modelagem conceitual dos demais contextos na ordem do roadmap.
 
 Modelagem conceitual, máquinas de estado, arquitetura física, modelo lógico e implementação **não** estão concluídos.
 
@@ -505,7 +505,7 @@ Project OS na raiz e adotado como ponto de entrada.
 
 ## Fase 2 — Modelagem conceitual — PRÓXIMA
 
-Começa por `ARC-001` (Context Map), `ARC-002` (Ownership Map) e `MODEL-001` (People/Patients/Staff/Organization). Nenhum item abaixo foi marcado como concluído pelo Gate M1.
+`ARC-001` (Context Map) foi concluído. A fase segue por `ARC-002` (Ownership Map) e `MODEL-001` (People/Patients/Staff/Organization). Nenhum item de entidade abaixo foi marcado como concluído.
 
 ### People / Patients / Staff / Organization
 - [ ] Person
@@ -809,8 +809,8 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| ARC-001 | Context Map definitivo | P0 | READY |
-| ARC-002 | Matriz de ownership | P0 | TODO |
+| ARC-001 | Context Map definitivo | P0 | DONE |
+| ARC-002 | Matriz de ownership | P0 | READY |
 | ARC-003 | Matriz de dependências | P0 | TODO |
 | ARC-004 | ADR monólito modular | P0 | TODO |
 | ARC-005 | Definir application/domain/infrastructure | P0 | TODO |
@@ -1284,6 +1284,7 @@ f​isiofit-crm/
 | `docs/processes/PROCESS_INDEX.md` | IDs e estado dos processos |
 | `docs/decisions/DECISIONS.md` | Decisões oficiais e consequências |
 | `docs/GATE_M1_AUDIT.md` | Conflitos, correções e pendências |
+| `docs/architecture/CONTEXT_MAP.md` | Boundaries, responsabilidades e relações oficiais entre contextos |
 | `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx` | Fonte de descoberta preservada; consultar a auditoria para decisões superadas |
 
 ---
@@ -1393,9 +1394,9 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. `ARC-001` — criar Context Map definitivo.
-2. `ARC-002` — criar mapa de ownership.
-3. `MODEL-001` — modelar People/Patients/Staff/Organization.
+1. `ARC-002` — criar mapa de ownership.
+2. `MODEL-001` — modelar People/Patients/Staff/Organization.
+3. modelar Scheduling/Pilates.
 
 ## Em seguida
 
@@ -1410,75 +1411,68 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 # 24. ÚLTIMO HANDOFF
 
-## HANDOFF — 2026-09-15 — Gate M1
+## HANDOFF — 2026-09-15 — ARC-001
 
 ### Objetivo da sessão
-Fechar descoberta/requisitos dos domínios operacionais DOM-011 a DOM-018 e preparar o repositório para modelagem conceitual.
+Criar o Context Map definitivo do monólito modular a partir da baseline `discovery-v1`.
 
 ### Status atual
-Discovery / Domain Definition — COMPLETE. M1 — Domínio operacional fechado.
+ARC-001 — DONE. Próxima tarefa READY: ARC-002 — Ownership Map.
 
 ### Concluído
-- Caderno Mestre lido por extração textual local não destrutiva; DOCX original preservado;
-- oito documentos de domínio consolidados e aprovados para modelagem;
-- glossário e parâmetros de negócio separados entre regra e valor configurável;
-- 75 regras catalogadas sem IDs equivalentes concorrentes;
-- 37 processos catalogados;
-- 26 decisões registradas;
-- auditoria de consistência criada com conflitos resolvidos e pendências classificadas;
-- DOM-011, DOM-012, DOM-013, DOM-014, DOM-015, DOM-016, DOM-017 e DOM-018 marcados DONE.
+- 16 contextos confirmados com responsabilidade, ownership, entradas/saídas e proibições;
+- relações principais classificadas como contrato síncrono, evento, read model, referência por ID ou forbidden;
+- Scheduling e Pilates separados sem ownership duplicado de recorrência, ocorrência ou capacidade;
+- Billing e Finance separados, com Payment e FinancialTransaction explicitamente distintos;
+- fluxos transversais, eventos candidatos e pontos para ARC-002 documentados;
+- nenhum blocker identificado para ARC-002.
 
 ### Arquivos criados
 
-- `docs/domain/GLOSSARY.md`;
-- `docs/domain/BUSINESS_PARAMETERS.md`;
-- `docs/domain/01-people-patients.md` a `08-finance.md`;
-- `docs/business-rules/RULES_INDEX.md`;
-- `docs/processes/PROCESS_INDEX.md`;
-- `docs/decisions/DECISIONS.md`;
-- `docs/GATE_M1_AUDIT.md`.
+- `docs/architecture/CONTEXT_MAP.md`.
 
 ### Arquivos alterados
 
 - `PROJECT_OS.md`.
 
-### Documentos consolidados
+### Decisões tomadas
 
-- `PROJECT_OS.md` anterior;
-- `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx`;
-- decisões oficiais fornecidas para o Gate M1.
+- nenhum contexto foi fundido, separado ou renomeado em relação ao mapa candidato;
+- Plans & Enrollment permanece um boundary único;
+- Privacy & Audit permanece combinado até detalhamento de sub-ownership;
+- fluxo bidirecional não implica ownership circular: respostas assíncronas usam evento/read model;
+- n8n permanece fora do domínio e acessa somente APIs/eventos públicos.
 
-### Conflitos encontrados e corrigidos
+### Migrations
 
-- pausa sem limite/prorrogação do contrato substituída por máximo de 15 dias sem prorrogação;
-- suspensão por atraso separada de pausa por meio de `FinancialRestriction`;
-- vencimento no dia da contratação substituído pelos dias 5/10/15/20/25;
-- fórmula de pró-rata substituída por aulas restantes × H/A;
-- fechamento/reabertura e autoridade técnica corrigidos para exigir permissão financeira explícita;
-- Commission removida do MVP;
-- capacidade consolidada sob ownership de Pilates;
-- sala/equipamentos confirmados como não bloqueantes no Scheduling.
+- N/A — tarefa documental; nenhuma migration criada.
+
+### Testes executados
+
+- validação documental contra `RULES_INDEX`, `PROCESS_INDEX`, `DECISIONS` e `GATE_M1_AUDIT`;
+- revisão de ciclos, ownership duplicado, conceitos sem owner, módulo Deus, segregação Clinical e separação Billing/Finance;
+- validação estrutural de headings/tabelas/Mermaid e revisão do diff.
 
 ### Blockers restantes
 
-- nenhum antes da modelagem conceitual;
+- nenhum para ARC-002/modelagem conceitual;
 - antes da implementação: permissões/alçadas, segurança de Identity, Receivables vencidos no cancelamento, desconto/negociação, MakeupCredits durante pausa e decisões de modelo lógico;
 - antes do go-live: retenção/obrigações clínicas e LGPD, migração/cutover, backup/restore e resposta a incidente.
 
 ### Riscos
 
-- reintroduzir decisões superadas do capítulo 46 do Caderno sem consultar o Decision Log/auditoria;
-- misturar Billing e Finance ou Clinical e administrativo;
-- transformar parâmetros operacionais em constantes;
-- iniciar SQL/código antes de Context Map e Ownership Map.
+- atribuir dois owners a relações compartilhadas (especialmente pagador, calendário e anexos);
+- transformar interação bidirecional em dependência física circular;
+- detalhar contextos P1 inventando regras ainda não aprovadas;
+- iniciar SQL/código antes do Ownership Map.
 
 ### Próximas 3 ações
-1. `ARC-001` — criar Context Map definitivo;
-2. `ARC-002` — criar mapa de ownership;
-3. `MODEL-001` — modelar People/Patients/Staff/Organization.
+1. `ARC-002` — criar mapa de ownership;
+2. `MODEL-001` — modelar People/Patients/Staff/Organization;
+3. modelar Scheduling/Pilates.
 
 ### Instrução para a próxima IA
-Comece por `ARC-001`. Use `docs/GATE_M1_AUDIT.md` para não reintroduzir conflitos e não inicie scaffold, SQL ou entidades de produção.
+Comece por `ARC-002` usando `docs/architecture/CONTEXT_MAP.md` como boundary normativo. Resolva ownership granular sem criar modelo lógico, SQL, código ou arquitetura física.
 
 ---
 
