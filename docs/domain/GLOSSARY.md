@@ -28,8 +28,11 @@ Este glossário fixa o sentido dos termos usados na modelagem conceitual. Nomes 
 | Appointment | Compromisso ad-hoc, como avaliação, experimental, reposição, extraordinário ou encaixe. | Grade fixa ou ClassOccurrence. | Scheduling |
 | CareEpisode | Agrupador longitudinal de registros de um período ou objetivo assistencial. | Contract ou atendimento isolado. | Clinical |
 | Assessment | Avaliação ou reavaliação clínica estruturada. | ClinicalEntry de acompanhamento cotidiano. | Clinical |
+| ClinicalTemplate | Conceito lógico de formulário/estrutura clínica que possui versões publicadas. | ClinicalTemplateVersion usada em um registro histórico. | Clinical |
+| ClinicalTemplateVersion | Versão imutável da estrutura de um ClinicalTemplate, preservada no registro que a utilizou. | Template vigente hoje ou edição retroativa de registro. | Clinical |
 | ClinicalEntry | Registro clínico longitudinal, inicialmente DRAFT e depois FINALIZED. | Nota administrativa ou Attendance. | Clinical |
-| Rectification | Correção ou complemento associado a registro clínico finalizado, preservando o original. | Edição destrutiva do ClinicalEntry. | Clinical |
+| Rectification | Correção associada a registro clínico finalizado, preservando o original. | Addendum ou edição destrutiva do registro. | Clinical |
+| Addendum | Complementação posterior associada a registro clínico finalizado, preservando o original. | Rectification ou edição destrutiva do registro. | Clinical |
 | Plan | Oferta comercial do catálogo. | Contract ou preço histórico aceito. | Plans / Enrollment |
 | PlanVersion | Versão imutável das condições e preços de um Plan em determinada vigência. | Alteração retroativa de contrato. | Plans / Enrollment |
 | Contract | Snapshot das condições comerciais aceitas por paciente/pagador. | PlanVersion vigente hoje ou Enrollment. | Plans / Enrollment |
