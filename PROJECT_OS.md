@@ -21,7 +21,7 @@ project:
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: MODEL-003 — Clinical
+  current_priority: MODEL-004 — Plans / Billing / Finance
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -42,8 +42,8 @@ control:
 **FASE ATUAL:** M2 — Modelagem Conceitual — IN PROGRESS
 **MARCO CONCLUÍDO:** M1 — Domínio operacional fechado
 **PRÓXIMO MARCO:** M2 — Modelagem Conceitual Completa
-**ÚLTIMA TAREFA CONCLUÍDA:** MODEL-002 — Scheduling / Pilates
-**PRÓXIMA TAREFA:** MODEL-003 — Clinical
+**ÚLTIMA TAREFA CONCLUÍDA:** MODEL-003 — Clinical
+**PRÓXIMA TAREFA:** MODEL-004 — Plans / Billing / Finance
 
 | Domínio | Status |
 |---|---|
@@ -58,9 +58,9 @@ control:
 
 Sequência oficial imediata:
 
-1. `MODEL-003` — Clinical;
-2. `MODEL-004` — Plans/Billing/Finance;
-3. modelo conceitual integrado.
+1. `MODEL-004` — Plans / Billing / Finance;
+2. `MODEL-005` — Modelo Conceitual Integrado;
+3. `STATE` — Máquinas de Estado.
 
 Modelagem conceitual, máquinas de estado, arquitetura física, modelo lógico e implementação **não** estão concluídos.
 
@@ -506,7 +506,7 @@ Project OS na raiz e adotado como ponto de entrada.
 
 ## Fase 2 — Modelagem conceitual — IN PROGRESS
 
-`ARC-001`, `ARC-002`, `MODEL-001` e `MODEL-002` foram concluídos. A fase segue por `MODEL-003` (Clinical).
+`ARC-001`, `ARC-002`, `MODEL-001`, `MODEL-002` e `MODEL-003` foram concluídos. A fase segue por `MODEL-004` (Plans / Billing / Finance).
 
 ### People / Patients / Staff / Organization
 - [x] Person
@@ -542,12 +542,14 @@ Project OS na raiz e adotado como ponto de entrada.
 - [x] MakeupReservation
 
 ### Clinical
-- [ ] CareEpisode
-- [ ] Assessment
-- [ ] ClinicalTemplate
-- [ ] ClinicalEntry
-- [ ] Rectification
-- [ ] ClinicalDocumentLink
+- [x] CareEpisode
+- [x] Assessment
+- [x] ClinicalTemplate / ClinicalTemplateVersion
+- [x] ClinicalEntry
+- [x] Rectification / Addendum
+- [x] ClinicalDocumentLink
+- [x] BreakGlassAccess
+- [x] ClinicalExportOperation / ClinicalFinalizationPolicy
 
 ### Plans / Billing / Finance
 - [ ] Plan
@@ -820,8 +822,9 @@ Só entra quando Plans/Billing estiverem sem blocker.
 |---|---|---:|---|
 | MODEL-001 | People / Patients / Staff / Organization | P0 | DONE |
 | MODEL-002 | Scheduling / Pilates | P0 | DONE |
-| MODEL-003 | Clinical | P0 | TODO |
+| MODEL-003 | Clinical | P0 | DONE |
 | MODEL-004 | Plans / Billing / Finance | P0 | TODO |
+| MODEL-005 | Modelo Conceitual Integrado | P0 | TODO |
 
 ---
 
@@ -939,15 +942,15 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| CLI-001 | Modelar CareEpisode | P0 | TODO |
-| CLI-002 | Modelar Assessment | P0 | TODO |
-| CLI-003 | Modelar ClinicalEntry | P0 | TODO |
-| CLI-004 | Modelar finalização | P0 | TODO |
-| CLI-005 | Modelar Rectification/Addendum | P0 | TODO |
-| CLI-006 | Definir permissões clínicas | P0 | TODO |
-| CLI-007 | Definir anexos | P1 | TODO |
-| CLI-008 | Definir exportação | P1 | TODO |
-| CLI-009 | Definir break-glass | P1 | TODO |
+| CLI-001 | Modelar CareEpisode | P0 | DONE |
+| CLI-002 | Modelar Assessment | P0 | DONE |
+| CLI-003 | Modelar ClinicalEntry | P0 | DONE |
+| CLI-004 | Modelar finalização | P0 | DONE |
+| CLI-005 | Modelar Rectification/Addendum | P0 | DONE |
+| CLI-006 | Definir requisitos conceituais de permissões clínicas | P0 | DONE |
+| CLI-007 | Definir anexos | P1 | DONE |
+| CLI-008 | Definir exportação | P1 | DONE |
+| CLI-009 | Definir break-glass | P1 | DONE |
 
 ---
 
@@ -1322,6 +1325,7 @@ f​isiofit-crm/
 | `docs/architecture/OWNERSHIP_MAP.md` | Owner único, acessos cross-context, snapshots e ownership de eventos |
 | `docs/modeling/MODEL_001_PEOPLE_PATIENTS_STAFF_ORGANIZATION.md` | Modelo conceitual de Organization, People, Patients e Staff |
 | `docs/modeling/MODEL_002_SCHEDULING_PILATES.md` | Modelo conceitual de Scheduling e Pilates |
+| `docs/modeling/MODEL_003_CLINICAL.md` | Modelo conceitual de Clinical, histórico, acesso excepcional e exportação |
 | `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx` | Fonte de descoberta preservada; consultar a auditoria para decisões superadas |
 
 ---
@@ -1431,13 +1435,13 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. `MODEL-003` — modelar Clinical.
-2. `MODEL-004` — modelar Plans/Billing/Finance.
-3. criar modelo conceitual integrado.
+1. `MODEL-004` — modelar Plans / Billing / Finance.
+2. `MODEL-005` — criar Modelo Conceitual Integrado.
+3. `STATE` — criar Máquinas de Estado.
 
 ## Em seguida
 
-4. criar máquinas de estado e catálogo de eventos;
+4. fechar catálogo de eventos;
 5. fechar matriz de permissões/dependências;
 6. avançar para arquitetura física e modelo lógico somente após aprovação conceitual.
 
@@ -1445,43 +1449,47 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 # 24. ÚLTIMO HANDOFF
 
-## HANDOFF — 2026-09-15 — MODEL-002
+## HANDOFF — 2026-09-15 — MODEL-003
 
 ### Objetivo da sessão
-Criar o modelo conceitual detalhado de Scheduling e Pilates, preservando os boundaries de ARC-001 e ARC-002.
+Criar o modelo conceitual detalhado de Clinical, preservando segregação, ownership, autoria, histórico e privacidade.
 
 ### Status atual
-MODEL-002 — DONE. Próxima tarefa: MODEL-003 — Clinical.
+MODEL-003 — DONE. Próxima tarefa: MODEL-004 — Plans / Billing / Finance.
 
 ### Concluído
-- separação estrita de Scheduling (Appointment, conflito e agenda geral) e Pilates (turma, recorrência, ocorrência, capacidade, presença e reposição);
-- classificação de entidades, value objects, policies, read models, referências externas e aggregate roots candidatos;
-- Class, ClassSchedule e ClassMembership como roots separados; ClassOccurrence como root da chamada e MakeupCredit como root da reserva;
-- recorrência, vigência, ocorrência, substituição, Attendance auditável, capacidade e reposição detalhadas;
-- ScheduleRule geral separado de ClassSchedule; FixedSchedule tratado como alias, não entidade paralela;
-- AgendaView como projeção de Scheduling sem ownership compartilhado;
-- invariantes `INV-AGD-*` e `INV-PIL-*`, operações, eventos, hotspots de concorrência, seis diagramas Mermaid e três matrizes;
-- `PROC-AGD-001/002` e `PROC-PIL-001` a `005` suportados sem escrita cross-context;
-- nenhum detalhe físico, algoritmo, API, banco ou UI foi introduzido.
+- CareEpisode, Assessment, ClinicalTemplate/Version, ClinicalEntry, Rectification, Addendum, ClinicalDocumentLink e BreakGlassAccess classificados e detalhados;
+- CareEpisode, Assessment e ClinicalEntry definidos como roots independentes, sem aggregate gigante de prontuário;
+- ClinicalTemplateVersion definida como root imutável diretamente referenciável por registros históricos;
+- lifecycle DRAFT → FINALIZED, data do atendimento separada de criação, registro retroativo e ClinicalFinalizationPolicy documentados;
+- Rectification e Addendum separados como correção e complementação append-only;
+- autoria profissional e prova lógica de finalização preservadas mesmo após desligamento/desativação;
+- Documents mantido como owner do arquivo técnico e Clinical como owner de ClinicalDocumentLink/semântica;
+- acesso contextual, break-glass, exportação sensível, retenção e minimização de eventos/audit logs modelados;
+- operações, eventos, read models, 23 invariantes, hotspots de concorrência, oito diagramas Mermaid e três matrizes;
+- `PROC-CLI-001` a `005` e fluxos por turma/Appointment suportados sem escrita cross-context;
+- nenhum detalhe físico, API, banco, autorização técnica ou UI foi introduzido.
 
 ### Arquivos criados
 
-- `docs/modeling/MODEL_002_SCHEDULING_PILATES.md`.
+- `docs/modeling/MODEL_003_CLINICAL.md`.
 
 ### Arquivos alterados
 
 - `PROJECT_OS.md`.
+- `docs/domain/GLOSSARY.md`.
 
 ### Decisões tomadas
 
-- `FixedSchedule` é alias operacional de ScheduleRule geral não-turma, não entidade paralela;
-- recorrência de turma é exclusivamente ClassSchedule em Pilates;
-- Class, ClassSchedule e ClassMembership não formam aggregate gigante;
-- ClassOccurrence governa participantes esperados, Attendance e correções; MakeupCredit governa MakeupReservation;
-- capacidade efetiva pertence ao ClassSchedule e é snapshotada na ocorrência, nunca derivada de Room;
-- reposição em turma usa MakeupReservation; reposição ad-hoc usa Appointment, sem duplicar o mesmo assento;
-- AgendaView é composição/read model de Scheduling; Reports não se torna owner;
-- efeito da pausa sobre MakeupCredit permanece NON_BLOCKING e não recebeu política inventada.
+- CareEpisode relaciona, mas não contém, a coleção crescente de registros;
+- Assessment e ClinicalEntry são roots próprios e ambos admitem DRAFT → FINALIZED conforme a baseline;
+- Rectification/Addendum pertencem ao aggregate do registro finalizado alvo;
+- ClinicalTemplateVersion é root imutável separado do ClinicalTemplate lógico;
+- PatientMedicalRecord é read model/composição, não aggregate;
+- ClinicalExportOperation permanece operação, sem entidade Request ainda;
+- FinalizationMetadata é prova lógica inicial, sem equivalência regulatória afirmada;
+- ClinicalAlert foi rejeitado por falta de sustentação canônica;
+- 24h e 10 MB permanecem parâmetros, não invariantes.
 
 ### Migrations
 
@@ -1489,30 +1497,31 @@ MODEL-002 — DONE. Próxima tarefa: MODEL-003 — Clinical.
 
 ### Testes executados
 
-- validação documental contra `CONTEXT_MAP`, `OWNERSHIP_MAP`, MODEL-001, `RULES_INDEX`, `PROCESS_INDEX`, `DECISIONS`, `GATE_M1_AUDIT` e parâmetros de negócio;
-- revisão das checklists de ownership, histórico, conflitos, processos e critérios de pass de MODEL-002;
+- leitura e validação documental integral contra `PROJECT_OS`, último handoff, `GATE_M1_AUDIT`, `CONTEXT_MAP`, `OWNERSHIP_MAP`, MODEL-001, MODEL-002, glossário, parâmetros, domínio Clinical, regras, processos e decisões;
+- revisão das checklists de ownership, histórico, segurança, processos e critérios de pass de MODEL-003;
 - `git diff --check`, revisão do diff e `git diff --stat`.
 
 ### Blockers restantes
 
-- nenhum para MODEL-003/modelagem conceitual;
-- antes da implementação: permissões/alçadas, segurança de Identity, Receivables vencidos no cancelamento, desconto/negociação, MakeupCredits durante pausa e decisões de modelo lógico;
-- antes do go-live: retenção/obrigações clínicas e LGPD, migração/cutover, backup/restore e resposta a incidente.
+- nenhum para MODEL-004/modelagem conceitual;
+- antes da implementação clínica: matriz de permissões/alçadas, MFA/step-up, schemas clínicos mínimos, policy de anexos/exportação e tratamento de concorrência;
+- antes do go-live: retenção, campos obrigatórios, assinatura, exigências regulatórias/RT, disclosure/exportação, menores/representantes e inventário LGPD.
 
 ### Riscos
 
-- implementar check de conflito sem proteção contra concorrência;
-- duplicar reposição como Appointment e MakeupReservation para o mesmo assento;
-- transformar Room em fonte de capacidade ou recorrência de turma em Scheduling;
-- confundir Attendance operacional com ClinicalEntry em MODEL-003.
+- transformar prontuário em aggregate único ou permitir sobrescrita de FINALIZED;
+- usar UserAccount/nome textual como substituto de autoria profissional;
+- vazar conteúdo clínico em eventos, logs, relatórios administrativos ou AuditLog;
+- tratar break-glass como papel administrativo permanente;
+- permitir que Documents decida semântica/autorização clínica ou que Clinical altere Appointment/ClassOccurrence.
 
 ### Próximas 3 ações
-1. `MODEL-003` — modelar Clinical;
-2. `MODEL-004` — modelar Plans/Billing/Finance;
-3. criar modelo conceitual integrado.
+1. `MODEL-004` — Plans / Billing / Finance;
+2. `MODEL-005` — Modelo Conceitual Integrado;
+3. `STATE` — Máquinas de Estado.
 
 ### Instrução para a próxima IA
-Comece por `MODEL-003` usando Context Map, Ownership Map, MODEL-001 e MODEL-002. Modele Clinical sem absorver Appointment, ClassOccurrence, Attendance, PatientProfile, ProfessionalProfile ou arquivo binário e sem criar modelo lógico, SQL, código ou arquitetura física.
+Comece por `MODEL-004` usando Context Map, Ownership Map e MODEL-001 a MODEL-003. Modele Plans / Billing / Finance sem misturar Contract, Receivable, Payment e FinancialTransaction e sem iniciar máquinas de estado, modelo lógico ou implementação.
 
 ---
 
