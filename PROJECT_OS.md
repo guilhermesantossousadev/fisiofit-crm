@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: event_catalog_complete
+  status: authorization_model_complete
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: AUTH-001 — Matriz de Permissões e Policies
+  current_priority: ARC-003 — Physical Architecture / Modular Monolith Design
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,11 +39,11 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** AUTH-001 — Matriz de Permissões e Policies — NEXT
-**MARCO CONCLUÍDO:** EVT-001 — Catálogo final de Eventos de Domínio
-**PRÓXIMO MARCO:** AUTH-001 — Matriz de Permissões e Policies
-**ÚLTIMA TAREFA CONCLUÍDA:** EVT-001 — Catálogo final de Eventos de Domínio
-**PRÓXIMA TAREFA:** AUTH-001 — Matriz de Permissões e Policies
+**FASE ATUAL:** ARC-003 — Physical Architecture / Modular Monolith Design — NEXT
+**MARCO CONCLUÍDO:** AUTH-001 — Matriz de Permissões e Policies
+**PRÓXIMO MARCO:** ARC-003 — Physical Architecture / Modular Monolith Design
+**ÚLTIMA TAREFA CONCLUÍDA:** AUTH-001 — Matriz de Permissões e Policies
+**PRÓXIMA TAREFA:** ARC-003 — Physical Architecture / Modular Monolith Design
 
 | Domínio | Status |
 |---|---|
@@ -58,11 +58,11 @@ control:
 
 Sequência oficial imediata:
 
-1. `AUTH-001` — Matriz de Permissões e Policies;
-2. `ARC-003` — Matriz de Dependências e início da arquitetura física;
-3. `ARC-004` — ADR do monólito modular, conforme o roadmap.
+1. `ARC-003` — Physical Architecture / Modular Monolith Design;
+2. `DB-001` — Logical Data Model;
+3. `API-001` — Application/API Contracts.
 
-Modelagem conceitual, máquinas de estado e catálogo final de eventos estão concluídos. Permissões, arquitetura física, modelo lógico e implementação **não** estão concluídos.
+Modelagem conceitual, máquinas de estado, catálogo final de eventos e autorização conceitual estão concluídos. Arquitetura física, modelo lógico, contratos de aplicação/API e implementação **não** estão concluídos. A ordem DB/API poderá ser refinada por ARC-003.
 
 ---
 
@@ -432,8 +432,8 @@ Nenhum blocker conhecido. DOM-011 a DOM-018 estão aprovados para Context Map, O
 
 ### BLOCKERS BEFORE IMPLEMENTATION
 
-- definir matriz detalhada de permissões e alçadas, inclusive Clinical e Finance;
-- fechar política de autenticação, MFA/step-up, sessão e recuperação antes de implementar Identity/autorização;
+- definir valores/aprovadores das alçadas ainda abertas de desconto, negociação, reversal, refund e transferência;
+- fechar mecanismo concreto de autenticação, MFA/step-up, sessão, revogação e recuperação antes de implementar Identity/autorização;
 - definir o tratamento de Receivables vencidos no cancelamento: não presumir perdão automático;
 - definir alçadas e limites de desconto/negociação; perdão arbitrário não é permitido;
 - definir o efeito da pausa sobre disponibilidade e expiração de MakeupCredits, sem prolongar o Contract;
@@ -490,7 +490,7 @@ Project OS na raiz e adotado como ponto de entrada.
 - [x] capítulo 16 — Plans/Contracts/Enrollment;
 - [x] capítulo 17 — Billing;
 - [x] capítulo 18 — Finance;
-- [ ] matriz de permissões;
+- [x] matriz de permissões;
 - [ ] regras de segurança-base.
 
 ### P1
@@ -636,14 +636,14 @@ ADR de arquitetura aprovado.
 
 ## Fase 5 — Segurança e autorização
 
-- [ ] Role model;
-- [ ] Permission model;
-- [ ] resource-level policies;
-- [ ] escopo por unidade;
-- [ ] escopo por profissional;
-- [ ] escopo por paciente;
-- [ ] acesso Clinical;
-- [ ] break-glass;
+- [x] Role model conceitual;
+- [x] Permission model conceitual;
+- [x] resource-level policies conceituais;
+- [x] escopo por unidade definido conceitualmente; atribuição default permanece aberta;
+- [x] escopo por profissional;
+- [x] escopo por paciente;
+- [x] acesso Clinical conceitual;
+- [x] break-glass conceitual;
 - [ ] MFA/step-up;
 - [ ] sessões;
 - [ ] revogação;
@@ -837,7 +837,7 @@ Só entra quando Plans/Billing estiverem sem blocker.
 |---|---|---:|---|
 | STATE-001 | Máquinas de Estado | P0 | DONE |
 | EVT-001 | Catálogo final de Eventos de Domínio | P0 | DONE |
-| AUTH-001 | Matriz de Permissões e Policies | P0 | READY |
+| AUTH-001 | Matriz de Permissões e Policies | P0 | DONE |
 
 ---
 
@@ -847,13 +847,24 @@ Só entra quando Plans/Billing estiverem sem blocker.
 |---|---|---:|---|
 | ARC-001 | Context Map definitivo | P0 | DONE |
 | ARC-002 | Matriz de ownership | P0 | DONE |
-| ARC-003 | Matriz de dependências | P0 | TODO |
+| ARC-003 | Physical Architecture / Modular Monolith Design | P0 | READY |
 | ARC-004 | ADR monólito modular | P0 | TODO |
 | ARC-005 | Definir application/domain/infrastructure | P0 | TODO |
 | ARC-006 | Definir transaction boundaries | P0 | TODO |
 | ARC-007 | Definir event strategy | P0 | TODO |
 | ARC-008 | Definir Outbox | P1 | TODO |
 | ARC-009 | Definir storage strategy | P1 | TODO |
+
+---
+
+## EPIC DB / API — Próxima sequência após ARC-003
+
+| ID | Tarefa | Prioridade | Status |
+|---|---|---:|---|
+| DB-001 | Logical Data Model | P0 | TODO |
+| API-001 | Application/API Contracts | P0 | TODO |
+
+> A ordem relativa entre DB-001 e API-001 poderá ser refinada por ARC-003.
 
 ---
 
@@ -1343,6 +1354,7 @@ f​isiofit-crm/
 | `docs/modeling/MODEL_005_INTEGRATED_CONCEPTUAL_MODEL.md` | Baseline conceitual integrada dos 16 contextos, com catálogos globais, invariantes, cobertura e fluxos end-to-end |
 | `docs/state-machines/STATE_001_STATE_MACHINES.md` | Lifecycles, máquinas de estado, transições, guards, condições derivadas, temporalidade, dependências e auditoria |
 | `docs/architecture/DOMAIN_EVENTS.md` | Catálogo canônico de domain/integration events, owners, payloads, consumers, sensibilidade, ordering, idempotência e cobertura |
+| `docs/security/AUTH_001_PERMISSIONS_POLICIES.md` | Modelo canônico de roles, scopes, permissions, resource policies, negações, auditoria e cobertura de autorização |
 | `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx` | Fonte de descoberta preservada; consultar a auditoria para decisões superadas |
 
 ---
@@ -1452,91 +1464,88 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. `AUTH-001` — criar Matriz de Permissões e Policies.
-2. `ARC-003` — criar Matriz de Dependências e iniciar a arquitetura física conforme o roadmap.
-3. `ARC-004` — registrar o ADR do monólito modular conforme o roadmap.
+1. `ARC-003` — Physical Architecture / Modular Monolith Design.
+2. `DB-001` — Logical Data Model.
+3. `API-001` — Application/API Contracts.
 
 ## Em seguida
 
-4. fechar contratos públicos e demais decisões da arquitetura física;
-5. criar modelo lógico somente após os gates correspondentes;
+4. refinar a ordem DB/API conforme as decisões de ARC-003;
+5. fechar contratos públicos e demais decisões físicas sem violar ownership/autorização;
 6. preparar a primeira vertical slice somente quando seus gates estiverem completos.
 
 ---
 
 # 24. ÚLTIMO HANDOFF
 
-## HANDOFF — 2026-09-16 — EVT-001
+## HANDOFF — 2026-09-16 — AUTH-001
 
 ### Objetivo da sessão
-Consolidar o catálogo canônico de fatos de domínio e integração, distinguindo comandos, operações, mensagens, auditoria e atualizações de read model, sem escolher infraestrutura de mensageria.
+Criar o modelo canônico de autorização conceitual do Fisiofit CRM 2.0, combinando RBAC com policies de recurso, escopos, negações, auditoria, motivo e step-up, sem escolher implementação de IAM.
 
 ### Status atual
-EVT-001 — DONE / PASS. AUTH-001 — READY e próxima tarefa oficial.
+AUTH-001 — DONE / PASS. ARC-003 — READY e próxima tarefa oficial.
 
 ### Concluído
-- terminologia, princípios, naming, envelope conceitual, correlation/causation e versionamento;
-- catálogo por owner dos 16 contexts, sem inventar eventos para contextos sem sustentação;
-- master catalog com status ADOPTED, INTERNAL_ONLY, DEFERRED, REJECTED e DEPRECATED;
-- payload mínimo e dados explicitamente proibidos para todos os integration events adotados;
-- producer/consumer matrix e classificações de consistency, sensitivity, ordering, idempotency, audit e failure impact;
-- matrizes de cobertura de transições e 37/37 processos;
-- cadeias prioritárias de contratação, pagamento, reversal, refund, pausa, cancelamento, clínico, leave e merge;
-- duplicidades/aliases resolvidos sem alterar ownership ou state machines;
-- riscos e consequências físicas registrados sem escolher broker, transporte, schema ou outbox/inbox físico;
-- nenhum blocker para AUTH-001.
+- quatro roles operacionais preservados sem explosão; RT classificado como atributo/alçada profissional deferred;
+- scopes SELF, OWN_RESOURCE, ASSIGNED_PATIENT/CLASS/APPOINTMENT, UNIT/MULTI_UNIT/CLINIC, FINANCIAL, CLINICAL e TECHNICAL_SUPPORT definidos;
+- catálogo de permissions orientado a ações de negócio e catálogo de policies resource-based;
+- matriz principal role/permission, resource matrix e autorização das transições de STATE-001;
+- segregação explícita de Clinical, Finance e administração técnica;
+- NORMAL_CLINICAL_ACCESS, BREAK_GLASS_ACCESS, exportação clínica e autoria histórica formalizados;
+- ações sensíveis classificadas por reason, approval, step-up e quatro níveis de audit;
+- 20 regras negativas e 20 invariantes de autorização;
+- Documents, Reports, eventos e consumers impedidos de ampliar privilégios da fonte;
+- cobertura dos 37 processos e das 75 regras, sem AUTH_RULE_CONFLICT;
+- least privilege review concluído e nenhum blocker para ARC-003;
+- nenhuma tecnologia ou implementação IAM escolhida.
 
 ### Arquivos criados
 
-- `docs/architecture/DOMAIN_EVENTS.md`.
+- `docs/security/AUTH_001_PERMISSIONS_POLICIES.md`.
 
 ### Arquivos alterados
 
 - `PROJECT_OS.md`.
 
 ### Decisões tomadas
-
-- `RefundCompleted` é o único fato de Refund que representa saída real para Finance; `RefundIssued` permanece interno;
-- experimental usa `AppointmentScheduled/Completed/NoShowRecorded` de Scheduling com purpose EXPERIMENTAL; CRM não duplica o fato;
-- renovação cria novo Contract e publica `ContractAccepted` com correlação opcional ao anterior; `ContractRenewed` é internal-only;
-- transferência de turma é `ClassMembershipEnded` + `ClassMembershipStarted` correlacionados;
-- `ReceivableBecameOverdue` é fato da condição derivada, sem persistir OVERDUE como estado;
-- `MonthClosed`, `ExpenseCreated`, `MoneyTransferred` e `EnrollmentFrequencyChanged` são nomes canônicos; aliases concorrentes foram deprecated;
-- eventos clínicos públicos contêm apenas metadata; break-glass/export são SECURITY_SENSITIVE;
-- Communication usa FACT_DRIVEN para fatos objetivos e EXPLICIT_INTENT para campanha/ad-hoc/clínico.
+- roles se combinam por união de grants explícitos, mas explicit deny, scope, owner policy e state guard prevalecem;
+- Owner/Manager não recebe Clinical; Developer/IT não recebe Clinical/Billing/Finance; Physiotherapist não recebe Finance;
+- Clinical exige papel/permissão clínica, Professional ativo e vínculo assistencial atual; autoria passada não concede acesso;
+- Secretary pode concluir merge simples seguro; merge sensível separa request de approval pelo Owner/Manager;
+- no overbooking: `OverrideCapacity` não existe;
+- event consumption, Documents e Reports não concedem nem ampliam command/data authority;
+- impersonation administrativa foi rejeitada para MVP; service identity permanece deferred e least-privilege;
+- step-up concreto é obrigatório antes de implementar break-glass, export clínico, mudança de privilégios, merge sensível, reversal/refund e reopen Closing.
 
 ### Migrations
 
 - N/A — tarefa documental; nenhuma migration criada.
 
 ### Testes executados
-
-- leitura e revisão cruzada das fontes obrigatórias e do último handoff;
-- validação de owners, consumers, payloads, sensibilidade, idempotência, ordering, versionamento, STATE-001 e MODEL-005;
-- conferência de cobertura dos 37 processos e das transições prioritárias;
+- leitura integral das fontes obrigatórias e do handoff EVT-001;
+- revisão cruzada de boundaries, owners, states, eventos, 37 processos e 75 regras;
+- verificação das 48 seções, 37 linhas de process coverage e proibições obrigatórias;
 - `git diff --check`, revisão do diff e `git diff --stat`.
 
 ### Blockers restantes
-
-- nenhum para AUTH-001;
-- questões de Identity, Communication, Documents, concorrência financeira, MakeupCredit/pausa, Receivables vencidos, retenção e LGPD permanecem classificadas para arquitetura, implementação ou go-live.
+- nenhum para ARC-003;
+- alçadas financeiras, multi-unit, RT, exportação clínica, step-up/session/revocation, privacy roles, service identities e suporte privilegiado permanecem classificados antes de implementação/go-live.
 
 ### Riscos
-
-- arquitetura física publicar eventos INTERNAL_ONLY/DEFERRED por conveniência;
-- consumer tratar evento como autorização ou escrita cross-context;
-- duplicação/out-of-order/replay criar fatos financeiros repetidos;
-- schema evolution quebrar consumers;
-- vazamento de conteúdo clínico, CPF, credencial ou payload financeiro excessivo;
-- projeções stale serem tratadas como source of truth.
+- arquitetura física centralizar regra de recurso no IAM ou confiar em role/claim stale;
+- grants multi-role ampliarem Clinical/Finance indevidamente;
+- Documents, Reports, support ou service identities virarem bypass;
+- implementar ações sensíveis antes de fechar step-up, alçadas e revogação crítica;
+- logs/audit capturarem payload clínico, financeiro, credencial ou justificativa livre excessiva.
 
 ### Próximas 3 ações
-1. `AUTH-001` — Matriz de Permissões e Policies;
-2. `ARC-003` — Matriz de Dependências e início da arquitetura física;
-3. `ARC-004` — ADR do monólito modular conforme o roadmap.
+1. `ARC-003` — Physical Architecture / Modular Monolith Design;
+2. `DB-001` — Logical Data Model;
+3. `API-001` — Application/API Contracts.
 
 ### Instrução para a próxima IA
-Comece por AUTH-001 usando STATE-001 para comandos/transições e DOMAIN_EVENTS para sensibilidade, audit reason e operações críticas. Não escolha arquitetura física nem promova eventos deferred durante AUTH-001.
+Comece por ARC-003 usando ARC-001/002, MODEL-005, STATE-001, EVT-001 e AUTH-001 como constraints. Preserve enforcement no owner do recurso, decisões contextuais atuais, contratos cross-context e segregação Clinical/Finance/Technical. Não implemente IAM, banco ou API durante ARC-003 sem o gate correspondente.
 
 ---
 
