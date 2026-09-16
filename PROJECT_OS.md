@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: physical_architecture_complete
+  status: logical_data_model_complete
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: DB-001 — Logical Data Model
+  current_priority: API-001 — Application / API Contracts
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,11 +39,11 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** DB-001 — Logical Data Model — READY
-**MARCO CONCLUÍDO:** ARC-003 — Physical Architecture / Modular Monolith Design
-**PRÓXIMO MARCO:** DB-001 — Logical Data Model
-**ÚLTIMA TAREFA CONCLUÍDA:** ARC-003 — Physical Architecture / Modular Monolith Design
-**PRÓXIMA TAREFA:** DB-001 — Logical Data Model
+**FASE ATUAL:** API-001 — Application / API Contracts — READY
+**MARCO CONCLUÍDO:** DB-001 — Logical Data Model
+**PRÓXIMO MARCO:** API-001 — Application / API Contracts
+**ÚLTIMA TAREFA CONCLUÍDA:** DB-001 — Logical Data Model
+**PRÓXIMA TAREFA:** API-001 — Application / API Contracts
 
 | Domínio | Status |
 |---|---|
@@ -58,11 +58,11 @@ control:
 
 Sequência oficial imediata:
 
-1. `DB-001` — Logical Data Model;
-2. `API-001` — Application/API Contracts;
-3. `IMP-BOOTSTRAP` — criar skeleton da solução.
+1. `API-001` — Application/API Contracts;
+2. `IMP-BOOTSTRAP` — criar skeleton da solução;
+3. fechar detalhes deferred exigidos pela primeira vertical slice antes da implementação correspondente.
 
-Modelagem conceitual, máquinas de estado, catálogo final de eventos, autorização conceitual e arquitetura física estão concluídos. DB-001 está READY. API-001 está READY_IN_PARALLEL, mas permanece segunda ação operacional para estabilizar primeiro IDs, Money/timezone, constraints e detalhes lógicos de persistência. Implementação ainda não começou.
+Modelagem conceitual, máquinas de estado, catálogo final de eventos, autorização conceitual, arquitetura física e modelo lógico estão concluídos. DB-001 definiu IDs, Money/time, tabelas, ownership, referências, constraints, concorrência, migrations e Outbox/Inbox R2. API-001 está READY e é a próxima ação operacional. Implementação ainda não começou.
 
 ---
 
@@ -437,7 +437,6 @@ Nenhum blocker conhecido. DOM-011 a DOM-018 estão aprovados para Context Map, O
 - definir o tratamento de Receivables vencidos no cancelamento: não presumir perdão automático;
 - definir alçadas e limites de desconto/negociação; perdão arbitrário não é permitido;
 - definir o efeito da pausa sobre disponibilidade e expiração de MakeupCredits, sem prolongar o Contract;
-- definir IDs, timezone, precisão/arredondamento monetário e baseline de auditoria antes do modelo lógico/migrations;
 - detalhar precedência de operações financeiras concorrentes, como pausa, cancelamento, reversão e reembolso na mesma data.
 
 ### BLOCKERS BEFORE GO-LIVE
@@ -630,7 +629,7 @@ Máquinas prioritárias formalizadas, lifecycles restantes classificados e nenhu
 - [x] definir configuração por ambiente.
 
 ### Gate
-ARC-003 aprovado. ADR-001, ADR-002, ADR-003 e ADR-005 aceitas; ADR-004 permanece proposta até DB-001 fechar as estruturas lógicas de Outbox/Inbox dos fluxos R2, sem reabrir boundaries.
+ARC-003 aprovado. ADR-001 a ADR-006 estão aceitas; DB-001 fechou as estruturas lógicas seletivas de Outbox/Inbox R2 da ADR-004 sem reabrir boundaries.
 
 ---
 
@@ -656,20 +655,20 @@ ARC-003 aprovado. ADR-001, ADR-002, ADR-003 e ADR-005 aceitas; ADR-004 permanece
 
 ## Fase 6 — Modelo lógico e banco
 
-- [ ] convenção de IDs;
-- [ ] PK/FK;
-- [ ] uniques;
-- [ ] nullability;
-- [ ] checks;
-- [ ] índices;
-- [ ] created_at/updated_at;
-- [ ] autoria;
-- [ ] optimistic locking;
-- [ ] concorrência de capacidade;
-- [ ] concorrência financeira;
-- [ ] precisão monetária;
-- [ ] timezone;
-- [ ] delete policy;
+- [x] convenção de IDs;
+- [x] PK/FK;
+- [x] uniques;
+- [x] nullability lógica relevante;
+- [x] checks;
+- [x] índices candidatos classificados;
+- [x] created_at/updated_at;
+- [x] autoria;
+- [x] optimistic locking seletivo;
+- [x] concorrência de capacidade;
+- [x] concorrência financeira;
+- [x] precisão monetária;
+- [x] timezone/time strategy;
+- [x] delete policy;
 - [ ] migrations;
 - [ ] seed strategy;
 - [ ] backup;
@@ -861,10 +860,10 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| DB-001 | Logical Data Model | P0 | READY |
+| DB-001 | Logical Data Model | P0 | DONE |
 | API-001 | Application/API Contracts | P0 | READY |
 
-> ARC-003 classificou API-001 como `READY_IN_PARALLEL`; a ordem operacional permanece DB-001 → API-001 para estabilizar primeiro os detalhes lógicos de dados.
+> DB-001 foi concluído e estabilizou IDs, Money/time, ownership, constraints, concorrência, migrations ownership e confiabilidade R2. API-001 é a próxima ação operacional.
 
 ---
 
@@ -1366,11 +1365,13 @@ f​isiofit-crm/
 | `docs/architecture/DOMAIN_EVENTS.md` | Catálogo canônico de domain/integration events, owners, payloads, consumers, sensibilidade, ordering, idempotência e cobertura |
 | `docs/security/AUTH_001_PERMISSIONS_POLICIES.md` | Modelo canônico de roles, scopes, permissions, resource policies, negações, auditoria e cobertura de autorização |
 | `docs/architecture/ARC_003_PHYSICAL_ARCHITECTURE.md` | Arquitetura física do modular monolith, módulos, layers, contracts, persistência, comunicação, segurança, deployment e testes |
+| `docs/database/DB_001_LOGICAL_DATA_MODEL.md` | Modelo lógico PostgreSQL dos 16 schemas, tabelas, ownership, referências, constraints, concorrência, migrations e Outbox/Inbox R2 |
 | `docs/adr/ADR-001-MODULAR-MONOLITH-PHYSICAL-STRUCTURE.md` | Estrutura física híbrida do modular monolith |
 | `docs/adr/ADR-002-MODULE-PERSISTENCE-ISOLATION.md` | PostgreSQL, schemas, DbContexts e referências cross-context — Accepted; detalhes físicos seguem para DB-001 |
 | `docs/adr/ADR-003-MODULE-COMMUNICATION-STRATEGY.md` | Contratos tipados in-process, events e read models sem HTTP interno |
-| `docs/adr/ADR-004-EVENT-RELIABILITY-STRATEGY.md` | Tiers R0/R1/R2, outbox/inbox seletivos e ausência de broker inicial — Proposed |
+| `docs/adr/ADR-004-EVENT-RELIABILITY-STRATEGY.md` | Tiers R0/R1/R2, outbox/inbox seletivos e ausência de broker inicial — Accepted após DB-001 |
 | `docs/adr/ADR-005-CLINICAL-DATA-ISOLATION.md` | Isolamento de código, dados, autorização, events, logs e documentos clínicos |
+| `docs/adr/ADR-006-IDENTIFIER-STRATEGY.md` | UUID como padrão opaco e nativo, com UUIDv7 preferencial e UUIDv4 fallback |
 | `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx` | Fonte de descoberta preservada; consultar a auditoria para decisões superadas |
 
 ---
@@ -1449,9 +1450,9 @@ Não iniciar scaffold definitivo até:
 - [ ] matriz de dependências aprovada;
 - [ ] estratégia de identidade aprovada;
 - [ ] estratégia de autorização-base aprovada;
-- [ ] convenção de IDs definida;
-- [ ] timezone definido;
-- [ ] estratégia monetária definida;
+- [x] convenção de IDs definida;
+- [x] timezone definido;
+- [x] estratégia monetária definida;
 - [ ] audit baseline definido;
 - [ ] VS-01 em READY.
 
@@ -1480,9 +1481,9 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. `DB-001` — Logical Data Model.
-2. `API-001` — Application/API Contracts.
-3. `IMP-BOOTSTRAP` — criar skeleton da solução.
+1. `API-001` — Application/API Contracts.
+2. `IMP-BOOTSTRAP` — criar skeleton da solução.
+3. fechar detalhes deferred exigidos pela primeira vertical slice antes da implementação correspondente.
 
 ## Em seguida
 
@@ -1494,88 +1495,79 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 # 24. ÚLTIMO HANDOFF
 
-## HANDOFF — 2026-09-16 — ARC-003
+## HANDOFF — 2026-09-16 — DB-001
 
 ### Objetivo da sessão
-Definir a arquitetura física implementável do Fisiofit CRM 2.0 como modular monolith, preservando os 16 bounded contexts, ownership, segurança, consistência e simplicidade operacional, sem criar código ou infraestrutura.
+Transformar a baseline conceitual e ARC-003 em modelo lógico PostgreSQL implementável, sem criar banco, migrations, ORM ou código.
 
 ### Status atual
-ARC-003 — DONE / PASS. DB-001 — READY e próxima tarefa oficial. API-001 — READY_IN_PARALLEL, operacionalmente após DB-001.
+DB-001 — DONE / PASS. API-001 — READY e próxima tarefa oficial. Implementação física permanece posterior a API-001 e aos blockers específicos da slice.
 
 ### Concluído
-- estratégia híbrida escolhida: 10 assemblies de módulo, layers como folders/namespaces, Host, BuildingBlocks mínimo e ModuleContracts contract-only;
-- mapeamento completo dos 16 contexts, regras de dependência e ArchitectureTests futuros;
-- árvore futura de backend, frontend, testes e deploy;
-- public contracts tipados e comunicação síncrona in-process sem HTTP interno;
-- domain/module/external events separados; tiers R0/R1/R2 e outbox/inbox seletivos definidos, sem broker;
-- transações locais por bounded context e workflows sem distributed transaction;
-- um PostgreSQL database por ambiente, schema e DbContext por context, migrations próprias e IDs opacos sem FK cross-context por default;
-- Clinical, Billing/Finance, Documents, Reports, Communication e n8n isolados fisicamente;
-- pontos de enforcement de auth, step-up, audit, error handling, concurrency e idempotency;
-- read models, frontend feature-first, API boundary, background processing, observability, deployment e environments;
-- 10 diagramas Mermaid, matrizes de módulo/dados/comunicação/segurança/transação e 24 invariantes ARC;
-- DB-001 classificado READY; API-001 classificado READY_IN_PARALLEL;
-- Redis explicitamente excluído do MVP inicial.
+- modelo lógico canônico dos 16 schemas e 16 DbContexts;
+- UUID padrão definido em ADR-006, com UUIDv7 preferencial e UUIDv4 fallback;
+- estratégias de time, Money, naming, enum/catalog, temporalidade, delete e JSONB;
+- catálogo completo de tabelas com owner único, relações internas e referências externas sem FK cross-schema;
+- snapshots de proposta, Contract, Receivable, occurrence, Clinical finalization/template, Closing e DocumentVersion;
+- 44 invariantes lógicas, índices classificados e estratégias seletivas de concorrência/idempotência;
+- Outbox apenas em People, Staff, Plans, Billing e Clinical; Inbox apenas nos consumers R2 comprovados;
+- migrations ownership independente por schema e ADR-004 aceita após fechamento da opção C;
+- dicionário de dados, sensibilidade, retenção, riscos e 11 ERDs;
+- API-001 classificada READY; nenhuma implementação iniciada.
 
 ### Arquivos criados
 
-- `docs/architecture/ARC_003_PHYSICAL_ARCHITECTURE.md`;
-- `docs/adr/ADR-001-MODULAR-MONOLITH-PHYSICAL-STRUCTURE.md`;
-- `docs/adr/ADR-002-MODULE-PERSISTENCE-ISOLATION.md`;
-- `docs/adr/ADR-003-MODULE-COMMUNICATION-STRATEGY.md`;
-- `docs/adr/ADR-004-EVENT-RELIABILITY-STRATEGY.md`;
-- `docs/adr/ADR-005-CLINICAL-DATA-ISOLATION.md`.
+- `docs/database/DB_001_LOGICAL_DATA_MODEL.md`;
+- `docs/adr/ADR-006-IDENTIFIER-STRATEGY.md`.
 
 ### Arquivos alterados
 
-- `PROJECT_OS.md`.
+- `PROJECT_OS.md`;
+- `docs/adr/ADR-004-EVENT-RELIABILITY-STRATEGY.md`;
+- `docs/architecture/ARC_003_PHYSICAL_ARCHITECTURE.md`.
 
 ### Decisões tomadas
-- bounded context não implica assembly: Registry agrupa Organization/People/Patients/Staff; Operations agrupa Scheduling/Pilates; Revenue agrupa Plans/Billing/Finance;
-- contexts agrupados continuam isolados por namespace, contracts, DbContext, schema, migrations e tests;
-- nenhum module assembly referencia outro; comunicação atravessa `Fisiofit.ModuleContracts`;
-- um PostgreSQL database com 16 schemas e 16 DbContexts; transaction boundary não cruza context;
-- referências cross-context são lógicas, sem FK por default;
-- outbox/inbox são obrigatórios somente para R2; in-process basta aos demais e broker não entra inicialmente;
-- backend/frontend são containers distintos; jobs começam no backend deployment por abstração/provider deferred;
-- S3-compatible privado em produção, sem URL clínica pública permanente;
-- API-001 pode trabalhar em paralelo conceitual, mas DB-001 é a próxima ação para fechar dados básicos.
+- UUID é o identificador padrão; IDs externos continuam opacos;
+- instantes usam semântica `timestamptz`/UTC, enquanto `date` e hora local preservam calendário civil/recorrência;
+- Money usa decimal exato `numeric(19,4)` mais moeda ISO; BRL é default explícito;
+- FK física é local ao schema; integridade externa usa validação do owner, R2 e reconciliação;
+- concorrência é seletiva por hotspot, não token universal;
+- Outbox/Inbox segue a opção C e ADR-004 passa a Accepted;
+- Reports/Audit mantêm somente projeções/evidência minimizadas e não copiam Clinical ou finanças completas.
 
 ### Migrations
 
-- N/A — tarefa documental; nenhuma migration criada.
+- N/A — tarefa documental; ownership e dependências foram definidos, nenhuma migration criada.
 
 ### Testes executados
 
-- leitura integral das 18 fontes obrigatórias e do handoff AUTH-001;
-- verificação e consulta metodológica do workflow `refatoracao-arquitetural` sem execução modificadora;
-- revisão cruzada de owners, 16 contexts, events, states, authorization e 37 processos;
-- revisão de seções, tabelas, diagrams, ADRs, readiness e invariantes;
+- leitura integral das fontes obrigatórias e do último handoff;
+- revisão cruzada contra MODEL-005, STATE-001, AUTH-001, EVT-001, ARC-003 e ADR-002/004;
+- validação de 16 schemas/DbContexts, owners, R2 producers/consumers, tabelas, ERDs e critérios de PASS;
 - `git diff --check`, revisão do diff, `git diff --stat`, `git status` e confirmação de branch.
 
 ### Blockers restantes
 
-- nenhum para DB-001;
-- IDs, Money/arredondamento, timezone, tabelas, constraints, índices e estruturas lógicas de Outbox nos producers e Inbox/receipt nos consumers dos fluxos R2 pertencem a DB-001;
-- alçadas financeiras, RT/export clínico, step-up/session/revocation, privacy/legal hold e suporte privilegiado continuam antes de implementação/go-live.
+- nenhum para API-001;
+- alçadas financeiras, precedência/reallocation, Receivables vencidos no cancelamento, MakeupCredit durante pausa, RT/export clínico, step-up/session/revocation, privacy/legal hold e suporte privilegiado continuam antes da implementação/go-live aplicável.
 
 ### Riscos
 
-- grouped contexts burlarem boundaries sem ArchitectureTests;
-- `ModuleContracts` ou BuildingBlocks crescerem como Shared Kernel;
-- referências sem FK ficarem órfãs sem validação/reconciliação;
-- outbox R2 sem operação/observabilidade adequada;
-- Clinical vazar por logs, projections, Documents ou suporte;
-- Revenue fundir Payment e FinancialTransaction por conveniência.
+- overhead operacional dos 16 DbContexts/migrations;
+- referências opacas ficarem órfãs sem validação/reconciliação;
+- PersonMerge e R2 ficarem parcialmente aplicados;
+- overlaps temporais, overbooking e allocation races;
+- crescimento de JSONB clínico e Outbox/Inbox sem retenção futura;
+- vazamento de Clinical/Financial por Reports, Audit, Documents ou logs.
 
 ### Próximas 3 ações
 
-1. `DB-001` — Logical Data Model;
-2. `API-001` — Application/API Contracts;
-3. `IMP-BOOTSTRAP` — criar skeleton da solução.
+1. `API-001` — Application/API Contracts;
+2. `IMP-BOOTSTRAP` — criar skeleton da solução;
+3. fechar detalhes deferred exigidos pela primeira vertical slice antes da implementação correspondente.
 
 ### Instrução para a próxima IA
-Comece por DB-001 usando ARC-003, ADR-002 e ADR-004 como constraints. Modele 16 schemas/DbContexts, constraints locais, IDs, Money/timezone e concorrência; modele Outbox nos producers e Inbox/receipt nos consumers somente dos fluxos R2. Não crie FK cross-context por default, não acesse tabelas externas e não inicie API/implementação.
+Comece por API-001 usando DB-001 como baseline de IDs, owners, relações, Money/time, estados, idempotência e transaction boundaries. Não exponha entities/JSONB/storage internals, não crie acesso cross-schema e não inicie BOOT-001 durante API-001.
 
 ---
 

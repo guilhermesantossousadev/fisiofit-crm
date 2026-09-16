@@ -153,7 +153,7 @@ Owner/context: **People**.
 | Event | Class / Status | Source; trigger; meaning | Consumers | Payload minimum | Sens. | Order / Idemp. | Audit / Failure | Versioning / Notes |
 |---|---|---|---|---|---|---|---|---|
 | PersonCreated | DOMAIN_EVENT / INTERNAL_ONLY | Person; identidade criada; PersonId canônico existe | projeções internas | personId, createdAt | PERSONAL | NONE / RECOMMENDED | STANDARD / LOW | criação downstream usa contrato explícito, não reação implícita |
-| PersonMergeCompleted | BOTH / ADOPTED | PersonMerge; merge concluído; source virou alias do target | Patients, Staff, Identity, CRM, Plans, Billing e demais detentores de PersonId | personMergeId, sourcePersonId, targetPersonId, completedAt | PERSONAL | PER_SUBJECT / REQUIRED | SENSITIVE / HIGH | sem nome, CPF, contato ou manifest completo; snapshots históricos não são reescritos |
+| PersonMergeCompleted | BOTH / ADOPTED | PersonMerge; merge concluído; source virou alias do target | Patients, Staff, Identity, CRM, Scheduling, Plans, Billing e demais detentores de PersonId | personMergeId, sourcePersonId, targetPersonId, completedAt | PERSONAL | PER_SUBJECT / REQUIRED | SENSITIVE / HIGH | sem nome, CPF, contato ou manifest completo; snapshots históricos não são reescritos |
 | PersonMergeReversed | BOTH / ADOPTED | PersonMerge; reversão autorizada concluída; aliasing foi desfeito conforme manifest | mesmos consumers do merge | personMergeId, sourcePersonId, targetPersonId, reversedAt, reversalReference | PERSONAL | WORKFLOW_DEPENDENT / REQUIRED | SENSITIVE / HIGH | consumers revertem apenas referências correntes cuja segurança foi validada |
 | PersonIdentityUpdated | DOMAIN_EVENT / INTERNAL_ONLY | Person; dado civil relevante mudou | projeções autorizadas internas | personId, changedFieldSet, occurredAt | PERSONAL | PER_SUBJECT / RECOMMENDED | SENSITIVE / LOW | sem before/after público; não substitui consulta autorizada |
 | ContactPointChanged | DOMAIN_EVENT / INTERNAL_ONLY | Person; contato atual mudou | projeção autorizada de contato | personId, contactPointId, changeKind | PERSONAL | PER_SUBJECT / RECOMMENDED | SENSITIVE / LOW | não carrega telefone/e-mail em evento público |
@@ -337,7 +337,7 @@ Reports não possui eventos transacionais. `AgendaViewUpdated`, `BillingDashboar
 | InstitutionalCalendarChanged | Organization | BOTH | InstitutionalCalendar | Scheduling, Pilates, Billing | NORMAL | PER_AGGREGATE | REQUIRED | ADOPTED |
 | UnitCreated; HolidayRegistered | Organization | DOMAIN_EVENT | Unit/Calendar | internos | NORMAL | NONE/PER_AGGREGATE | NOT_CRITICAL/RECOMMENDED | INTERNAL_ONLY |
 | UnitUpdated | Organization | — | Unit | — | NORMAL | — | — | REJECTED |
-| PersonMergeCompleted; PersonMergeReversed | People | BOTH | PersonMerge/Person | ID holders | PERSONAL | PER_SUBJECT/WORKFLOW_DEPENDENT | REQUIRED | ADOPTED |
+| PersonMergeCompleted; PersonMergeReversed | People | BOTH | PersonMerge/Person | Identity, Patients, Staff, CRM, Scheduling, Plans, Billing e demais detentores de PersonId | PERSONAL | PER_SUBJECT/WORKFLOW_DEPENDENT | REQUIRED | ADOPTED |
 | PersonCreated; PersonIdentityUpdated; ContactPointChanged | People | DOMAIN_EVENT | Person | internos | PERSONAL | NONE/PER_SUBJECT | RECOMMENDED | INTERNAL_ONLY |
 | PersonUpdated e field-level setters | People | — | Person | — | PERSONAL | — | — | REJECTED |
 | PatientProfileCreated; PatientActivated; PatientDeactivated; ResponsiblePayerChanged | Patients | BOTH | PatientProfile/PayerLink | CRM/Scheduling/Pilates/Plans/Billing conforme evento | PERSONAL | PER_SUBJECT/PER_AGGREGATE | REQUIRED | ADOPTED |
@@ -555,7 +555,7 @@ Cobertura: **37/37 processos**. Processos single-context não foram artificialme
 
 ### Merge
 
-`PersonMergeCompleted` → cada detentor de PersonId aplica source→target idempotentemente nas próprias referências correntes; snapshots históricos permanecem.
+`PersonMergeCompleted` → cada detentor de PersonId, inclusive Scheduling para `Appointment.personId` quando presente, aplica source→target idempotentemente nas próprias referências correntes; snapshots históricos permanecem.
 
 ## 34. Duplicate Event Review
 

@@ -418,7 +418,7 @@ Não se atribui a mesma decisão a dois owners: o owner do estado solicitado dec
 
 | Evento | Publisher | Consumers | Motivo | Sensibilidade |
 |---|---|---|---|---|
-| PersonMergeCompleted | People | Patients, Staff, CRM e detentores de PersonId | atualizar aliases/referências | PERSONAL |
+| PersonMergeCompleted | People | Identity, Patients, Staff, CRM, Scheduling, Plans, Billing e demais detentores de PersonId | atualizar aliases/referências correntes; preservar snapshots históricos | PERSONAL |
 | ExperimentalCompleted | Scheduling | CRM | decisão comercial posterior | PERSONAL |
 | ClassScheduleChanged | Pilates | Scheduling, Reports | atualizar projeção de agenda | NORMAL |
 | EnrollmentActivated | Plans & Enrollment | Pilates, Billing, CRM | publicar direito operacional | PERSONAL |
@@ -852,7 +852,7 @@ Nenhum. Durante STATE-001 devem ser decididos o fato de Refund que representa sa
 - precedência entre pausa, cancelamento, frequência, Payment, allocation, reversal e refund;
 - reallocation e allocations afetadas por reversal;
 - conteúdo clínico mínimo, templates, documentos, exportação e retificações concorrentes;
-- IDs, timezone, Money/arredondamento, concorrência e baseline técnica de auditoria/idempotência.
+- concorrência específica ainda não fechada por regra de negócio e detalhes técnicos de auditoria/idempotência; IDs, timezone e Money/arredondamento foram fechados posteriormente por DB-001.
 
 ### BLOCKING BEFORE GO-LIVE
 

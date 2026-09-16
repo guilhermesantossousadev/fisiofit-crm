@@ -918,7 +918,7 @@ flowchart TB
 | ADR-001 | Accepted | modular monolith híbrido com 10 assemblies de módulo |
 | ADR-002 | Accepted | um database, schema e `DbContext` por context; detalhes físicos seguem para DB-001 sem reabrir o isolamento |
 | ADR-003 | Accepted | contratos tipados in-process; sem HTTP interno |
-| ADR-004 | Proposed | outbox/inbox seletivos R2, sem broker inicial |
+| ADR-004 | Accepted by DB-001 | outbox/inbox seletivos R2, sem broker inicial |
 | ADR-005 | Accepted | Clinical dedicado e segregado em código, dados, auth e observabilidade |
 
 ## 57. Rejected Alternatives
@@ -942,8 +942,6 @@ flowchart TB
 
 ## 58. Deferred Decisions
 
-- UUID vs ULID vs bigint; tipos, nomes de tabelas, nullability, índices e precisão monetária;
-- timezone e representação física de períodos;
 - provider IAM/MFA/token/session e força do step-up;
 - provider S3-compatible, antivírus/MIME e retenção;
 - scheduler/job engine, worker separado e broker externo;
@@ -951,7 +949,7 @@ flowchart TB
 - detalhes de HTTP/API, versioning externo e endpoint catalog;
 - eventual exceção de FK cross-context;
 - provider de observabilidade e secret store;
-- estruturas lógicas concretas de outbox/inbox nos contexts R2; retention/replay operacional.
+- retention/replay operacional de outbox/inbox; as estruturas lógicas e os contexts R2 foram fechados por DB-001.
 
 ## 59. Risks
 
@@ -969,12 +967,10 @@ flowchart TB
 
 ## 60. Open Questions
 
-### Não bloqueiam DB-001
+### Resolvidas por DB-001
 
-- formato dos IDs, timezone e Money/arredondamento;
-- nomes físicos de schemas/tabelas e migration history;
-- constraints/índices e estratégia exata de optimistic concurrency;
-- retenção de outbox/inbox e scheduler do dispatcher.
+- UUID, timezone, Money/arredondamento, nomes lógicos, ownership de migrations, constraints/índices candidatos e optimistic concurrency seletiva foram fechados em `docs/database/DB_001_LOGICAL_DATA_MODEL.md`;
+- estruturas e owners de Outbox/Inbox R2 foram fechados; retenção e scheduler do dispatcher continuam deferred.
 
 ### Bloqueiam implementação específica, não a arquitetura
 
