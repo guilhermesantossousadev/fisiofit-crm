@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: application_api_contracts_complete
+  status: solution_skeleton_complete
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: BOOT-001 — Solution Skeleton
+  current_priority: IMP-001 — definir primeira vertical slice pequena e fechar seus gates
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,11 +39,11 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** BOOT-001 — Solution Skeleton — READY (`READY_WITH_DEFERRED_DETAILS`)
-**MARCO CONCLUÍDO:** API-001 — Application / API Contracts
-**PRÓXIMO MARCO:** BOOT-001 — Solution Skeleton
-**ÚLTIMA TAREFA CONCLUÍDA:** API-001 — Application / API Contracts
-**PRÓXIMA TAREFA:** BOOT-001 — Solution Skeleton
+**FASE ATUAL:** pós-bootstrap — seleção e preparação da primeira vertical slice
+**MARCO CONCLUÍDO:** BOOT-001 — Solution Skeleton — DONE / PASS
+**PRÓXIMO MARCO:** IMP-001 — primeira vertical slice pequena, ainda a detalhar e tornar READY
+**ÚLTIMA TAREFA CONCLUÍDA:** BOOT-001 — Solution Skeleton
+**PRÓXIMA TAREFA:** definir o escopo mínimo de IMP-001 e fechar somente os gates exigidos por ele
 
 | Domínio | Status |
 |---|---|
@@ -58,11 +58,11 @@ control:
 
 Sequência oficial imediata:
 
-1. `BOOT-001` — Solution Skeleton;
-2. fechar detalhes deferred exigidos pela primeira vertical slice antes da implementação correspondente;
-3. iniciar a sequência de implementação que o Project OS definir após o bootstrap.
+1. `BOOT-001` — Solution Skeleton — concluído;
+2. definir uma primeira vertical slice pequena e verificável para `IMP-001`;
+3. fechar os detalhes deferred exigidos por essa slice antes de implementá-la.
 
-Modelagem conceitual, máquinas de estado, catálogo final de eventos, autorização conceitual, arquitetura física, modelo lógico e contratos de aplicação/API estão concluídos. API-001 definiu 137 commands e 77 queries como mapa de cobertura contratual, não como escopo imediato de implementação. BOOT-001 está `READY_WITH_DEFERRED_DETAILS` e é a próxima ação operacional; pode criar somente o skeleton físico autorizado. Implementação funcional ainda não começou.
+Modelagem conceitual, máquinas de estado, catálogo final de eventos, autorização conceitual, arquitetura física, modelo lógico, contratos de aplicação/API e o skeleton físico estão concluídos. API-001 definiu 137 commands e 77 queries como mapa de cobertura contratual, não como escopo imediato de implementação. BOOT-001 foi encerrado sem implementação funcional; IMP-001 ainda precisa ser delimitado e passar por seus gates.
 
 ---
 
@@ -718,12 +718,12 @@ BOOT-001 pode iniciar antes de uma vertical slice funcional estar `READY`, porqu
 
 Pode criar:
 
-- [ ] solution e projects;
-- [ ] module assemblies, namespaces/folders e registration surfaces;
-- [ ] BuildingBlocks e ModuleContracts mínimos;
-- [ ] Host e configuration baseline;
-- [ ] test projects e dependency/architecture rules;
-- [ ] frontend skeleton.
+- [x] solution e projects;
+- [x] module assemblies, namespaces/folders e registration surfaces;
+- [x] BuildingBlocks e ModuleContracts mínimos;
+- [x] Host e configuration baseline;
+- [x] test projects e dependency/architecture rules;
+- [x] frontend skeleton.
 
 Não faz parte de BOOT-001:
 
@@ -872,7 +872,7 @@ Só entra quando Plans/Billing estiverem sem blocker.
 | DB-001 | Logical Data Model | P0 | DONE |
 | API-001 | Application/API Contracts | P0 | DONE |
 
-> API-001 foi concluído e estabilizou commands, queries, endpoint ownership, HTTP/versioning, errors, auth, idempotência, concorrência e ModuleContracts. BOOT-001 é a próxima ação operacional.
+> API-001 foi concluído e estabilizou commands, queries, endpoint ownership, HTTP/versioning, errors, auth, idempotência, concorrência e ModuleContracts. BOOT-001 foi concluído; a próxima ação é delimitar IMP-001.
 
 ---
 
@@ -880,7 +880,7 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| BOOT-001 | Solution Skeleton backend/frontend e testes | P0 | READY |
+| BOOT-001 | Solution Skeleton backend/frontend e testes | P0 | DONE |
 
 > DB-001 e API-001 forneceram os boundaries e contracts necessários. BOOT-001 pode criar somente o skeleton; detalhes deferred continuam gates das slices afetadas.
 
@@ -1496,9 +1496,9 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. `BOOT-001` — Solution Skeleton.
-2. fechar detalhes deferred exigidos pela primeira vertical slice antes da implementação correspondente.
-3. iniciar `IMP-001` ou a sequência de implementação que este Project OS determinar após o bootstrap.
+1. definir `IMP-001` como uma primeira vertical slice pequena e verificável, derivada de VS-01;
+2. fechar somente os detalhes deferred e critérios de aceitação exigidos por esse slice;
+3. mover `IMP-001` para READY apenas quando seus gates estiverem completos.
 
 ## Em seguida
 
@@ -1509,6 +1509,68 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 ---
 
 # 24. ÚLTIMO HANDOFF
+
+## HANDOFF — 2026-09-16 — BOOT-001
+
+### Objetivo da sessão
+Criar somente o solution skeleton físico, compilável e testável do Fisiofit CRM 2.0, sem implementação funcional.
+
+### Status atual
+BOOT-001 — DONE / PASS. IMP-001 ainda não foi iniciado nem promovido para READY.
+
+### Concluído
+- solution `Fisiofit.slnx`, target `net10.0` e configuração comum;
+- Host ASP.NET Core como composition root, route group vazio `/api/v1` e health check `/health`;
+- BuildingBlocks minimalista e ModuleContracts particionado pelos 16 owners;
+- exatamente 10 module assemblies, com layers e boundaries internos conforme ARC-003;
+- registration e endpoint mapping surfaces dos 10 módulos, todas compostas pelo Host;
+- frontend React + TypeScript + Vite feature-first, sem tela de negócio;
+- quatro projetos de teste e três verificações executáveis de dependências;
+- documentação do bootstrap e README de desenvolvimento.
+
+### Arquivos alterados
+- `PROJECT_OS.md`, `README.md` e `.gitignore` revisado sem necessidade de mudança;
+- novos arquivos sob `src/`, `tests/` e `docs/implementation/`;
+- `Directory.Build.props` e `Fisiofit.slnx`.
+
+### Decisões tomadas
+- .NET 10 LTS foi usado por ser o único SDK suportado disponível no ambiente;
+- Node 26/npm 11 foram usados como toolchain disponível e compatível, sem virar regra permanente;
+- xUnit/Test SDK foram as únicas dependências backend externas, sem biblioteca de architecture testing;
+- projetos Unit/Integration/API possuem somente um smoke test estrutural cada, sem comportamento artificial.
+
+### Migrations
+- N/A — nenhum DbContext, schema, SQL ou migration foi criado.
+
+### Testes executados
+- `dotnet restore Fisiofit.slnx` — PASS;
+- `dotnet build Fisiofit.slnx --no-restore --disable-build-servers` — PASS, zero warnings/errors;
+- `dotnet test Fisiofit.slnx --no-build --no-restore --disable-build-servers` — PASS, 3 architecture tests e 3 smoke tests estruturais;
+- Host iniciado e `GET /health` — PASS, HTTP 200; processo encerrado;
+- `npm install` — PASS, 0 vulnerabilities reportadas;
+- `npm run build`, `npm run lint`, `npm run typecheck` — PASS;
+- Vite iniciado e smoke HTTP — PASS, HTTP 200; processo encerrado;
+- `git diff --check` e inspeções finais — PASS.
+
+### Blockers restantes
+- nenhum para BOOT-001;
+- os blockers/deferred canônicos continuam válidos para as implementações correspondentes;
+- IMP-001 precisa ser delimitado e passar por DoR antes de código funcional.
+
+### Riscos
+- isolamento entre contexts agrupados exigirá regras arquiteturais adicionais quando houver código real;
+- projetos de teste não arquiteturais possuem apenas smoke tests estruturais por design;
+- não há persistence, auth, Docker, CI/CD ou observability completa nesta baseline.
+
+### Próximas 3 ações
+1. definir `IMP-001` como o menor recorte vertical útil derivado de VS-01;
+2. fechar IAM/persistência/API/UI e critérios de teste estritamente necessários a esse recorte;
+3. implementar somente após `IMP-001` estar READY, preservando ARC-003 e API-001.
+
+### Instrução para a próxima IA
+Não expanda o skeleton nem implemente o catálogo inteiro. Primeiro delimite a menor slice de VS-01, registre seus gates no Project OS e só programe quando ela estiver READY.
+
+---
 
 ## HANDOFF — 2026-09-16 — API-001
 

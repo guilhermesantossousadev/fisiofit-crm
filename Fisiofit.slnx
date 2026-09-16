@@ -1,0 +1,25 @@
+<Solution>
+  <Folder Name="/src/backend/">
+    <Project Path="src/backend/Fisiofit.Api/Fisiofit.Api.csproj" />
+    <Project Path="src/backend/Fisiofit.BuildingBlocks/Fisiofit.BuildingBlocks.csproj" />
+    <Project Path="src/backend/Fisiofit.ModuleContracts/Fisiofit.ModuleContracts.csproj" />
+  </Folder>
+  <Folder Name="/src/backend/Modules/">
+    <Project Path="src/backend/Modules/Fisiofit.Modules.Access/Fisiofit.Modules.Access.csproj" />
+    <Project Path="src/backend/Modules/Fisiofit.Modules.Registry/Fisiofit.Modules.Registry.csproj" />
+    <Project Path="src/backend/Modules/Fisiofit.Modules.Crm/Fisiofit.Modules.Crm.csproj" />
+    <Project Path="src/backend/Modules/Fisiofit.Modules.Operations/Fisiofit.Modules.Operations.csproj" />
+    <Project Path="src/backend/Modules/Fisiofit.Modules.Clinical/Fisiofit.Modules.Clinical.csproj" />
+    <Project Path="src/backend/Modules/Fisiofit.Modules.Revenue/Fisiofit.Modules.Revenue.csproj" />
+    <Project Path="src/backend/Modules/Fisiofit.Modules.Communication/Fisiofit.Modules.Communication.csproj" />
+    <Project Path="src/backend/Modules/Fisiofit.Modules.Documents/Fisiofit.Modules.Documents.csproj" />
+    <Project Path="src/backend/Modules/Fisiofit.Modules.Audit/Fisiofit.Modules.Audit.csproj" />
+    <Project Path="src/backend/Modules/Fisiofit.Modules.Reports/Fisiofit.Modules.Reports.csproj" />
+  </Folder>
+  <Folder Name="/tests/backend/">
+    <Project Path="tests/backend/Fisiofit.ArchitectureTests/Fisiofit.ArchitectureTests.csproj" />
+    <Project Path="tests/backend/Fisiofit.UnitTests/Fisiofit.UnitTests.csproj" />
+    <Project Path="tests/backend/Fisiofit.IntegrationTests/Fisiofit.IntegrationTests.csproj" />
+    <Project Path="tests/backend/Fisiofit.ApiTests/Fisiofit.ApiTests.csproj" />
+  </Folder>
+</Solution>

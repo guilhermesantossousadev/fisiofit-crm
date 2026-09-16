@@ -1,39 +1,56 @@
 # Fisiofit CRM 2.0
 
-Sistema de gestão da Clínica Fisiofit.
+Fundação técnica do Fisiofit CRM 2.0, organizada como monólito modular em ASP.NET Core e frontend React + TypeScript. A fonte operacional do projeto é o [PROJECT_OS.md](./PROJECT_OS.md).
 
-## Estado atual
+## Pré-requisitos
 
-O projeto está atualmente na fase de modelagem conceitual.
+- .NET SDK 10 (LTS)
+- Node.js compatível com o toolchain (BOOT-001 foi validado com Node 26)
+- npm 11 ou compatível
 
-A fonte operacional central do projeto é:
+Não é necessário PostgreSQL nesta etapa.
 
-- [PROJECT_OS.md](./PROJECT_OS.md)
+## Estrutura
 
-## Documentação
+- `src/backend/Fisiofit.Api`: composition root e Host ASP.NET Core.
+- `src/backend/Fisiofit.BuildingBlocks`: primitives técnicas compartilhadas mínimas.
+- `src/backend/Fisiofit.ModuleContracts`: contratos públicos futuros, separados por owner/context.
+- `src/backend/Modules`: os 10 module assemblies aprovados.
+- `src/frontend/Fisiofit.Web`: aplicação React/TypeScript feature-first.
+- `tests/backend`: testes de arquitetura, unidade, integração e API.
+- `docs/implementation`: documentação das tarefas de implementação.
 
-A documentação canônica está em:
+## Backend
 
-- `/docs/domain`
-- `/docs/business-rules`
-- `/docs/processes`
-- `/docs/decisions`
-- `/docs/architecture`
+Na raiz do repositório:
 
-## Arquitetura alvo
+```bash
+dotnet restore Fisiofit.slnx
+dotnet build Fisiofit.slnx --no-restore
+dotnet test Fisiofit.slnx --no-build --no-restore
+dotnet run --project src/backend/Fisiofit.Api/Fisiofit.Api.csproj
+```
 
-- React + TypeScript
-- ASP.NET Core / C#
-- PostgreSQL
-- Monólito modular
+O Host usa `http://localhost:5080` no profile local. O health check está em `GET /health`.
 
-> Antes de desenvolver qualquer funcionalidade, leia `PROJECT_OS.md`.
+## Frontend
 
-## AI-assisted development
+```bash
+cd src/frontend/Fisiofit.Web
+npm install
+npm run dev
+npm run build
+npm run lint
+npm run typecheck
+```
 
-- [`PROJECT_OS.md`](./PROJECT_OS.md) controla o andamento e a prioridade operacional do projeto.
-- [`docs/ai/FISIOFIT_AI_PROFILE.md`](./docs/ai/FISIOFIT_AI_PROFILE.md) orienta agentes e CLIs sobre como trabalhar no Fisiofit.
-- `.prompts` pode apontar para uma biblioteca local e opcional de métodos reutilizáveis; ela não substitui as fontes do projeto nem é necessária para build, testes, execução, CI ou deploy.
+`VITE_API_BASE_URL` pode sobrescrever a URL local da API; consulte `.env.example`. Nenhum secret é necessário ou deve ser commitado.
+
+## Escopo atual
+
+BOOT-001 contém somente skeleton técnico. Não há regra de negócio, endpoint funcional, autenticação, banco, `DbContext`, migration, outbox/inbox, Docker ou CI/CD implementados.
+
+Antes de implementar qualquer funcionalidade, leia `PROJECT_OS.md` e a documentação canônica relacionada à tarefa autorizada.
 
 ## Project Status Dashboard
 
@@ -43,4 +60,4 @@ Para visualizar localmente o status registrado no `PROJECT_OS.md`, execute na ra
 python3 -m http.server 8000
 ```
 
-Acesse `http://localhost:8000/project-status/`. Consulte as instruções completas em [`project-status/README.md`](./project-status/README.md).
+Acesse `http://localhost:8000/project-status/`.
