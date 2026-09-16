@@ -616,8 +616,8 @@ Cobertura: **37/37 processos**. Processos single-context não foram artificialme
 | poison event | isolamento, diagnóstico e recuperação sem vazar payload |
 | stale projection | indicar freshness e reconstruir a partir da fonte autorizada |
 | vazamento sensível | minimização, controles de acesso, redaction e propósito |
-| perda entre commit e publicação | reliable publication; outbox é candidato futuro, não decisão |
-| reprocessamento financeiro | inbox/deduplicação é candidato futuro; correlação obrigatória |
+| perda entre commit e publicação | reliable publication; nesta tarefa EVT-001, outbox era candidato a decisão física posterior; ARC-003 o adotou para R2 |
+| reprocessamento financeiro | nesta tarefa EVT-001, inbox/deduplicação era candidato; ARC-003 o adotou para consumers R2; correlação obrigatória |
 
 ## 39. Cross-Context Consistency
 
@@ -628,7 +628,7 @@ Contratos síncronos continuam necessários para validações como conflito, exi
 ## 40. Architecture Consequences
 
 - A arquitetura física deverá garantir publicação confiável e consumo idempotente onde marcado.
-- Outbox/inbox são candidatos de pattern, não escolhas desta tarefa.
+- Outbox/inbox eram candidatos de pattern, não escolhas da tarefa EVT-001; o ARC-003 posterior os tornou obrigatórios somente para R2.
 - Deverá existir correlação/causação observável, evolução versionada, replay controlado e segregação de eventos sensíveis.
 - Dependências devem preservar publisher owner, impedir ciclos de escrita e separar contrato síncrono, evento e read model.
 - Estratégia de broker, serialização, schema registry, retry e armazenamento fica para ARC-003/007/008.
