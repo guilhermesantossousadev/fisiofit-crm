@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta
+      name="description"
+      content="Dashboard local e somente leitura do status do projeto Fisiofit CRM 2.0."
+    >
+    <title>Fisiofit CRM 2.0 — Status do projeto</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
+    <header class="site-header">
+      <div class="container header-content">
+        <div>
+          <p class="eyebrow">Status do projeto</p>
+          <div class="title-row">
+            <h1 id="project-title">Fisiofit CRM 2.0</h1>
+            <span id="overall-status" class="status-badge status-neutral">Carregando</span>
+          </div>
+          <p class="source-note">
+            Fonte oficial: <code>PROJECT_OS.md</code>
+            <span aria-hidden="true">•</span>
+            Dashboard somente leitura
+          </p>
+        </div>
+        <button id="refresh-button" class="refresh-button" type="button">
+          <span aria-hidden="true">↻</span>
+          Atualizar
+        </button>
+      </div>
+    </header>
+
+    <main id="conteudo" class="container" tabindex="-1">
+      <div id="live-status" class="live-status" role="status" aria-live="polite">
+        Carregando status do projeto...
+      </div>
+
+      <section id="error-state" class="error-state" aria-labelledby="error-title" hidden>
+        <p class="eyebrow">Falha ao carregar</p>
+        <h2 id="error-title">Não foi possível carregar PROJECT_OS.md.</h2>
+        <p id="error-message">
+          Execute o dashboard através de um servidor HTTP iniciado na raiz do projeto.
+        </p>
+        <button id="retry-button" class="refresh-button" type="button">Tentar novamente</button>
+      </section>
+
+      <div id="dashboard" hidden>
+        <section class="dashboard-section" aria-labelledby="summary-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Visão operacional</p>
+              <h2 id="summary-title">Resumo atual</h2>
+            </div>
+            <p id="last-update" class="section-meta"></p>
+          </div>
+          <div id="summary-grid" class="summary-grid"></div>
+        </section>
+
+        <section class="dashboard-section progress-section" aria-labelledby="progress-title">
+          <div class="section-heading compact">
+            <div>
+              <p class="eyebrow">Backlog mestre</p>
+              <h2 id="progress-title">Progresso geral</h2>
+            </div>
+            <strong id="progress-percent" class="progress-percent">0%</strong>
+          </div>
+          <div
+            id="progress-track"
+            class="progress-track"
+            role="progressbar"
+            aria-labelledby="progress-title"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <span id="progress-bar" class="progress-bar"></span>
+          </div>
+          <p id="progress-label" class="progress-label"></p>
+          <p class="helper-text">
+            Percentual calculado pela quantidade de itens concluídos. Não representa estimativa de
+            esforço restante.
+          </p>
+        </section>
+
+        <section class="dashboard-section" aria-labelledby="counters-title">
+          <div class="section-heading compact">
+            <div>
+              <p class="eyebrow">Distribuição</p>
+              <h2 id="counters-title">Tarefas por status</h2>
+            </div>
+          </div>
+          <div id="status-counters" class="counter-grid"></div>
+        </section>
+
+        <div class="content-grid">
+          <section class="dashboard-section roadmap-section" aria-labelledby="roadmap-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Itens encontrados</p>
+                <h2 id="roadmap-title">Roadmap</h2>
+              </div>
+              <p id="roadmap-total" class="section-meta"></p>
+            </div>
+            <div id="roadmap" class="roadmap"></div>
+          </section>
+
+          <aside class="side-column" aria-label="Informações complementares">
+            <section class="dashboard-section" aria-labelledby="blockers-title">
+              <div class="section-heading compact">
+                <div>
+                  <p class="eyebrow">Impedimentos</p>
+                  <h2 id="blockers-title">Blockers</h2>
+                </div>
+              </div>
+              <div id="blockers"></div>
+            </section>
+
+            <section class="dashboard-section" aria-labelledby="actions-title">
+              <div class="section-heading compact">
+                <div>
+                  <p class="eyebrow">Continuidade</p>
+                  <h2 id="actions-title">Próximas 3 ações</h2>
+                </div>
+              </div>
+              <ol id="next-actions" class="action-list"></ol>
+            </section>
+
+            <section class="dashboard-section" aria-labelledby="handoff-title">
+              <div class="section-heading compact">
+                <div>
+                  <p class="eyebrow">Última sessão</p>
+                  <h2 id="handoff-title">Último handoff</h2>
+                </div>
+              </div>
+              <div id="handoff"></div>
+            </section>
+          </aside>
+        </div>
+
+        <section class="dashboard-section" aria-labelledby="documents-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Referências oficiais</p>
+              <h2 id="documents-title">Documentos canônicos</h2>
+            </div>
+            <p id="documents-total" class="section-meta"></p>
+          </div>
+          <div id="documents" class="document-grid"></div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>Visualização local. Nenhuma alteração é persistida pelo dashboard.</p>
+      </div>
+    </footer>
+  </body>
+</html>

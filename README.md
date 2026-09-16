@@ -28,3 +28,13 @@ A documentação canônica está em:
 - Monólito modular
 
 > Antes de desenvolver qualquer funcionalidade, leia `PROJECT_OS.md`.
+
+## Project Status Dashboard
+
+Para visualizar localmente o status registrado no `PROJECT_OS.md`, execute na raiz:
+
+```bash
+python3 -m http.server 8000
+```
+
+Acesse `http://localhost:8000/project-status/`. Consulte as instruções completas em [`project-status/README.md`](./project-status/README.md).
