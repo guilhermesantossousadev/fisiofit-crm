@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: conceptual_modeling_complete
+  status: state_modeling_complete
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: STATE-001 — Máquinas de Estado
+  current_priority: EVT-001 — Catálogo final de Eventos de Domínio
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,11 +39,11 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** M3 — Máquinas de Estado — NEXT
-**MARCO CONCLUÍDO:** M2 — Modelagem Conceitual Completa
-**PRÓXIMO MARCO:** M3 — Máquinas de Estado
-**ÚLTIMA TAREFA CONCLUÍDA:** MODEL-005 — Modelo Conceitual Integrado
-**PRÓXIMA TAREFA:** STATE-001 — Máquinas de Estado
+**FASE ATUAL:** EVT-001 — Catálogo final de Eventos de Domínio — NEXT
+**MARCO CONCLUÍDO:** M3 — Máquinas de Estado
+**PRÓXIMO MARCO:** EVT-001 — Catálogo final de Eventos de Domínio
+**ÚLTIMA TAREFA CONCLUÍDA:** STATE-001 — Máquinas de Estado
+**PRÓXIMA TAREFA:** EVT-001 — Catálogo final de Eventos de Domínio
 
 | Domínio | Status |
 |---|---|
@@ -58,11 +58,11 @@ control:
 
 Sequência oficial imediata:
 
-1. `STATE-001` — Máquinas de Estado;
-2. `EVT-001` — Catálogo final de Eventos de Domínio;
-3. `AUTH-001` — Matriz de Permissões e Policies.
+1. `EVT-001` — Catálogo final de Eventos de Domínio;
+2. `AUTH-001` — Matriz de Permissões e Policies;
+3. `ARC-003` — Matriz de Dependências e início da arquitetura física.
 
-Modelagem conceitual está concluída. Máquinas de estado, catálogo final de eventos, permissões, arquitetura física, modelo lógico e implementação **não** estão concluídos.
+Modelagem conceitual e máquinas de estado estão concluídas. Catálogo final de eventos, permissões, arquitetura física, modelo lógico e implementação **não** estão concluídos.
 
 ---
 
@@ -572,22 +572,22 @@ Modelo conceitual integrado aprovado antes de desenhar SQL definitivo.
 
 ---
 
-## Fase 3 — Máquinas de estado — NEXT
+## Fase 3 — Máquinas de estado — DONE
 
 Obrigatórias:
 
-- [ ] Opportunity
-- [ ] Appointment
-- [ ] Enrollment
-- [ ] Contract
-- [ ] ClassOccurrence
-- [ ] MakeupCredit
-- [ ] ClinicalEntry
-- [ ] Assessment
-- [ ] Receivable
-- [ ] Payment
-- [ ] Task
-- [ ] PrivacyRequest
+- [x] Opportunity
+- [x] Appointment
+- [x] Enrollment
+- [x] Contract
+- [x] ClassOccurrence
+- [x] MakeupCredit
+- [x] ClinicalEntry
+- [x] Assessment
+- [x] Receivable
+- [x] Payment
+- [x] Task
+- [x] PrivacyRequest classificada como DEFERRED por ausência de lifecycle aprovado
 
 Para cada transição definir:
 
@@ -601,6 +601,9 @@ Para cada transição definir:
 - evento;
 - auditoria;
 - reversibilidade.
+
+### Gate
+Máquinas prioritárias formalizadas, lifecycles restantes classificados e nenhum blocker para EVT-001.
 
 ---
 
@@ -832,7 +835,7 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| STATE-001 | Máquinas de Estado | P0 | TODO |
+| STATE-001 | Máquinas de Estado | P0 | DONE |
 | EVT-001 | Catálogo final de Eventos de Domínio | P0 | TODO |
 | AUTH-001 | Matriz de Permissões e Policies | P0 | TODO |
 
@@ -1338,6 +1341,7 @@ f​isiofit-crm/
 | `docs/modeling/MODEL_003_CLINICAL.md` | Modelo conceitual de Clinical, histórico, acesso excepcional e exportação |
 | `docs/modeling/MODEL_004_PLANS_BILLING_FINANCE.md` | Modelo conceitual de Plans & Enrollment, Billing e Finance, com snapshots, reversões, concorrência e fechamento versionado |
 | `docs/modeling/MODEL_005_INTEGRATED_CONCEPTUAL_MODEL.md` | Baseline conceitual integrada dos 16 contextos, com catálogos globais, invariantes, cobertura e fluxos end-to-end |
+| `docs/state-machines/STATE_001_STATE_MACHINES.md` | Lifecycles, máquinas de estado, transições, guards, condições derivadas, temporalidade, dependências e auditoria |
 | `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx` | Fonte de descoberta preservada; consultar a auditoria para decisões superadas |
 
 ---
@@ -1447,43 +1451,44 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. `STATE-001` — criar Máquinas de Estado.
-2. `EVT-001` — criar catálogo final de Eventos de Domínio.
-3. `AUTH-001` — criar Matriz de Permissões e Policies.
+1. `EVT-001` — criar catálogo final de Eventos de Domínio.
+2. `AUTH-001` — criar Matriz de Permissões e Policies.
+3. `ARC-003` — criar Matriz de Dependências e iniciar a arquitetura física conforme o roadmap.
 
 ## Em seguida
 
-4. fechar matriz de dependências e contratos públicos;
-5. avançar para arquitetura física;
-6. criar modelo lógico somente após os gates correspondentes.
+4. fechar contratos públicos e demais decisões da arquitetura física;
+5. criar modelo lógico somente após os gates correspondentes;
+6. preparar a primeira vertical slice somente quando seus gates estiverem completos.
 
 ---
 
 # 24. ÚLTIMO HANDOFF
 
-## HANDOFF — 2026-09-15 — MODEL-005
+## HANDOFF — 2026-09-15 — STATE-001
 
 ### Objetivo da sessão
-Criar a baseline conceitual integrada dos 16 contextos a partir de MODEL-001 a MODEL-004, auditando ownership, referências, cardinalidades, invariantes, dependências, processos, regras e readiness de VS-01.
+Formalizar lifecycles e máquinas de estado dos conceitos transacionais, distinguindo estado persistido, condição derivada, temporalidade, fato imutável e status de projeção, sem mudar processos, regras, ownership ou boundaries.
 
 ### Status atual
-MODEL-005 — DONE / PASS. Próxima tarefa: STATE-001 — Máquinas de Estado.
+STATE-001 — DONE / PASS. Próxima tarefa: EVT-001 — Catálogo final de Eventos de Domínio.
 
 ### Concluído
-- catálogos mestres de conceitos, aggregate roots, referências, cardinalidades, snapshots, read models e invariantes;
-- 16 contextos integrados sem aggregate cross-context, ownership compartilhado ou escrita direta entre contexts;
-- cardinalidade Contract/Enrollment consolidada: Enrollment operacional contínuo pode atravessar Contracts sucessivos;
-- cadeias operacional, comercial, clínica, de turma e financeira validadas sem fundir conceitos;
-- 37/37 processos do PROCESS_INDEX conceitualmente suportados e 75/75 regras do RULES_INDEX representáveis;
-- eventos cross-context mínimos classificados como NORMAL, PERSONAL, FINANCIAL ou CLINICAL_METADATA;
-- conceitos órfãos/residuais classificados e riscos de aggregates gigantes registrados;
-- dependências circulares auditadas sem ciclo conhecido de escrita síncrona;
-- oito diagramas globais e seis fluxos end-to-end documentados;
-- VS-01 classificada como CONCEPTUALLY_READY, sem afirmar readiness de implementação.
+- máquinas prioritárias de Opportunity, Appointment, ClassOccurrence, Attendance, MakeupCredit, CareEpisode, Assessment, ClinicalEntry, Contract, Enrollment, Receivable, Payment, FinancialRestriction, Expense e Closing;
+- lifecycles adicionais de Task, Refund, PatientProfile e ProfessionalProfile;
+- RefundCompleted definido como fato candidato de saída real, distinto de RefundIssued;
+- OVERDUE/delinquency/saldos/capacidade/disponibilidade classificados como condições derivadas;
+- ClassSchedule, ClassMembership e vínculos de Patients/Staff preservados como lifecycles temporais;
+- Rectification, Addendum, PaymentReversal, Transfer, FinancialTransaction e snapshots classificados como registros imutáveis;
+- matrizes mestres de estados, transições, inválidas, dependências e auditoria;
+- 15 diagramas Mermaid separados por máquina;
+- 37/37 processos representáveis e 75/75 regras compatíveis;
+- nenhum STATE_PROCESS_GAP, STATE_RULE_CONFLICT, cross-context write ou ciclo síncrono novo;
+- open questions classificadas sem bloquear EVT-001.
 
 ### Arquivos criados
 
-- `docs/modeling/MODEL_005_INTEGRATED_CONCEPTUAL_MODEL.md`.
+- `docs/state-machines/STATE_001_STATE_MACHINES.md`.
 
 ### Arquivos alterados
 
@@ -1491,11 +1496,14 @@ MODEL-005 — DONE / PASS. Próxima tarefa: STATE-001 — Máquinas de Estado.
 
 ### Decisões tomadas
 
-- nenhuma regra de domínio aprovada foi alterada;
-- a seta Attendance→ClinicalEntry é etapa de processo/contexto, não relação estrutural;
-- Contract aceito liga-se a zero ou um Enrollment antes da ativação e a exatamente um quando sustenta o vínculo; Enrollment ativado pode ter um ou mais Contracts sucessivos;
-- Billing→Finance para validar FinancialAccount é leitura síncrona; PaymentConfirmed/Reversed/Refund são fatos assíncronos e não criam escrita circular;
-- somente o evento que representar saída real de Refund poderá originar FinancialTransaction, a formalizar em STATE-001/EVT-001.
+- Contract usa estado `ACTIVE`; `ContractAccepted` é o fato de `DRAFT → ACTIVE`, não estado persistido concorrente;
+- Receivable/Expense `OVERDUE` são derivados, embora possam alimentar projeção/evento candidato;
+- Attendance permanece corrigível somente por AttendanceCorrection append-only;
+- MakeupReservation não recebe máquina independente e é derivada dos fatos de reserva/crédito/occurrence;
+- Payment admite PENDING ou criação+confirmação atômica manual; confirmação só é compensada por PaymentReversal;
+- `RefundCompleted` é o único fato candidato de Refund que representa saída real para Finance;
+- Transfer é registro atômico imutável sem estados bancários externos inventados;
+- PrivacyRequest, PersonMerge, ProfessionalLeave e Negotiation permanecem DEFERRED onde faltam estados/guards aprovados.
 
 ### Migrations
 
@@ -1503,32 +1511,31 @@ MODEL-005 — DONE / PASS. Próxima tarefa: STATE-001 — Máquinas de Estado.
 
 ### Testes executados
 
-- leitura integral de todas as fontes obrigatórias e do último handoff;
-- revisão cruzada de owner, conceitos, cardinalidades, snapshots, rules, processes, decisions e open questions;
-- validação textual dos 40 tópicos, tabelas e oito blocos Mermaid do MODEL-005;
+- leitura integral das fontes obrigatórias e do último handoff embutido no PROJECT_OS;
+- revisão cruzada de estados, invariantes, owners, rules, processes, parameters e decisions;
+- validação estrutural das 43 seções, matrizes e diagramas do STATE-001;
 - `git diff --check`, revisão do diff e `git diff --stat`.
 
 ### Blockers restantes
 
-- nenhum para iniciar STATE-001;
-- STATE-001 deve formalizar qual transição de Refund representa saída real e as transições Contract/Enrollment sem mudar a cardinalidade;
-- blockers de implementação e go-live permanecem classificados no MODEL-005 e na seção 9 deste PROJECT_OS.
+- nenhum para EVT-001;
+- blockers antes de arquitetura, implementação e go-live permanecem classificados no STATE-001 e na seção 9 deste PROJECT_OS.
 
 ### Riscos
 
-- arquitetura física introduzir dependência síncrona reversa onde a baseline exige evento/read model;
-- transformar read model ou snapshot em source of truth atualizável;
-- carregar coleções históricas ilimitadas em Person, Class, CareEpisode, FinancialAccount ou Closing;
-- eventos financeiros duplicarem movimentos por correlação insuficiente;
-- eventos clínicos vazarem conteúdo em vez de metadados mínimos.
+- EVT-001 promover todo candidate event indiscriminadamente ou duplicar eventos de estado/condição derivada;
+- implementação persistir `OVERDUE`, saldo, capacidade/disponibilidade ou vigência derivada como segunda fonte de verdade;
+- reversal/refund/Closing reopen serem implementados como edição destrutiva;
+- consumidores copiarem estado externo em vez de usar contrato/projeção/evento do owner;
+- payload clínico exceder metadados mínimos.
 
 ### Próximas 3 ações
-1. `STATE-001` — Máquinas de Estado;
-2. `EVT-001` — Catálogo final de Eventos de Domínio;
-3. `AUTH-001` — Matriz de Permissões e Policies.
+1. `EVT-001` — Catálogo final de Eventos de Domínio;
+2. `AUTH-001` — Matriz de Permissões e Policies;
+3. `ARC-003` — Matriz de Dependências e início da arquitetura física.
 
 ### Instrução para a próxima IA
-Comece por `STATE-001` usando MODEL-005 como baseline e os modelos de origem para detalhes locais. Formalize transições sem mudar owners, cardinalidades ou snapshots e sem avançar para EVT-001 nesta mesma execução.
+Comece por EVT-001 usando STATE-001 como fonte das transições e mantendo todos os nomes como candidatos até definir owner, exposição, payload mínimo, sensibilidade, correlação e idempotência. Não altere estados, guards ou ownership silenciosamente.
 
 ---
 
