@@ -29,6 +29,12 @@ A documentação canônica está em:
 
 > Antes de desenvolver qualquer funcionalidade, leia `PROJECT_OS.md`.
 
+## AI-assisted development
+
+- [`PROJECT_OS.md`](./PROJECT_OS.md) controla o andamento e a prioridade operacional do projeto.
+- [`docs/ai/FISIOFIT_AI_PROFILE.md`](./docs/ai/FISIOFIT_AI_PROFILE.md) orienta agentes e CLIs sobre como trabalhar no Fisiofit.
+- `.prompts` pode apontar para uma biblioteca local e opcional de métodos reutilizáveis; ela não substitui as fontes do projeto nem é necessária para build, testes, execução, CI ou deploy.
+
 ## Project Status Dashboard
 
 Para visualizar localmente o status registrado no `PROJECT_OS.md`, execute na raiz:
