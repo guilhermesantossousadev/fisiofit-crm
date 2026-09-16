@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: logical_data_model_complete
+  status: application_api_contracts_complete
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: API-001 — Application / API Contracts
+  current_priority: BOOT-001 — Solution Skeleton
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,11 +39,11 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** API-001 — Application / API Contracts — READY
-**MARCO CONCLUÍDO:** DB-001 — Logical Data Model
-**PRÓXIMO MARCO:** API-001 — Application / API Contracts
-**ÚLTIMA TAREFA CONCLUÍDA:** DB-001 — Logical Data Model
-**PRÓXIMA TAREFA:** API-001 — Application / API Contracts
+**FASE ATUAL:** BOOT-001 — Solution Skeleton — READY (`READY_WITH_DEFERRED_DETAILS`)
+**MARCO CONCLUÍDO:** API-001 — Application / API Contracts
+**PRÓXIMO MARCO:** BOOT-001 — Solution Skeleton
+**ÚLTIMA TAREFA CONCLUÍDA:** API-001 — Application / API Contracts
+**PRÓXIMA TAREFA:** BOOT-001 — Solution Skeleton
 
 | Domínio | Status |
 |---|---|
@@ -58,11 +58,11 @@ control:
 
 Sequência oficial imediata:
 
-1. `API-001` — Application/API Contracts;
-2. `IMP-BOOTSTRAP` — criar skeleton da solução;
-3. fechar detalhes deferred exigidos pela primeira vertical slice antes da implementação correspondente.
+1. `BOOT-001` — Solution Skeleton;
+2. fechar detalhes deferred exigidos pela primeira vertical slice antes da implementação correspondente;
+3. iniciar a sequência de implementação que o Project OS definir após o bootstrap.
 
-Modelagem conceitual, máquinas de estado, catálogo final de eventos, autorização conceitual, arquitetura física e modelo lógico estão concluídos. DB-001 definiu IDs, Money/time, tabelas, ownership, referências, constraints, concorrência, migrations e Outbox/Inbox R2. API-001 está READY e é a próxima ação operacional. Implementação ainda não começou.
+Modelagem conceitual, máquinas de estado, catálogo final de eventos, autorização conceitual, arquitetura física, modelo lógico e contratos de aplicação/API estão concluídos. API-001 definiu 137 commands e 77 queries como mapa de cobertura contratual, não como escopo imediato de implementação. BOOT-001 está `READY_WITH_DEFERRED_DETAILS` e é a próxima ação operacional; pode criar somente o skeleton físico autorizado. Implementação funcional ainda não começou.
 
 ---
 
@@ -438,6 +438,9 @@ Nenhum blocker conhecido. DOM-011 a DOM-018 estão aprovados para Context Map, O
 - definir alçadas e limites de desconto/negociação; perdão arbitrário não é permitido;
 - definir o efeito da pausa sobre disponibilidade e expiração de MakeupCredits, sem prolongar o Contract;
 - detalhar precedência de operações financeiras concorrentes, como pausa, cancelamento, reversão e reembolso na mesma data.
+- definir allowlist/formato, tamanho máximo, scan/quarantine e provider antes de aceitar uploads;
+- definir contratos provider-specific antes de criar inbound webhooks;
+- definir quotas concretas por ambiente/finalidade antes de expor superfícies externas dependentes de rate limit.
 
 ### BLOCKERS BEFORE GO-LIVE
 
@@ -629,7 +632,7 @@ Máquinas prioritárias formalizadas, lifecycles restantes classificados e nenhu
 - [x] definir configuração por ambiente.
 
 ### Gate
-ARC-003 aprovado. ADR-001 a ADR-006 estão aceitas; DB-001 fechou as estruturas lógicas seletivas de Outbox/Inbox R2 da ADR-004 sem reabrir boundaries.
+ARC-003 aprovado. ADR-001 a ADR-007 estão aceitas; DB-001 fechou as estruturas lógicas seletivas de Outbox/Inbox R2 da ADR-004 e API-001 fechou a baseline HTTP na ADR-007 sem reabrir boundaries.
 
 ---
 
@@ -711,20 +714,26 @@ Cada tela deve possuir:
 
 ## Fase 8 — Scaffold técnico
 
-Somente depois dos gates anteriores da primeira slice.
+BOOT-001 pode iniciar antes de uma vertical slice funcional estar `READY`, porque cria somente a estrutura física sem materializar o catálogo API.
 
-- [ ] repo definitivo;
-- [ ] frontend;
-- [ ] backend;
-- [ ] PostgreSQL;
-- [ ] Docker;
-- [ ] migrations;
-- [ ] CI;
-- [ ] testes;
-- [ ] logging;
-- [ ] health checks;
-- [ ] auth skeleton;
-- [ ] module skeleton.
+Pode criar:
+
+- [ ] solution e projects;
+- [ ] module assemblies, namespaces/folders e registration surfaces;
+- [ ] BuildingBlocks e ModuleContracts mínimos;
+- [ ] Host e configuration baseline;
+- [ ] test projects e dependency/architecture rules;
+- [ ] frontend skeleton.
+
+Não faz parte de BOOT-001:
+
+- implementar os 137 commands ou os 77 queries;
+- criar todos os endpoints;
+- implementar regras de negócio ou state machines;
+- criar tabelas, schemas físicos ou migrations;
+- resolver decisões `GATED`/`DEFERRED`.
+
+PostgreSQL funcional, migrations, auth funcional, Docker/CI operacional e a primeira vertical slice exigem tarefas próprias e seus gates.
 
 ---
 
@@ -861,19 +870,21 @@ Só entra quando Plans/Billing estiverem sem blocker.
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
 | DB-001 | Logical Data Model | P0 | DONE |
-| API-001 | Application/API Contracts | P0 | READY |
+| API-001 | Application/API Contracts | P0 | DONE |
 
-> DB-001 foi concluído e estabilizou IDs, Money/time, ownership, constraints, concorrência, migrations ownership e confiabilidade R2. API-001 é a próxima ação operacional.
+> API-001 foi concluído e estabilizou commands, queries, endpoint ownership, HTTP/versioning, errors, auth, idempotência, concorrência e ModuleContracts. BOOT-001 é a próxima ação operacional.
 
 ---
 
-## EPIC IMP — Bootstrap técnico
+## EPIC BOOT — Bootstrap técnico
 
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
-| IMP-BOOTSTRAP | Criar skeleton da solução backend/frontend e testes | P0 | TODO |
+| BOOT-001 | Solution Skeleton backend/frontend e testes | P0 | READY |
 
-> Não iniciar antes de DB-001 e API-001 fornecerem os contracts mínimos da primeira slice.
+> DB-001 e API-001 forneceram os boundaries e contracts necessários. BOOT-001 pode criar somente o skeleton; detalhes deferred continuam gates das slices afetadas.
+
+> O catálogo de 137 commands + 77 queries não é backlog de BOOT-001. `READY` em API-001 significa implementável futuramente, não selecionado para implementação imediata.
 
 ---
 
@@ -1366,12 +1377,14 @@ f​isiofit-crm/
 | `docs/security/AUTH_001_PERMISSIONS_POLICIES.md` | Modelo canônico de roles, scopes, permissions, resource policies, negações, auditoria e cobertura de autorização |
 | `docs/architecture/ARC_003_PHYSICAL_ARCHITECTURE.md` | Arquitetura física do modular monolith, módulos, layers, contracts, persistência, comunicação, segurança, deployment e testes |
 | `docs/database/DB_001_LOGICAL_DATA_MODEL.md` | Modelo lógico PostgreSQL dos 16 schemas, tabelas, ownership, referências, constraints, concorrência, migrations e Outbox/Inbox R2 |
+| `docs/api/API_001_APPLICATION_API_CONTRACTS.md` | Commands, queries, read models, endpoints, contratos públicos, autorização, idempotência, concorrência, erros, workflows e readiness do bootstrap |
 | `docs/adr/ADR-001-MODULAR-MONOLITH-PHYSICAL-STRUCTURE.md` | Estrutura física híbrida do modular monolith |
 | `docs/adr/ADR-002-MODULE-PERSISTENCE-ISOLATION.md` | PostgreSQL, schemas, DbContexts e referências cross-context — Accepted; detalhes físicos seguem para DB-001 |
 | `docs/adr/ADR-003-MODULE-COMMUNICATION-STRATEGY.md` | Contratos tipados in-process, events e read models sem HTTP interno |
 | `docs/adr/ADR-004-EVENT-RELIABILITY-STRATEGY.md` | Tiers R0/R1/R2, outbox/inbox seletivos e ausência de broker inicial — Accepted após DB-001 |
 | `docs/adr/ADR-005-CLINICAL-DATA-ISOLATION.md` | Isolamento de código, dados, autorização, events, logs e documentos clínicos |
 | `docs/adr/ADR-006-IDENTIFIER-STRATEGY.md` | UUID como padrão opaco e nativo, com UUIDv7 preferencial e UUIDv4 fallback |
+| `docs/adr/ADR-007-HTTP-API-CONTRACT-BASELINE.md` | `/api/v1`, Problem Details RFC 9457, paginação offset inicial e whitelists de filtro/sort |
 | `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx` | Fonte de descoberta preservada; consultar a auditoria para decisões superadas |
 
 ---
@@ -1439,9 +1452,11 @@ Validar a fundação da arquitetura ponta a ponta sem tentar construir o CRM int
 
 ---
 
-# 21. CHECKLIST PARA COMEÇAR A CODAR
+# 21. CHECKLIST PARA COMEÇAR IMPLEMENTAÇÃO FUNCIONAL
 
-Não iniciar scaffold definitivo até:
+Este checklist bloqueia vertical slices, regras de negócio, endpoints funcionais e persistência. Ele não bloqueia o skeleton estritamente limitado de BOOT-001 definido na Fase 8.
+
+Não iniciar implementação funcional até:
 
 - [ ] PROJECT_OS adotado;
 - [ ] primeira slice escolhida;
@@ -1481,93 +1496,94 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. `API-001` — Application/API Contracts.
-2. `IMP-BOOTSTRAP` — criar skeleton da solução.
-3. fechar detalhes deferred exigidos pela primeira vertical slice antes da implementação correspondente.
+1. `BOOT-001` — Solution Skeleton.
+2. fechar detalhes deferred exigidos pela primeira vertical slice antes da implementação correspondente.
+3. iniciar `IMP-001` ou a sequência de implementação que este Project OS determinar após o bootstrap.
 
 ## Em seguida
 
 4. fechar os detalhes deferred de IAM/segurança necessários à implementação correspondente;
 5. preparar a primeira vertical slice somente quando seus gates estiverem completos;
-6. implementar sem alterar os boundaries de ARC-003.
+6. implementar sem alterar os boundaries de ARC-003 e os contratos de API-001.
 
 ---
 
 # 24. ÚLTIMO HANDOFF
 
-## HANDOFF — 2026-09-16 — DB-001
+## HANDOFF — 2026-09-16 — API-001
 
 ### Objetivo da sessão
-Transformar a baseline conceitual e ARC-003 em modelo lógico PostgreSQL implementável, sem criar banco, migrations, ORM ou código.
+Transformar os modelos, states, authorization, events, arquitetura física e DB-001 em contratos canônicos de aplicação, ModuleContracts e HTTP, sem implementar código.
 
 ### Status atual
-DB-001 — DONE / PASS. API-001 — READY e próxima tarefa oficial. Implementação física permanece posterior a API-001 e aos blockers específicos da slice.
+API-001 — DONE / PASS. BOOT-001 — READY_WITH_DEFERRED_DETAILS e próxima tarefa oficial. Nenhum skeleton, endpoint, DTO, banco ou OpenAPI foi criado.
 
 ### Concluído
-- modelo lógico canônico dos 16 schemas e 16 DbContexts;
-- UUID padrão definido em ADR-006, com UUIDv7 preferencial e UUIDv4 fallback;
-- estratégias de time, Money, naming, enum/catalog, temporalidade, delete e JSONB;
-- catálogo completo de tabelas com owner único, relações internas e referências externas sem FK cross-schema;
-- snapshots de proposta, Contract, Receivable, occurrence, Clinical finalization/template, Closing e DocumentVersion;
-- 44 invariantes lógicas, índices classificados e estratégias seletivas de concorrência/idempotência;
-- Outbox apenas em People, Staff, Plans, Billing e Clinical; Inbox apenas nos consumers R2 comprovados;
-- migrations ownership independente por schema e ADR-004 aceita após fechamento da opção C;
-- dicionário de dados, sensibilidade, retenção, riscos e 11 ERDs;
-- API-001 classificada READY; nenhuma implementação iniciada.
+- princípios de commands/queries/read models, transactions e ownership dos 16 contexts;
+- 137 commands e 77 queries catalogados com actor, autorização, inputs/results, idempotência e concorrência;
+- catálogo mestre de endpoints `/api/v1` com owner, permission, resposta e sensibilidade;
+- RFC 9457, status codes, validação por boundary e códigos externos estáveis;
+- pagination offset inicial, filtros/sorts por whitelist e ETag seletivo;
+- catálogo de ModuleContracts e contratos síncronos mínimos sem entities/shared services;
+- mapeamento command→event limitado ao catálogo canônico;
+- Clinical segregado, Billing/Finance separados e Documents/Reports com autorização herdada;
+- fluxos cross-context, exemplos críticos e oito diagramas Mermaid;
+- validação 37/37 processos, 75/75 regras, AUTH-001, DB-001, STATE-001 e DOMAIN_EVENTS;
+- ADR-007 aceita para versionamento por path, Problem Details e paginação inicial;
+- revisão final separou `READY`/`GATED`/`DEFERRED`, validou 137 command IDs únicos + 77 query IDs e fixou o limite estrito de BOOT-001.
 
 ### Arquivos criados
 
-- `docs/database/DB_001_LOGICAL_DATA_MODEL.md`;
-- `docs/adr/ADR-006-IDENTIFIER-STRATEGY.md`.
+- `docs/api/API_001_APPLICATION_API_CONTRACTS.md`;
+- `docs/adr/ADR-007-HTTP-API-CONTRACT-BASELINE.md`.
 
 ### Arquivos alterados
 
-- `PROJECT_OS.md`;
-- `docs/adr/ADR-004-EVENT-RELIABILITY-STRATEGY.md`;
-- `docs/architecture/ARC_003_PHYSICAL_ARCHITECTURE.md`.
+- `PROJECT_OS.md`.
 
 ### Decisões tomadas
-- UUID é o identificador padrão; IDs externos continuam opacos;
-- instantes usam semântica `timestamptz`/UTC, enquanto `date` e hora local preservam calendário civil/recorrência;
-- Money usa decimal exato `numeric(19,4)` mais moeda ISO; BRL é default explícito;
-- FK física é local ao schema; integridade externa usa validação do owner, R2 e reconciliação;
-- concorrência é seletiva por hotspot, não token universal;
-- Outbox/Inbox segue a opção C e ADR-004 passa a Accepted;
-- Reports/Audit mantêm somente projeções/evidência minimizadas e não copiam Clinical ou finanças completas.
+- rotas externas iniciam em `/api/v1`;
+- erros usam RFC 9457 com `code`, `traceId` e `errors`;
+- listagens comuns iniciam com `page/pageSize/totalCount`; cursor exige evidência por endpoint;
+- ETag/If-Match é seletivo nos hotspots, não universal;
+- Idempotency-Key é obrigatório nos efeitos críticos/retryable, não em toda operação;
+- `DEFERRED` resulta em deny/fail explícito, nunca fallback permissivo;
+- o catálogo completo é cobertura contratual, não backlog de implementação imediata;
+- BOOT-001 pode criar o skeleton e enforcement points, mas não implementar commands, queries, endpoints, regras, banco/migrations ou gates.
 
 ### Migrations
 
-- N/A — tarefa documental; ownership e dependências foram definidos, nenhuma migration criada.
+- N/A — tarefa documental; nenhuma migration, SQL ou DbContext criado.
 
 ### Testes executados
 
-- leitura integral das fontes obrigatórias e do último handoff;
-- revisão cruzada contra MODEL-005, STATE-001, AUTH-001, EVT-001, ARC-003 e ADR-002/004;
-- validação de 16 schemas/DbContexts, owners, R2 producers/consumers, tabelas, ERDs e critérios de PASS;
-- `git diff --check`, revisão do diff, `git diff --stat`, `git status` e confirmação de branch.
+- leitura e cruzamento das fontes obrigatórias e do handoff DB-001;
+- revisão de ownership, permissions/policies, states, R2, idempotência e concorrência;
+- validação de 137 command IDs/names únicos, 77 query IDs/names únicos, 37 processos, 75 regras, oito diagramas e critérios de PASS;
+- `git diff --check`, revisão de diff/stat/status e confirmação da branch ao encerrar.
 
 ### Blockers restantes
 
-- nenhum para API-001;
-- alçadas financeiras, precedência/reallocation, Receivables vencidos no cancelamento, MakeupCredit durante pausa, RT/export clínico, step-up/session/revocation, privacy/legal hold e suporte privilegiado continuam antes da implementação/go-live aplicável.
+- nenhum para BOOT-001;
+- alçadas/step-up, precedência/reallocation, vencidos no cancelamento, MakeupCredit na pausa, RT/export/retention clínica, IAM concreto, upload/webhooks/rate limits e privacy/legal hold bloqueiam somente as implementações/go-live correspondentes.
 
 ### Riscos
 
-- overhead operacional dos 16 DbContexts/migrations;
-- referências opacas ficarem órfãs sem validação/reconciliação;
-- PersonMerge e R2 ficarem parcialmente aplicados;
-- overlaps temporais, overbooking e allocation races;
-- crescimento de JSONB clínico e Outbox/Inbox sem retenção futura;
-- vazamento de Clinical/Financial por Reports, Audit, Documents ou logs.
+- catálogo amplo virar CRUD ou implementation scope prematuro;
+- ModuleContracts virar shared domain model;
+- workflows eventuais serem interpretados como transação distribuída;
+- vazamento Clinical/Financial por Reports, Documents, Audit ou listagens;
+- deferred authority ser implementada permissivamente;
+- drift entre catálogo, OpenAPI futuro e endpoints.
 
 ### Próximas 3 ações
 
-1. `API-001` — Application/API Contracts;
-2. `IMP-BOOTSTRAP` — criar skeleton da solução;
-3. fechar detalhes deferred exigidos pela primeira vertical slice antes da implementação correspondente.
+1. `BOOT-001` — Solution Skeleton;
+2. fechar detalhes deferred exigidos pela primeira vertical slice antes da implementação correspondente;
+3. iniciar `IMP-001` ou a sequência de implementação definida pelo Project OS após o bootstrap.
 
 ### Instrução para a próxima IA
-Comece por API-001 usando DB-001 como baseline de IDs, owners, relações, Money/time, estados, idempotência e transaction boundaries. Não exponha entities/JSONB/storage internals, não crie acesso cross-schema e não inicie BOOT-001 durante API-001.
+Comece por BOOT-001 usando ARC-003, DB-001 e API-001 como baselines. Crie somente topology, registration/enforcement/test skeletons autorizados; não materialize todos os endpoints, não resolva deferred por inferência e não altere ownership/contratos.
 
 ---
 
