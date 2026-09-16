@@ -1537,7 +1537,7 @@ Nenhuma para iniciar AUTH-001. AUTH-001 deverá fechar atores, permissions e al�
 
 ### BLOCKING BEFORE IMPLEMENTATION
 
-STATE-OQ-001 a 008; matriz de permissions/alçadas; autenticação/MFA/session; IDs/timezone/Money/arredondamento; concorrência de capacidade, agenda e finanças.
+STATE-OQ-001 a 008; matriz de permissions/alçadas; autenticação/MFA/session; concorrência de capacidade, agenda e finanças. IDs/timezone/Money/arredondamento foram fechados posteriormente por DB-001.
 
 ### BLOCKING BEFORE GO-LIVE
 
