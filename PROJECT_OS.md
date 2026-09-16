@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: conceptual_modeling_in_progress
+  status: conceptual_modeling_complete
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: MODEL-005 — Modelo Conceitual Integrado
+  current_priority: STATE-001 — Máquinas de Estado
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,11 +39,11 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** M2 — Modelagem Conceitual — IN PROGRESS
-**MARCO CONCLUÍDO:** M1 — Domínio operacional fechado
-**PRÓXIMO MARCO:** M2 — Modelagem Conceitual Completa
-**ÚLTIMA TAREFA CONCLUÍDA:** MODEL-004 — Plans / Billing / Finance
-**PRÓXIMA TAREFA:** MODEL-005 — Modelo Conceitual Integrado
+**FASE ATUAL:** M3 — Máquinas de Estado — NEXT
+**MARCO CONCLUÍDO:** M2 — Modelagem Conceitual Completa
+**PRÓXIMO MARCO:** M3 — Máquinas de Estado
+**ÚLTIMA TAREFA CONCLUÍDA:** MODEL-005 — Modelo Conceitual Integrado
+**PRÓXIMA TAREFA:** STATE-001 — Máquinas de Estado
 
 | Domínio | Status |
 |---|---|
@@ -58,11 +58,11 @@ control:
 
 Sequência oficial imediata:
 
-1. `MODEL-005` — Modelo Conceitual Integrado;
-2. `STATE-001` — Máquinas de Estado;
-3. `EVT-001` — Catálogo final de Eventos de Domínio.
+1. `STATE-001` — Máquinas de Estado;
+2. `EVT-001` — Catálogo final de Eventos de Domínio;
+3. `AUTH-001` — Matriz de Permissões e Policies.
 
-Modelagem conceitual, máquinas de estado, arquitetura física, modelo lógico e implementação **não** estão concluídos.
+Modelagem conceitual está concluída. Máquinas de estado, catálogo final de eventos, permissões, arquitetura física, modelo lógico e implementação **não** estão concluídos.
 
 ---
 
@@ -504,9 +504,9 @@ Project OS na raiz e adotado como ponto de entrada.
 
 ---
 
-## Fase 2 — Modelagem conceitual — IN PROGRESS
+## Fase 2 — Modelagem conceitual — DONE
 
-`ARC-001`, `ARC-002` e `MODEL-001` a `MODEL-004` foram concluídos. A fase segue por `MODEL-005` (Modelo Conceitual Integrado).
+`ARC-001`, `ARC-002` e `MODEL-001` a `MODEL-005` foram concluídos. A baseline integrada passou sem blocker para STATE-001.
 
 ### People / Patients / Staff / Organization
 - [x] Person
@@ -568,11 +568,11 @@ Project OS na raiz e adotado como ponto de entrada.
 - [x] Closing / ClosingSnapshot
 
 ### Gate
-Modelo conceitual aprovado antes de desenhar SQL definitivo.
+Modelo conceitual integrado aprovado antes de desenhar SQL definitivo.
 
 ---
 
-## Fase 3 — Máquinas de estado
+## Fase 3 — Máquinas de estado — NEXT
 
 Obrigatórias:
 
@@ -824,7 +824,17 @@ Só entra quando Plans/Billing estiverem sem blocker.
 | MODEL-002 | Scheduling / Pilates | P0 | DONE |
 | MODEL-003 | Clinical | P0 | DONE |
 | MODEL-004 | Plans / Billing / Finance | P0 | DONE |
-| MODEL-005 | Modelo Conceitual Integrado | P0 | TODO |
+| MODEL-005 | Modelo Conceitual Integrado | P0 | DONE |
+
+---
+
+## EPIC STATE / EVT / AUTH — Próxima sequência
+
+| ID | Tarefa | Prioridade | Status |
+|---|---|---:|---|
+| STATE-001 | Máquinas de Estado | P0 | TODO |
+| EVT-001 | Catálogo final de Eventos de Domínio | P0 | TODO |
+| AUTH-001 | Matriz de Permissões e Policies | P0 | TODO |
 
 ---
 
@@ -1310,7 +1320,7 @@ f​isiofit-crm/
 
 `Git` registra a evolução.
 
-## 19.1 Índice canônico do Gate M1
+## 19.1 Índice canônico do projeto
 
 | Documento | Finalidade |
 |---|---|
@@ -1327,6 +1337,7 @@ f​isiofit-crm/
 | `docs/modeling/MODEL_002_SCHEDULING_PILATES.md` | Modelo conceitual de Scheduling e Pilates |
 | `docs/modeling/MODEL_003_CLINICAL.md` | Modelo conceitual de Clinical, histórico, acesso excepcional e exportação |
 | `docs/modeling/MODEL_004_PLANS_BILLING_FINANCE.md` | Modelo conceitual de Plans & Enrollment, Billing e Finance, com snapshots, reversões, concorrência e fechamento versionado |
+| `docs/modeling/MODEL_005_INTEGRATED_CONCEPTUAL_MODEL.md` | Baseline conceitual integrada dos 16 contextos, com catálogos globais, invariantes, cobertura e fluxos end-to-end |
 | `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx` | Fonte de descoberta preservada; consultar a auditoria para decisões superadas |
 
 ---
@@ -1361,12 +1372,12 @@ Validar a fundação da arquitetura ponta a ponta sem tentar construir o CRM int
 - [x] PatientProfile modelado;
 - [x] ProfessionalProfile modelado;
 - [x] Unit modelada;
-- [ ] Class modelada;
-- [ ] ClassSchedule modelado;
-- [ ] ClassMembership modelado;
-- [ ] capacidade definida;
-- [ ] conflito de paciente definido;
-- [ ] conflito de profissional definido;
+- [x] Class modelada;
+- [x] ClassSchedule modelado;
+- [x] ClassMembership modelado;
+- [x] capacidade definida conceitualmente;
+- [x] conflito de paciente definido conceitualmente;
+- [x] conflito de profissional definido conceitualmente;
 - [ ] permissões definidas;
 - [ ] use cases definidos;
 - [ ] API definida;
@@ -1436,44 +1447,43 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. `MODEL-005` — criar Modelo Conceitual Integrado.
-2. `STATE-001` — criar Máquinas de Estado.
-3. `EVT-001` — criar catálogo final de Eventos de Domínio.
+1. `STATE-001` — criar Máquinas de Estado.
+2. `EVT-001` — criar catálogo final de Eventos de Domínio.
+3. `AUTH-001` — criar Matriz de Permissões e Policies.
 
 ## Em seguida
 
-4. fechar catálogo de eventos;
-5. fechar matriz de permissões/dependências;
-6. avançar para arquitetura física e modelo lógico somente após aprovação conceitual.
+4. fechar matriz de dependências e contratos públicos;
+5. avançar para arquitetura física;
+6. criar modelo lógico somente após os gates correspondentes.
 
 ---
 
 # 24. ÚLTIMO HANDOFF
 
-## HANDOFF — 2026-09-15 — MODEL-004
+## HANDOFF — 2026-09-15 — MODEL-005
 
 ### Objetivo da sessão
-Criar o modelo conceitual detalhado de Plans & Enrollment, Billing e Finance, preservando ownership, snapshots, vigência, reversões, concorrência e auditabilidade.
+Criar a baseline conceitual integrada dos 16 contextos a partir de MODEL-001 a MODEL-004, auditando ownership, referências, cardinalidades, invariantes, dependências, processos, regras e readiness de VS-01.
 
 ### Status atual
-MODEL-004 — DONE. Próxima tarefa: MODEL-005 — Modelo Conceitual Integrado.
+MODEL-005 — DONE / PASS. Próxima tarefa: STATE-001 — Máquinas de Estado.
 
 ### Concluído
-- Plan, PlanVersion, Contract e Enrollment separados e detalhados, incluindo renovação, pausa, cancelamento e frequência com vigência;
-- PlanVersion definida como root imutável e Contract como snapshot aceito; Enrollment pode continuar por Contracts sucessivos;
-- Receivable, Payment, PaymentAllocation, PaymentReversal, Refund, BillingAdjustment, Negotiation e FinancialRestriction modelados em Billing;
-- PaymentAllocation definida como child de Payment; reversal preserva Payment e Refund é root próprio/devolução real;
-- FinancialAccount, FinancialTransaction, Expense/Category, Transfer, ReconciliationAdjustment, Closing e ClosingSnapshot modelados em Finance;
-- Payment e FinancialTransaction, Expense e FinancialTransaction, previsto e realizado, competência e caixa mantidos distintos;
-- snapshots de Contract, Receivable e Closing explicitados; ClosingSnapshot definido como child imutável/versionado;
-- aggregates pequenos justificados, operações/eventos/read models definidos, invariantes PLN/ENR/BIL/FIN e hotspots concorrentes documentados;
-- processos PLN/ENR/BIL/FIN suportados, onze diagramas Mermaid e matrizes conceitual, de relações e invariantes incluídos;
-- Benefit, Entitlement e ContractAmendment adiados sem invenção; Commission rejeitada no MVP;
-- nenhum detalhe físico, API, banco, provider, algoritmo de conciliação, autorização técnica ou UI foi introduzido.
+- catálogos mestres de conceitos, aggregate roots, referências, cardinalidades, snapshots, read models e invariantes;
+- 16 contextos integrados sem aggregate cross-context, ownership compartilhado ou escrita direta entre contexts;
+- cardinalidade Contract/Enrollment consolidada: Enrollment operacional contínuo pode atravessar Contracts sucessivos;
+- cadeias operacional, comercial, clínica, de turma e financeira validadas sem fundir conceitos;
+- 37/37 processos do PROCESS_INDEX conceitualmente suportados e 75/75 regras do RULES_INDEX representáveis;
+- eventos cross-context mínimos classificados como NORMAL, PERSONAL, FINANCIAL ou CLINICAL_METADATA;
+- conceitos órfãos/residuais classificados e riscos de aggregates gigantes registrados;
+- dependências circulares auditadas sem ciclo conhecido de escrita síncrona;
+- oito diagramas globais e seis fluxos end-to-end documentados;
+- VS-01 classificada como CONCEPTUALLY_READY, sem afirmar readiness de implementação.
 
 ### Arquivos criados
 
-- `docs/modeling/MODEL_004_PLANS_BILLING_FINANCE.md`.
+- `docs/modeling/MODEL_005_INTEGRATED_CONCEPTUAL_MODEL.md`.
 
 ### Arquivos alterados
 
@@ -1481,16 +1491,11 @@ MODEL-004 — DONE. Próxima tarefa: MODEL-005 — Modelo Conceitual Integrado.
 
 ### Decisões tomadas
 
-- PlanVersion é root imutável separado e diretamente referenciável;
-- Contract e Enrollment são roots distintos; renovação cria novo Contract sem necessariamente recriar Enrollment;
-- PaymentAllocation e PaymentReversal pertencem ao aggregate Payment;
-- Refund, Negotiation e FinancialRestriction são roots próprios em Billing;
-- BillingAdjustment é child imutável de Receivable;
-- FinancialTransaction é root independente de FinancialAccount por volume/concorrência/histórico;
-- Expense, ExpenseCategory, Transfer e ReconciliationAdjustment são roots candidatos separados;
-- ClosingSnapshot é child imutável do Closing mensal;
-- OVERDUE é condição derivada de saldo, vencimento e tolerância;
-- Benefit, Entitlement e ContractAmendment permanecem deferred; Commission permanece fora do MVP.
+- nenhuma regra de domínio aprovada foi alterada;
+- a seta Attendance→ClinicalEntry é etapa de processo/contexto, não relação estrutural;
+- Contract aceito liga-se a zero ou um Enrollment antes da ativação e a exatamente um quando sustenta o vínculo; Enrollment ativado pode ter um ou mais Contracts sucessivos;
+- Billing→Finance para validar FinancialAccount é leitura síncrona; PaymentConfirmed/Reversed/Refund são fatos assíncronos e não criam escrita circular;
+- somente o evento que representar saída real de Refund poderá originar FinancialTransaction, a formalizar em STATE-001/EVT-001.
 
 ### Migrations
 
@@ -1498,32 +1503,32 @@ MODEL-004 — DONE. Próxima tarefa: MODEL-005 — Modelo Conceitual Integrado.
 
 ### Testes executados
 
-- leitura e validação documental integral contra `PROJECT_OS`, último handoff, `GATE_M1_AUDIT`, `CONTEXT_MAP`, `OWNERSHIP_MAP`, MODEL-001 a MODEL-003, glossário, parâmetros, domínios Plans/Billing/Finance, regras, processos e decisões;
-- revisão das checklists de ownership, snapshots, reversibilidade, processos, concorrência e critérios de pass de MODEL-004;
+- leitura integral de todas as fontes obrigatórias e do último handoff;
+- revisão cruzada de owner, conceitos, cardinalidades, snapshots, rules, processes, decisions e open questions;
+- validação textual dos 40 tópicos, tabelas e oito blocos Mermaid do MODEL-005;
 - `git diff --check`, revisão do diff e `git diff --stat`.
 
 ### Blockers restantes
 
-- nenhum para MODEL-005/modelagem conceitual integrada;
-- antes da implementação financeira: alçadas de desconto/negociação, tratamento de vencidos no cancelamento, precedência de operações concorrentes, matriz de permissões e definições físicas de Money/idempotência;
-- integração bancária/provider, pagamento parcial de Expense e granularidade física de ClosingSnapshot permanecem futuras e não bloqueiam MODEL-005.
+- nenhum para iniciar STATE-001;
+- STATE-001 deve formalizar qual transição de Refund representa saída real e as transições Contract/Enrollment sem mudar a cardinalidade;
+- blockers de implementação e go-live permanecem classificados no MODEL-005 e na seção 9 deste PROJECT_OS.
 
 ### Riscos
 
-- fundir Contract, Receivable, Payment e FinancialTransaction ou criar aggregate financeiro gigante;
-- reescrever snapshots/versões históricos ou apagar Payment/Closing em correções;
-- tratar FinancialRestriction como Enrollment.PAUSED;
-- permitir allocations, reversals, refunds, transfers ou closings concorrentes violarem limites/cutoffs;
-- conceder alçada financeira a Developer por autoridade técnica;
-- transformar valores configuráveis ou categorias em constantes estruturais.
+- arquitetura física introduzir dependência síncrona reversa onde a baseline exige evento/read model;
+- transformar read model ou snapshot em source of truth atualizável;
+- carregar coleções históricas ilimitadas em Person, Class, CareEpisode, FinancialAccount ou Closing;
+- eventos financeiros duplicarem movimentos por correlação insuficiente;
+- eventos clínicos vazarem conteúdo em vez de metadados mínimos.
 
 ### Próximas 3 ações
-1. `MODEL-005` — Modelo Conceitual Integrado;
-2. `STATE-001` — Máquinas de Estado;
-3. `EVT-001` — Catálogo final de Eventos de Domínio.
+1. `STATE-001` — Máquinas de Estado;
+2. `EVT-001` — Catálogo final de Eventos de Domínio;
+3. `AUTH-001` — Matriz de Permissões e Policies.
 
 ### Instrução para a próxima IA
-Comece por `MODEL-005` usando Context Map, Ownership Map e MODEL-001 a MODEL-004. Integre referências, cardinalidades e eventos sem fundir aggregates ou contexts e sem iniciar STATE-001, modelo lógico ou implementação.
+Comece por `STATE-001` usando MODEL-005 como baseline e os modelos de origem para detalhes locais. Formalize transições sem mudar owners, cardinalidades ou snapshots e sem avançar para EVT-001 nesta mesma execução.
 
 ---
 
