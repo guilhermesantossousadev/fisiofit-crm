@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: state_modeling_complete
+  status: event_catalog_complete
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: EVT-001 — Catálogo final de Eventos de Domínio
+  current_priority: AUTH-001 — Matriz de Permissões e Policies
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,11 +39,11 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** EVT-001 — Catálogo final de Eventos de Domínio — NEXT
-**MARCO CONCLUÍDO:** M3 — Máquinas de Estado
-**PRÓXIMO MARCO:** EVT-001 — Catálogo final de Eventos de Domínio
-**ÚLTIMA TAREFA CONCLUÍDA:** STATE-001 — Máquinas de Estado
-**PRÓXIMA TAREFA:** EVT-001 — Catálogo final de Eventos de Domínio
+**FASE ATUAL:** AUTH-001 — Matriz de Permissões e Policies — NEXT
+**MARCO CONCLUÍDO:** EVT-001 — Catálogo final de Eventos de Domínio
+**PRÓXIMO MARCO:** AUTH-001 — Matriz de Permissões e Policies
+**ÚLTIMA TAREFA CONCLUÍDA:** EVT-001 — Catálogo final de Eventos de Domínio
+**PRÓXIMA TAREFA:** AUTH-001 — Matriz de Permissões e Policies
 
 | Domínio | Status |
 |---|---|
@@ -58,11 +58,11 @@ control:
 
 Sequência oficial imediata:
 
-1. `EVT-001` — Catálogo final de Eventos de Domínio;
-2. `AUTH-001` — Matriz de Permissões e Policies;
-3. `ARC-003` — Matriz de Dependências e início da arquitetura física.
+1. `AUTH-001` — Matriz de Permissões e Policies;
+2. `ARC-003` — Matriz de Dependências e início da arquitetura física;
+3. `ARC-004` — ADR do monólito modular, conforme o roadmap.
 
-Modelagem conceitual e máquinas de estado estão concluídas. Catálogo final de eventos, permissões, arquitetura física, modelo lógico e implementação **não** estão concluídos.
+Modelagem conceitual, máquinas de estado e catálogo final de eventos estão concluídos. Permissões, arquitetura física, modelo lógico e implementação **não** estão concluídos.
 
 ---
 
@@ -618,8 +618,8 @@ Máquinas prioritárias formalizadas, lifecycles restantes classificados e nenhu
 - [ ] definir infrastructure layer;
 - [ ] definir Unit of Work;
 - [ ] definir transações;
-- [ ] definir domain events;
-- [ ] definir integration events;
+- [x] definir domain events conceituais — EVT-001;
+- [x] definir integration events conceituais — EVT-001;
 - [ ] definir Outbox;
 - [ ] definir worker;
 - [ ] definir fronteira do n8n;
@@ -836,8 +836,8 @@ Só entra quando Plans/Billing estiverem sem blocker.
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
 | STATE-001 | Máquinas de Estado | P0 | DONE |
-| EVT-001 | Catálogo final de Eventos de Domínio | P0 | TODO |
-| AUTH-001 | Matriz de Permissões e Policies | P0 | TODO |
+| EVT-001 | Catálogo final de Eventos de Domínio | P0 | DONE |
+| AUTH-001 | Matriz de Permissões e Policies | P0 | READY |
 
 ---
 
@@ -1342,6 +1342,7 @@ f​isiofit-crm/
 | `docs/modeling/MODEL_004_PLANS_BILLING_FINANCE.md` | Modelo conceitual de Plans & Enrollment, Billing e Finance, com snapshots, reversões, concorrência e fechamento versionado |
 | `docs/modeling/MODEL_005_INTEGRATED_CONCEPTUAL_MODEL.md` | Baseline conceitual integrada dos 16 contextos, com catálogos globais, invariantes, cobertura e fluxos end-to-end |
 | `docs/state-machines/STATE_001_STATE_MACHINES.md` | Lifecycles, máquinas de estado, transições, guards, condições derivadas, temporalidade, dependências e auditoria |
+| `docs/architecture/DOMAIN_EVENTS.md` | Catálogo canônico de domain/integration events, owners, payloads, consumers, sensibilidade, ordering, idempotência e cobertura |
 | `docs/product/Fisiofit_CRM_2.0_Caderno_Mestre_CONSOLIDADO.docx` | Fonte de descoberta preservada; consultar a auditoria para decisões superadas |
 
 ---
@@ -1451,9 +1452,9 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. `EVT-001` — criar catálogo final de Eventos de Domínio.
-2. `AUTH-001` — criar Matriz de Permissões e Policies.
-3. `ARC-003` — criar Matriz de Dependências e iniciar a arquitetura física conforme o roadmap.
+1. `AUTH-001` — criar Matriz de Permissões e Policies.
+2. `ARC-003` — criar Matriz de Dependências e iniciar a arquitetura física conforme o roadmap.
+3. `ARC-004` — registrar o ADR do monólito modular conforme o roadmap.
 
 ## Em seguida
 
@@ -1465,30 +1466,29 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 # 24. ÚLTIMO HANDOFF
 
-## HANDOFF — 2026-09-15 — STATE-001
+## HANDOFF — 2026-09-16 — EVT-001
 
 ### Objetivo da sessão
-Formalizar lifecycles e máquinas de estado dos conceitos transacionais, distinguindo estado persistido, condição derivada, temporalidade, fato imutável e status de projeção, sem mudar processos, regras, ownership ou boundaries.
+Consolidar o catálogo canônico de fatos de domínio e integração, distinguindo comandos, operações, mensagens, auditoria e atualizações de read model, sem escolher infraestrutura de mensageria.
 
 ### Status atual
-STATE-001 — DONE / PASS. Próxima tarefa: EVT-001 — Catálogo final de Eventos de Domínio.
+EVT-001 — DONE / PASS. AUTH-001 — READY e próxima tarefa oficial.
 
 ### Concluído
-- máquinas prioritárias de Opportunity, Appointment, ClassOccurrence, Attendance, MakeupCredit, CareEpisode, Assessment, ClinicalEntry, Contract, Enrollment, Receivable, Payment, FinancialRestriction, Expense e Closing;
-- lifecycles adicionais de Task, Refund, PatientProfile e ProfessionalProfile;
-- RefundCompleted definido como fato candidato de saída real, distinto de RefundIssued;
-- OVERDUE/delinquency/saldos/capacidade/disponibilidade classificados como condições derivadas;
-- ClassSchedule, ClassMembership e vínculos de Patients/Staff preservados como lifecycles temporais;
-- Rectification, Addendum, PaymentReversal, Transfer, FinancialTransaction e snapshots classificados como registros imutáveis;
-- matrizes mestres de estados, transições, inválidas, dependências e auditoria;
-- 15 diagramas Mermaid separados por máquina;
-- 37/37 processos representáveis e 75/75 regras compatíveis;
-- nenhum STATE_PROCESS_GAP, STATE_RULE_CONFLICT, cross-context write ou ciclo síncrono novo;
-- open questions classificadas sem bloquear EVT-001.
+- terminologia, princípios, naming, envelope conceitual, correlation/causation e versionamento;
+- catálogo por owner dos 16 contexts, sem inventar eventos para contextos sem sustentação;
+- master catalog com status ADOPTED, INTERNAL_ONLY, DEFERRED, REJECTED e DEPRECATED;
+- payload mínimo e dados explicitamente proibidos para todos os integration events adotados;
+- producer/consumer matrix e classificações de consistency, sensitivity, ordering, idempotency, audit e failure impact;
+- matrizes de cobertura de transições e 37/37 processos;
+- cadeias prioritárias de contratação, pagamento, reversal, refund, pausa, cancelamento, clínico, leave e merge;
+- duplicidades/aliases resolvidos sem alterar ownership ou state machines;
+- riscos e consequências físicas registrados sem escolher broker, transporte, schema ou outbox/inbox físico;
+- nenhum blocker para AUTH-001.
 
 ### Arquivos criados
 
-- `docs/state-machines/STATE_001_STATE_MACHINES.md`.
+- `docs/architecture/DOMAIN_EVENTS.md`.
 
 ### Arquivos alterados
 
@@ -1496,14 +1496,14 @@ STATE-001 — DONE / PASS. Próxima tarefa: EVT-001 — Catálogo final de Event
 
 ### Decisões tomadas
 
-- Contract usa estado `ACTIVE`; `ContractAccepted` é o fato de `DRAFT → ACTIVE`, não estado persistido concorrente;
-- Receivable/Expense `OVERDUE` são derivados, embora possam alimentar projeção/evento candidato;
-- Attendance permanece corrigível somente por AttendanceCorrection append-only;
-- MakeupReservation não recebe máquina independente e é derivada dos fatos de reserva/crédito/occurrence;
-- Payment admite PENDING ou criação+confirmação atômica manual; confirmação só é compensada por PaymentReversal;
-- `RefundCompleted` é o único fato candidato de Refund que representa saída real para Finance;
-- Transfer é registro atômico imutável sem estados bancários externos inventados;
-- PrivacyRequest, PersonMerge, ProfessionalLeave e Negotiation permanecem DEFERRED onde faltam estados/guards aprovados.
+- `RefundCompleted` é o único fato de Refund que representa saída real para Finance; `RefundIssued` permanece interno;
+- experimental usa `AppointmentScheduled/Completed/NoShowRecorded` de Scheduling com purpose EXPERIMENTAL; CRM não duplica o fato;
+- renovação cria novo Contract e publica `ContractAccepted` com correlação opcional ao anterior; `ContractRenewed` é internal-only;
+- transferência de turma é `ClassMembershipEnded` + `ClassMembershipStarted` correlacionados;
+- `ReceivableBecameOverdue` é fato da condição derivada, sem persistir OVERDUE como estado;
+- `MonthClosed`, `ExpenseCreated`, `MoneyTransferred` e `EnrollmentFrequencyChanged` são nomes canônicos; aliases concorrentes foram deprecated;
+- eventos clínicos públicos contêm apenas metadata; break-glass/export são SECURITY_SENSITIVE;
+- Communication usa FACT_DRIVEN para fatos objetivos e EXPLICIT_INTENT para campanha/ad-hoc/clínico.
 
 ### Migrations
 
@@ -1511,31 +1511,32 @@ STATE-001 — DONE / PASS. Próxima tarefa: EVT-001 — Catálogo final de Event
 
 ### Testes executados
 
-- leitura integral das fontes obrigatórias e do último handoff embutido no PROJECT_OS;
-- revisão cruzada de estados, invariantes, owners, rules, processes, parameters e decisions;
-- validação estrutural das 43 seções, matrizes e diagramas do STATE-001;
+- leitura e revisão cruzada das fontes obrigatórias e do último handoff;
+- validação de owners, consumers, payloads, sensibilidade, idempotência, ordering, versionamento, STATE-001 e MODEL-005;
+- conferência de cobertura dos 37 processos e das transições prioritárias;
 - `git diff --check`, revisão do diff e `git diff --stat`.
 
 ### Blockers restantes
 
-- nenhum para EVT-001;
-- blockers antes de arquitetura, implementação e go-live permanecem classificados no STATE-001 e na seção 9 deste PROJECT_OS.
+- nenhum para AUTH-001;
+- questões de Identity, Communication, Documents, concorrência financeira, MakeupCredit/pausa, Receivables vencidos, retenção e LGPD permanecem classificadas para arquitetura, implementação ou go-live.
 
 ### Riscos
 
-- EVT-001 promover todo candidate event indiscriminadamente ou duplicar eventos de estado/condição derivada;
-- implementação persistir `OVERDUE`, saldo, capacidade/disponibilidade ou vigência derivada como segunda fonte de verdade;
-- reversal/refund/Closing reopen serem implementados como edição destrutiva;
-- consumidores copiarem estado externo em vez de usar contrato/projeção/evento do owner;
-- payload clínico exceder metadados mínimos.
+- arquitetura física publicar eventos INTERNAL_ONLY/DEFERRED por conveniência;
+- consumer tratar evento como autorização ou escrita cross-context;
+- duplicação/out-of-order/replay criar fatos financeiros repetidos;
+- schema evolution quebrar consumers;
+- vazamento de conteúdo clínico, CPF, credencial ou payload financeiro excessivo;
+- projeções stale serem tratadas como source of truth.
 
 ### Próximas 3 ações
-1. `EVT-001` — Catálogo final de Eventos de Domínio;
-2. `AUTH-001` — Matriz de Permissões e Policies;
-3. `ARC-003` — Matriz de Dependências e início da arquitetura física.
+1. `AUTH-001` — Matriz de Permissões e Policies;
+2. `ARC-003` — Matriz de Dependências e início da arquitetura física;
+3. `ARC-004` — ADR do monólito modular conforme o roadmap.
 
 ### Instrução para a próxima IA
-Comece por EVT-001 usando STATE-001 como fonte das transições e mantendo todos os nomes como candidatos até definir owner, exposição, payload mínimo, sensibilidade, correlação e idempotência. Não altere estados, guards ou ownership silenciosamente.
+Comece por AUTH-001 usando STATE-001 para comandos/transições e DOMAIN_EVENTS para sensibilidade, audit reason e operações críticas. Não escolha arquitetura física nem promova eventos deferred durante AUTH-001.
 
 ---
 
