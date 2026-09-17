@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: solution_skeleton_complete
+  status: imp_001_blocked_by_organization_unit_prerequisite
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: IMP-001 — definir primeira vertical slice pequena e fechar seus gates
+  current_priority: IMP-000 — ORGANIZATION / UNIT BASELINE
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,11 +39,11 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** pós-bootstrap — seleção e preparação da primeira vertical slice
-**MARCO CONCLUÍDO:** BOOT-001 — Solution Skeleton — DONE / PASS
-**PRÓXIMO MARCO:** IMP-001 — primeira vertical slice pequena, ainda a detalhar e tornar READY
-**ÚLTIMA TAREFA CONCLUÍDA:** BOOT-001 — Solution Skeleton
-**PRÓXIMA TAREFA:** definir o escopo mínimo de IMP-001 e fechar somente os gates exigidos por ele
+**FASE ATUAL:** pós-bootstrap — prerequisite Organization/Unit anterior ao primeiro vertical slice
+**MARCO CONCLUÍDO:** IMP-001-DESIGN — Register Patient Vertical Slice Design — DONE / PASS (revisão corretiva final)
+**PRÓXIMO MARCO:** IMP-000 — ORGANIZATION / UNIT BASELINE
+**ÚLTIMA TAREFA CONCLUÍDA:** revisão corretiva final de IMP-001-DESIGN
+**PRÓXIMA TAREFA:** materializar somente o baseline Clinic/Unit e o contrato owner de validação; não iniciar IMP-001
 
 | Domínio | Status |
 |---|---|
@@ -59,10 +59,11 @@ control:
 Sequência oficial imediata:
 
 1. `BOOT-001` — Solution Skeleton — concluído;
-2. definir uma primeira vertical slice pequena e verificável para `IMP-001`;
-3. fechar os detalhes deferred exigidos por essa slice antes de implementá-la.
+2. `IMP-001-DESIGN` — primeiro slice pequeno e verificável — concluído;
+3. `IMP-000` — Organization / Unit Baseline — próximo prerequisite;
+4. `IMP-001` — somente depois de IMP-000, mantendo minors/payer diferente e produção externa gated.
 
-Modelagem conceitual, máquinas de estado, catálogo final de eventos, autorização conceitual, arquitetura física, modelo lógico, contratos de aplicação/API e o skeleton físico estão concluídos. API-001 definiu 137 commands e 77 queries como mapa de cobertura contratual, não como escopo imediato de implementação. BOOT-001 foi encerrado sem implementação funcional; IMP-001 ainda precisa ser delimitado e passar por seus gates.
+Modelagem conceitual, máquinas de estado, catálogo final de eventos, autorização conceitual, arquitetura física, modelo lógico, contratos de aplicação/API e o skeleton físico estão concluídos. API-001 definiu 137 commands e 77 queries como mapa de cobertura contratual, não como escopo imediato de implementação. IMP-001-DESIGN delimitou o primeiro recorte, mas a revisão final confirmou que a Unit obrigatória não possui owner persistido. IMP-001 está `BLOCKED_BY_PREREQUISITE` até IMP-000 entregar Clinic/Unit reais e contrato público de validação.
 
 ---
 
@@ -872,7 +873,7 @@ Só entra quando Plans/Billing estiverem sem blocker.
 | DB-001 | Logical Data Model | P0 | DONE |
 | API-001 | Application/API Contracts | P0 | DONE |
 
-> API-001 foi concluído e estabilizou commands, queries, endpoint ownership, HTTP/versioning, errors, auth, idempotência, concorrência e ModuleContracts. BOOT-001 foi concluído; a próxima ação é delimitar IMP-001.
+> API-001 e BOOT-001 estão concluídos. A revisão final de IMP-001-DESIGN tornou IMP-000 o próximo prerequisite obrigatório antes de qualquer implementação de Register Patient.
 
 ---
 
@@ -885,6 +886,18 @@ Só entra quando Plans/Billing estiverem sem blocker.
 > DB-001 e API-001 forneceram os boundaries e contracts necessários. BOOT-001 pode criar somente o skeleton; detalhes deferred continuam gates das slices afetadas.
 
 > O catálogo de 137 commands + 77 queries não é backlog de BOOT-001. `READY` em API-001 significa implementável futuramente, não selecionado para implementação imediata.
+
+---
+
+## EPIC IMP — Vertical slices de implementação
+
+| ID | Tarefa | Prioridade | Status |
+|---|---|---:|---|
+| IMP-001-DESIGN | Register Patient Vertical Slice Design | P0 | DONE — PASS |
+| IMP-000 | Organization / Unit Baseline | P0 | READY — NEXT |
+| IMP-001 | Register Patient Vertical Slice | P0 | BLOCKED_BY_PREREQUISITE: IMP-000 |
+
+> Escopo normativo de IMP-001 e do predecessor mínimo: `docs/implementation/IMP_001_REGISTER_PATIENT_DESIGN.md`. IMP-000 materializa somente Clinic/Unit, OrganizationDbContext/migration, contract de validação e testes PostgreSQL; sem UI, CRUD completo, Room/Calendar ou seed de produção. Após IMP-000, o cadastro adulto/self-payer e GET poderão ser promovidos; menores, payer diferente, UI e ativação externa/produção sem IAM/Audit concretos permanecem GATED.
 
 ---
 
@@ -1496,19 +1509,127 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. definir `IMP-001` como uma primeira vertical slice pequena e verificável, derivada de VS-01;
-2. fechar somente os detalhes deferred e critérios de aceitação exigidos por esse slice;
-3. mover `IMP-001` para READY apenas quando seus gates estiverem completos.
+1. executar `IMP-000 — ORGANIZATION / UNIT BASELINE` no escopo mínimo definido pelo design;
+2. validar Clinic→Unit, ACTIVE/INACTIVE e o public contract com PostgreSQL real, sem CRUD/UI/seed de produção;
+3. manter `IMP-001` bloqueado e não iniciar People/Patients até IMP-000 estar DONE.
 
 ## Em seguida
 
-4. fechar os detalhes deferred de IAM/segurança necessários à implementação correspondente;
-5. preparar a primeira vertical slice somente quando seus gates estiverem completos;
-6. implementar sem alterar os boundaries de ARC-003 e os contratos de API-001.
+4. promover e executar `IMP-001 — REGISTER PATIENT VERTICAL SLICE` somente após o prerequisite;
+5. fechar os detalhes deferred de IAM/Audit necessários à ativação externa/produção;
+6. desenhar guardian/payer diferente/frontend e só depois retomar VS-01 turma conforme seus gates.
 
 ---
 
 # 24. ÚLTIMO HANDOFF
+
+## HANDOFF — 2026-09-16 — IMP-001-DESIGN FINAL CORRECTIVE REVIEW
+
+### Objetivo da sessão
+Revisar exclusivamente a lacuna de Organization/Unit, ownership de idempotência, failure windows, teste de autorização, audit e readiness do design, sem implementar código.
+
+### Status atual
+IMP-001-DESIGN — DONE / PASS. IMP-001 — **BLOCKED_BY_PREREQUISITE**. Próxima tarefa: `IMP-000 — ORGANIZATION / UNIT BASELINE`.
+
+### Decisões tomadas
+- a validação de `primaryUnitId` não pode funcionar legitimamente no skeleton atual: não existem Unit persistida, `OrganizationDbContext` nem handler owner;
+- foi escolhida a alternativa B para preservar o tamanho do slice: IMP-000 precede IMP-001;
+- IMP-000 materializa somente `organization.clinic` e `organization.unit` (Clinic é indispensável por `INV-ORG-001`), `OrganizationDbContext`, migration owner, lifecycle ACTIVE/INACTIVE, public contract de validação e testes PostgreSQL;
+- IMP-000 não inclui UI, CRUD completo, Room, Holiday/Calendar ou seed de produção; fixture persistida é permitida somente nos testes do owner;
+- `patients.command_receipt` é o único owner da `Idempotency-Key` HTTP e do workflow completo;
+- `people.command_receipt` deduplica somente `CreatePersonForPatientRegistration` por operation key derivada `{workflowId}/person-step/v1` e hash do subrequest People;
+- falhas antes/depois dos commits People/Patients, resposta perdida, concorrência da mesma key e corrida de CPF possuem recuperação determinística sem transação cross-context;
+- policies e application boundary são reais; principal/authentication handler fake existe somente em ApiTests/IntegrationTests e nunca no Host normal;
+- business audit não é logging operacional. Sem superfície Audit real, ativação externa/produção continua gated e nenhuma implementação improvisada entra no slice.
+
+### Persistence e migrations
+- IMP-000: `organization.clinic`, `organization.unit`, migration `Organization_InitialUnitBaseline` e history Organization;
+- IMP-001 futuro: `people.person`, `people.contact_point`, `people.command_receipt`, `patients.patient_profile`, `patients.command_receipt`;
+- migrations People/Patients permanecem independentes e sem FK cross-schema.
+
+### Blockers e gates
+- blocker técnico único para iniciar IMP-001: IMP-000 ainda não executado;
+- minors/guardian e payer diferente permanecem branches gated;
+- ativação externa/produção permanece gated por IAM concreto, Audit e Unit real provisionada pelo owner.
+
+### Testes executados
+- releitura das fontes canônicas solicitadas e inspeção do design/PROJECT_OS;
+- revisão documental dos seis failure windows, receipts e boundaries;
+- `git diff --check` e `git status` serão registrados no fechamento desta execução.
+
+### Próximas 3 ações
+1. `IMP-000 — ORGANIZATION / UNIT BASELINE`;
+2. validar baseline em PostgreSQL e fechar seu DoD, sem iniciar Patient registration;
+3. somente então promover `IMP-001` para implementação dos branches aprovados.
+
+### Instrução para a próxima IA
+Não inicie IMP-001. Implemente primeiro somente o baseline owner Organization descrito no design; não use Unit hardcoded/config/fake, não crie CRUD/UI e não mova a validação para Patients.
+
+---
+
+## HANDOFF — 2026-09-16 — IMP-001-DESIGN
+
+> Histórico anterior à revisão corretiva final; o handoff imediatamente acima o substitui para readiness e próxima tarefa.
+
+### Objetivo da sessão
+Definir, sem código, o primeiro vertical slice funcional `REGISTER PATIENT` e provar que People e Patients permanecem isolados dentro do assembly Registry.
+
+### Status atual
+IMP-001-DESIGN — DONE / PASS. IMP-001 — READY_WITH_GATED_BRANCHES para cadastro adulto/self-payer e GET administrativo backend-only.
+
+### Concluído
+- POST `/api/v1/patients` e GET `/api/v1/patients/{patientId}` especificados;
+- Patients Application escolhida como orchestration owner; Host permanece sem regra;
+- People cria Person/ContactPoint em transaction própria e Patients cria PatientProfile em outra;
+- estratégia A escolhida: falha Patients preserva Person legítima; mesma idempotency key retoma deterministicamente;
+- `Idempotency-Key` obrigatório com receipt/hash context-local em People e Patients;
+- CPF, telefone, birth date, Unit, authorization, read composition e Problem Details definidos;
+- minors/guardian e payer diferente classificados como GATED; frontend como DEFERRED;
+- persistence limitada a `people.person`, `people.contact_point`, receipts locais e `patients.patient_profile`;
+- duas migrations independentes e plano de testes com PostgreSQL/Testcontainers definidos.
+
+### Arquivos alterados
+- criado `docs/implementation/IMP_001_REGISTER_PATIENT_DESIGN.md`;
+- atualizado `PROJECT_OS.md`.
+
+### Decisões tomadas
+- rota pertence logicamente a Patients; `RegisterPatient` é facade de Application, não novo bounded context;
+- `CreatePerson` é public contract mínimo de People e não expõe entity;
+- GET compõe Patients + People + Organization por contratos síncronos, sem join cross-schema;
+- persistência cross-context atômica e saga compensatória foram rejeitadas;
+- Person já criada não é apagada; retry reutiliza `personId` pelo receipt People;
+- produção externa continua gated pelo IAM/Audit concreto, sem bloquear os testes e o subfluxo backend aprovado.
+
+### Migrations
+N/A nesta tarefa documental. Planejadas: `People_InitialPatientRegistrationSlice` e `Patients_InitialPatientRegistrationSlice`, sem FK cross-schema.
+
+### Testes executados
+- inspeção integral das fontes obrigatórias e da estrutura real do skeleton;
+- validação documental de ownership, transactions, idempotência, erro, persistence e test plan;
+- `git diff --check` e inspeções finais registradas no encerramento desta execução.
+
+### Blockers restantes
+- nenhum para o subfluxo adulto/self-payer em desenvolvimento/testes com principal/scopes explícitos;
+- cadastro de menor bloqueado por GuardianLink e requisitos completos de representação/consentimento;
+- payer diferente bloqueado por fluxo de outra Person/ResponsiblePayerLink;
+- ativação externa/produção bloqueada por IAM/session/revocation/Unit grants e Audit concretos.
+
+### Riscos
+- Person legítima sem PatientProfile após falha parcial;
+- duplicate/race de CPF ou profile;
+- Unit mudar entre validações;
+- bypass acidental entre DbContexts no mesmo assembly;
+- contratos públicos ou persistence crescerem além do slice.
+
+### Próximas 3 ações
+1. `IMP-001 — REGISTER PATIENT VERTICAL SLICE`;
+2. implementar somente o branch adulto/self-payer e GET, com PostgreSQL/Testcontainers e testes negativos;
+3. não iniciar guardian, payer diferente, frontend ou turma nesta execução futura.
+
+### Instrução para a próxima IA
+Comece por `docs/implementation/IMP_001_REGISTER_PATIENT_DESIGN.md`. Preserve duas transactions/DbContexts/migrations, exija Idempotency-Key e não amplie os branches GATED.
+
+---
 
 ## HANDOFF — 2026-09-16 — BOOT-001
 
