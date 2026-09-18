@@ -27,3 +27,20 @@ public sealed record UnitValidationResult(
     public static UnitValidationResult Inactive(Guid unitId) =>
         new(UnitValidationOutcome.Inactive, unitId);
 }
+
+public interface IGetUnitForPatientRead
+{
+    Task<UnitPatientReadResult> GetAsync(Guid unitId, CancellationToken cancellationToken = default);
+}
+
+public sealed record UnitPatientReadResult(
+    bool Found,
+    Guid UnitId,
+    string? Name = null,
+    string? Status = null)
+{
+    public static UnitPatientReadResult Missing(Guid unitId) => new(false, unitId);
+
+    public static UnitPatientReadResult Existing(Guid unitId, string name, string status) =>
+        new(true, unitId, name, status);
+}

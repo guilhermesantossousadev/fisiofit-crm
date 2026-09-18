@@ -12,7 +12,31 @@ using Fisiofit.Modules.Revenue;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHealthChecks();
-builder.Services.AddProblemDetails();
+builder.Services.AddProblemDetails(options =>
+{
+    options.CustomizeProblemDetails = context =>
+    {
+        context.ProblemDetails.Extensions.TryAdd(
+            "code",
+            context.ProblemDetails.Status switch
+            {
+                StatusCodes.Status400BadRequest => "VALIDATION_ERROR",
+                StatusCodes.Status401Unauthorized => "UNAUTHORIZED",
+                StatusCodes.Status403Forbidden => "FORBIDDEN",
+                StatusCodes.Status404NotFound => "RESOURCE_NOT_FOUND",
+                StatusCodes.Status409Conflict => "CONFLICT",
+                _ => "INTERNAL_ERROR"
+            });
+        context.ProblemDetails.Extensions.TryAdd("traceId", context.HttpContext.TraceIdentifier);
+        if (context.ProblemDetails.Status >= StatusCodes.Status500InternalServerError)
+        {
+            context.ProblemDetails.Detail = "An unexpected error occurred.";
+        }
+    };
+});
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
 builder.Services
     .AddAccessModule()
     .AddRegistryModule(builder.Configuration)
@@ -28,6 +52,8 @@ builder.Services
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapHealthChecks("/health");
 
 var api = app.MapGroup("/api/v1");

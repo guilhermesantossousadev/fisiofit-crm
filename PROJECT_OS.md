@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: imp_000_blocked_by_postgresql_test_environment
+  status: imp_001_done_adult_self_payer_backend
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: IMP-000 — ORGANIZATION / UNIT BASELINE
+  current_priority: definir o menor próximo slice após IMP-001
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,11 +39,11 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** pós-bootstrap — IMP-000 implementado, aguardando validação PostgreSQL real
-**MARCO CONCLUÍDO:** IMP-001-DESIGN — Register Patient Vertical Slice Design — DONE / PASS (revisão corretiva final)
-**PRÓXIMO MARCO:** concluir validação PostgreSQL de IMP-000 — ORGANIZATION / UNIT BASELINE
-**ÚLTIMA TAREFA CONCLUÍDA:** revisão corretiva final de IMP-001-DESIGN
-**PRÓXIMA TAREFA:** disponibilizar Docker e executar a suite PostgreSQL de IMP-000; não iniciar IMP-001
+**FASE ATUAL:** primeiro vertical slice funcional backend concluído
+**MARCO CONCLUÍDO:** IMP-001 — Register Patient — DONE / PASS
+**PRÓXIMO MARCO:** selecionar e desenhar o menor próximo slice; candidato recomendado: Patient Search/List
+**ÚLTIMA TAREFA CONCLUÍDA:** IMP-001 — adulto + self-payer + backend + POST/GET administrativo
+**PRÓXIMA TAREFA:** DoR/design do menor próximo slice, sem presumir conclusão de People/Patients
 
 | Domínio | Status |
 |---|---|
@@ -60,8 +60,8 @@ Sequência oficial imediata:
 
 1. `BOOT-001` — Solution Skeleton — concluído;
 2. `IMP-001-DESIGN` — primeiro slice pequeno e verificável — concluído;
-3. `IMP-000` — Organization / Unit Baseline — próximo prerequisite;
-4. `IMP-001` — somente depois de IMP-000, mantendo minors/payer diferente e produção externa gated.
+3. `IMP-000` — Organization / Unit Baseline — concluído e validado em PostgreSQL;
+4. `IMP-001` — adulto/self-payer backend POST/GET — concluído, mantendo minors/payer diferente e produção externa gated.
 
 Modelagem conceitual, máquinas de estado, catálogo final de eventos, autorização conceitual, arquitetura física, modelo lógico, contratos de aplicação/API e o skeleton físico estão concluídos. API-001 definiu 137 commands e 77 queries como mapa de cobertura contratual, não como escopo imediato de implementação. IMP-001-DESIGN delimitou o primeiro recorte, mas a revisão final confirmou que a Unit obrigatória não possui owner persistido. IMP-001 está `BLOCKED_BY_PREREQUISITE` até IMP-000 entregar Clinic/Unit reais e contrato público de validação.
 
@@ -894,10 +894,10 @@ Só entra quando Plans/Billing estiverem sem blocker.
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
 | IMP-001-DESIGN | Register Patient Vertical Slice Design | P0 | DONE — PASS |
-| IMP-000 | Organization / Unit Baseline | P0 | BLOCKED — Docker/PostgreSQL indisponível para validação obrigatória |
-| IMP-001 | Register Patient Vertical Slice | P0 | BLOCKED_BY_PREREQUISITE: IMP-000 |
+| IMP-000 | Organization / Unit Baseline | P0 | DONE — PASS |
+| IMP-001 | Register Patient Vertical Slice | P0 | DONE — PASS (adult + SELF + backend + administrative POST/GET only) |
 
-> Escopo normativo de IMP-001 e do predecessor mínimo: `docs/implementation/IMP_001_REGISTER_PATIENT_DESIGN.md`. IMP-000 materializa somente Clinic/Unit, OrganizationDbContext/migration, contract de validação e testes PostgreSQL; sem UI, CRUD completo, Room/Calendar ou seed de produção. Após IMP-000, o cadastro adulto/self-payer e GET poderão ser promovidos; menores, payer diferente, UI e ativação externa/produção sem IAM/Audit concretos permanecem GATED.
+> Escopo normativo de IMP-001: `docs/implementation/IMP_001_REGISTER_PATIENT_DESIGN.md`; resultado executado: `docs/implementation/IMP_001_REGISTER_PATIENT.md`. `DONE` significa somente adulto + `SELF` + backend + POST/GET administrativo. People/Patients não estão completos. Menores, payer diferente, UI e ativação externa/produção sem IAM/Audit concretos permanecem GATED.
 
 ---
 
@@ -1509,19 +1509,69 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. disponibilizar um runtime Docker compatível no ambiente de desenvolvimento;
-2. executar a suite completa e validar Clinic→Unit, ACTIVE/INACTIVE e o public contract com PostgreSQL real;
-3. manter `IMP-001` bloqueado e não iniciar People/Patients até IMP-000 estar DONE.
+1. revisar o resultado de IMP-001 e preservar seus gates explícitos;
+2. selecionar o menor próximo slice coerente, com Patient Search/List como candidato recomendado;
+3. executar DoR/design próprio antes de qualquer nova implementação.
 
 ## Em seguida
 
-4. promover e executar `IMP-001 — REGISTER PATIENT VERTICAL SLICE` somente após o prerequisite;
-5. fechar os detalhes deferred de IAM/Audit necessários à ativação externa/produção;
-6. desenhar guardian/payer diferente/frontend e só depois retomar VS-01 turma conforme seus gates.
+4. fechar os detalhes deferred de IAM/Audit necessários à ativação externa/produção;
+5. desenhar guardian/payer diferente em slices próprias, sem ampliar o cadastro adulto concluído;
+6. retomar frontend/turma somente quando seus gates específicos estiverem READY.
 
 ---
 
 # 24. ÚLTIMO HANDOFF
+
+## HANDOFF — 2026-09-18 — IMP-001 REGISTER PATIENT DONE
+
+### Objetivo da sessão
+Implementar exclusivamente o vertical slice backend aprovado para cadastro e consulta administrativa de paciente adulto, self-payer.
+
+### Status atual
+IMP-000 — `DONE / PASS` após validação PostgreSQL. IMP-001 — `DONE / PASS` somente para adulto + `SELF` + backend + POST/GET administrativo. Isso não declara People ou Patients completos.
+
+### Concluído
+- Person, ContactPoint PHONE e PatientProfile ACTIVE com UUIDv7;
+- PeopleDbContext e PatientsDbContext isolados, histories e migrations independentes;
+- contracts públicos mínimos People create/read e Organization read;
+- POST/GET, Problem Details, Location, no-store e replay idempotente;
+- authorization por permission, conta/deny e UNIT_SCOPE, com test auth somente em ApiTests;
+- receipts distintos, hash canônico, Unit revalidation e recovery F1..F6;
+- testes Unit, Application/Integration PostgreSQL, API e Architecture.
+
+### Migrations
+- `Organization_InitialUnitBaseline`;
+- `People_InitialPatientRegistrationSlice`;
+- `Patients_InitialPatientRegistrationSlice`.
+
+### Testes executados
+- baseline prerequisite: PASS 24/24;
+- restore/build: PASS, zero warnings/errors;
+- UnitTests 19/19, IntegrationTests PostgreSQL 23/23, ApiTests 9/9 e ArchitectureTests 11/11: PASS (62/62);
+- migrations aplicadas em PostgreSQL descartável; containers descartados;
+- health/startup sem migration automática e git checks: PASS.
+
+### Blockers e gates
+- minors exigem GuardianLink e permanecem gated;
+- payer diferente exige ResponsiblePayerLink e permanece gated;
+- ativação externa/produção permanece gated por IAM concreto, Audit durável e provisioning real;
+- retenção definitiva dos receipts permanece decisão operacional.
+
+### Riscos
+- Person legítima pode permanecer sem profile após falha/Unit inativada; retry da mesma key recupera;
+- lease de idempotência é fixo em 30 segundos;
+- contratos People/Patients devem permanecer purpose-specific nas próximas slices.
+
+### Próximas 3 ações
+1. revisar/aceitar IMP-001 sem iniciar outro slice;
+2. escolher o menor próximo slice, preferencialmente Patient Search/List;
+3. produzir DoR/design separado antes de implementar relacionamentos, guardian ou frontend.
+
+### Instrução para a próxima IA
+Não interprete IMP-001 DONE como People/Patients completos. Preserve minors, payer diferente, durable Audit e produção IAM como gates. Comece pelo DoR do menor próximo slice, não por um módulo inteiro.
+
+---
 
 ## HANDOFF — 2026-09-16 — IMP-000 BLOCKED BY POSTGRESQL TEST ENVIRONMENT
 

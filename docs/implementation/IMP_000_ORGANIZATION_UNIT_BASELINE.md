@@ -2,7 +2,7 @@
 
 ## 1. Status
 
-`BLOCKED_BY_TEST_ENVIRONMENT`. Implementação, build, UnitTests e ArchitectureTests concluídos; a validação PostgreSQL real permanece bloqueada porque o ambiente não possui Docker nem endpoint compatível disponível. IMP-000 não está `DONE` e IMP-001 permanece `BLOCKED_BY_PREREQUISITE`.
+`DONE — PASS` em 2026-09-18. A validação pendente foi concluída em PostgreSQL real/Testcontainers após Docker se tornar disponível; o prerequisite de IMP-001 foi removido.
 
 ## 2. Objective
 
@@ -90,8 +90,8 @@ Não há migration automática no startup nem `Database.EnsureCreated()`.
 - `dotnet build Fisiofit.slnx --no-restore --disable-build-servers`: PASS, zero warnings/errors.
 - UnitTests: PASS, 9/9.
 - ArchitectureTests: PASS, 5/5.
-- IntegrationTests: BLOCKED; 1 smoke test anterior passou e 8 testes Organization não puderam iniciar porque `unix:///var/run/docker.sock` não existe.
-- Migration aplicada em PostgreSQL real: BLOCKED pelo mesmo motivo.
+- IntegrationTests baseline: PASS, 9/9, incluindo 8 testes Organization em PostgreSQL real.
+- Migration aplicada em PostgreSQL real: PASS via Testcontainers.
 
 ## 16. Out of Scope
 
@@ -99,8 +99,8 @@ Room, calendar, holiday, People, Patients, Staff, demais domínios, endpoints, C
 
 ## 17. Risks / Limitations
 
-O risco pendente é exclusivamente a falta de evidência executada contra PostgreSQL neste ambiente. Até que Docker esteja disponível e a suite completa passe, a migration não pode ser considerada validada e IMP-000 não pode ser promovido a `DONE`.
+A validação PostgreSQL foi concluída. Permanecem fora deste baseline provisioning de produção, seed genérico, CRUD/UI e demais conceitos Organization.
 
 ## 18. Consequences for IMP-001
 
-O contrato e owner necessários estão implementados, mas o gate formal continua fechado. Após disponibilizar Docker, executar `dotnet test Fisiofit.slnx`; se os IntegrationTests passarem, atualizar este documento e PROJECT_OS, marcar IMP-000 `DONE` e somente então promover IMP-001 para `READY_WITH_GATED_BRANCHES`, preservando minors, payer diferente, IAM externo e Audit durável como gates.
+O contrato e owner necessários foram validados e o gate técnico foi fechado antes da implementação de IMP-001. Minors, payer diferente, IAM externo e Audit durável continuam gates independentes.
