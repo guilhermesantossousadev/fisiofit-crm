@@ -10,6 +10,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Fisiofit.UnitTests" />
     <InternalsVisibleTo Include="Fisiofit.IntegrationTests" />
+    <InternalsVisibleTo Include="Fisiofit.ApiTests" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../Fisiofit.BuildingBlocks/Fisiofit.BuildingBlocks.csproj" />
