@@ -15,7 +15,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddProblemDetails();
 builder.Services
     .AddAccessModule()
-    .AddRegistryModule()
+    .AddRegistryModule(builder.Configuration)
     .AddCrmModule()
     .AddOperationsModule()
     .AddClinicalModule()

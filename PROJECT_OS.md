@@ -14,7 +14,7 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: imp_001_blocked_by_organization_unit_prerequisite
+  status: imp_000_blocked_by_postgresql_test_environment
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
@@ -39,11 +39,11 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** pós-bootstrap — prerequisite Organization/Unit anterior ao primeiro vertical slice
+**FASE ATUAL:** pós-bootstrap — IMP-000 implementado, aguardando validação PostgreSQL real
 **MARCO CONCLUÍDO:** IMP-001-DESIGN — Register Patient Vertical Slice Design — DONE / PASS (revisão corretiva final)
-**PRÓXIMO MARCO:** IMP-000 — ORGANIZATION / UNIT BASELINE
+**PRÓXIMO MARCO:** concluir validação PostgreSQL de IMP-000 — ORGANIZATION / UNIT BASELINE
 **ÚLTIMA TAREFA CONCLUÍDA:** revisão corretiva final de IMP-001-DESIGN
-**PRÓXIMA TAREFA:** materializar somente o baseline Clinic/Unit e o contrato owner de validação; não iniciar IMP-001
+**PRÓXIMA TAREFA:** disponibilizar Docker e executar a suite PostgreSQL de IMP-000; não iniciar IMP-001
 
 | Domínio | Status |
 |---|---|
@@ -894,7 +894,7 @@ Só entra quando Plans/Billing estiverem sem blocker.
 | ID | Tarefa | Prioridade | Status |
 |---|---|---:|---|
 | IMP-001-DESIGN | Register Patient Vertical Slice Design | P0 | DONE — PASS |
-| IMP-000 | Organization / Unit Baseline | P0 | READY — NEXT |
+| IMP-000 | Organization / Unit Baseline | P0 | BLOCKED — Docker/PostgreSQL indisponível para validação obrigatória |
 | IMP-001 | Register Patient Vertical Slice | P0 | BLOCKED_BY_PREREQUISITE: IMP-000 |
 
 > Escopo normativo de IMP-001 e do predecessor mínimo: `docs/implementation/IMP_001_REGISTER_PATIENT_DESIGN.md`. IMP-000 materializa somente Clinic/Unit, OrganizationDbContext/migration, contract de validação e testes PostgreSQL; sem UI, CRUD completo, Room/Calendar ou seed de produção. Após IMP-000, o cadastro adulto/self-payer e GET poderão ser promovidos; menores, payer diferente, UI e ativação externa/produção sem IAM/Audit concretos permanecem GATED.
@@ -1509,8 +1509,8 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. executar `IMP-000 — ORGANIZATION / UNIT BASELINE` no escopo mínimo definido pelo design;
-2. validar Clinic→Unit, ACTIVE/INACTIVE e o public contract com PostgreSQL real, sem CRUD/UI/seed de produção;
+1. disponibilizar um runtime Docker compatível no ambiente de desenvolvimento;
+2. executar a suite completa e validar Clinic→Unit, ACTIVE/INACTIVE e o public contract com PostgreSQL real;
 3. manter `IMP-001` bloqueado e não iniciar People/Patients até IMP-000 estar DONE.
 
 ## Em seguida
@@ -1522,6 +1522,54 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 ---
 
 # 24. ÚLTIMO HANDOFF
+
+## HANDOFF — 2026-09-16 — IMP-000 BLOCKED BY POSTGRESQL TEST ENVIRONMENT
+
+### Objetivo da sessão
+Implementar exclusivamente o baseline Organization/Unit e validá-lo em PostgreSQL real.
+
+### Status atual
+IMP-000 — `BLOCKED`. A implementação compila sem warnings e UnitTests/ArchitectureTests passam, mas o ambiente não possui Docker ou endpoint compatível; a migration não pôde ser aplicada em PostgreSQL real. IMP-001 permanece `BLOCKED_BY_PREREQUISITE`.
+
+### Concluído
+- Clinic e Unit com UUIDv7 preferencial e lifecycle ACTIVE/INACTIVE;
+- `OrganizationDbContext` exclusivo do schema `organization`;
+- mappings, FK interna restritiva, checks e migration `Organization_InitialUnitBaseline`;
+- public contract `IValidateUnitForPatientRegistration` e implementação owner;
+- registration no Registry/Host sem migration automática;
+- UnitTests, IntegrationTests Testcontainers e ArchitectureTests;
+- documentação `IMP_000_ORGANIZATION_UNIT_BASELINE.md`.
+
+### Migrations
+- criada a primeira migration do owner Organization;
+- migration history configurada como `organization.__organization_migrations_history`;
+- aplicação real bloqueada porque `unix:///var/run/docker.sock` está indisponível.
+
+### Testes executados
+- restore: PASS;
+- build: PASS, zero warnings/errors;
+- UnitTests: PASS, 9/9;
+- ArchitectureTests: PASS, 5/5;
+- IntegrationTests: BLOCKED pelo ambiente; 8 testes Organization não iniciaram sem Docker;
+- nenhuma substituição InMemory/SQLite foi feita.
+
+### Blockers
+- instalar/iniciar Docker Desktop, Colima, Podman compatível ou fornecer outro endpoint Docker aceito pelo Testcontainers;
+- executar `dotnet test Fisiofit.slnx` e obter PASS antes de promover o backlog.
+
+### Riscos
+- a migration foi gerada e revisada, mas ainda não há evidência de aplicação em PostgreSQL real;
+- marcar IMP-000 como DONE antes dessa prova violaria os critérios de pass.
+
+### Próximas 3 ações
+1. disponibilizar runtime Docker;
+2. executar `dotnet test Fisiofit.slnx` e revisar a aplicação da migration;
+3. se tudo passar, marcar IMP-000 DONE e promover IMP-001 para READY_WITH_GATED_BRANCHES sem iniciá-lo.
+
+### Instrução para a próxima IA
+Não implemente IMP-001. Primeiro rode os IntegrationTests Organization com Docker/PostgreSQL real; só atualize os status se toda a suite e `git diff --check` passarem.
+
+---
 
 ## HANDOFF — 2026-09-16 — IMP-001-DESIGN FINAL CORRECTIVE REVIEW
 
