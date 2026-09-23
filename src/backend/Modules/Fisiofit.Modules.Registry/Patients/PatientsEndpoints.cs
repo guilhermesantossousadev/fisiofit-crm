@@ -13,8 +13,47 @@ internal static class PatientsEndpoints
     public static IEndpointRouteBuilder MapPatientsEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("/patients", RegisterPatientAsync);
+        endpoints.MapGet("/patients", SearchPatientsAsync);
         endpoints.MapGet("/patients/{patientId:guid}", GetPatientAsync);
         return endpoints;
+    }
+
+    private static async Task<IResult> SearchPatientsAsync(
+        HttpContext httpContext,
+        SearchPatients handler,
+        ILoggerFactory loggerFactory,
+        CancellationToken cancellationToken)
+    {
+        var traceId = httpContext.TraceIdentifier;
+        try
+        {
+            var query = httpContext.Request.Query;
+            var result = await handler.ExecuteAsync(
+                new SearchPatientsQuery(
+                    query["search"].FirstOrDefault(),
+                    query["primaryUnitId"].FirstOrDefault(),
+                    query["administrativeStatus"].FirstOrDefault(),
+                    query["page"].FirstOrDefault(),
+                    query["pageSize"].FirstOrDefault(),
+                    query["sort"].FirstOrDefault(),
+                    query.Keys.ToArray(),
+                    PatientRequestActor.FromPrincipal(httpContext.User),
+                    traceId),
+                cancellationToken);
+            if (!result.Success)
+            {
+                return Problem(result, traceId);
+            }
+
+            httpContext.Response.Headers.CacheControl = "no-store";
+            return Results.Ok(result.Value);
+        }
+        catch (Exception)
+        {
+            loggerFactory.CreateLogger("Fisiofit.Registry.Patients")
+                .LogError("SearchPatients failed. TraceId: {TraceId}", traceId);
+            return InternalProblem(traceId);
+        }
     }
 
     private static async Task<IResult> RegisterPatientAsync(

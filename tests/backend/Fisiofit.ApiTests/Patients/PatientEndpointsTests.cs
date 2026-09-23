@@ -210,6 +210,90 @@ public sealed class PatientEndpointsTests(PatientApiFixture fixture)
         Assert.Equal(HttpStatusCode.Forbidden, scopeDenied.StatusCode);
     }
 
+    [Fact]
+    public async Task Search_ReturnsMinimizedMaskedPageAndNoStore()
+    {
+        const string fictitiousCpf = "529.982.247-25";
+        using var client = AuthorizedClient();
+        var created = await client.PostAsJsonAsync(
+            "/api/v1/patients",
+            Request() with { FullName = "Paciente Busca API Única", Cpf = fictitiousCpf },
+            CancellationToken.None);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+
+        var response = await client.GetAsync(
+            "/api/v1/patients?search=52998224725&page=1&pageSize=25&sort=name",
+            CancellationToken.None);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("no-store", response.Headers.CacheControl?.ToString(), StringComparison.Ordinal);
+        var document = await JsonDocument.ParseAsync(
+            await response.Content.ReadAsStreamAsync(CancellationToken.None),
+            cancellationToken: CancellationToken.None);
+        var item = Assert.Single(document.RootElement.GetProperty("items").EnumerateArray());
+        Assert.Equal("Paciente Busca API Única", item.GetProperty("fullName").GetString());
+        Assert.Equal("***.***.***-25", item.GetProperty("cpf").GetProperty("masked").GetString());
+        Assert.Equal("**0000", item.GetProperty("primaryPhone").GetProperty("maskedNumber").GetString());
+        Assert.False(item.TryGetProperty("personId", out _));
+        Assert.False(item.TryGetProperty("birthDate", out _));
+        Assert.Equal(1, document.RootElement.GetProperty("totalCount").GetInt32());
+    }
+
+    [Fact]
+    public async Task Search_UsesDefaultsSupportsNameAndPhoneAndReturnsEmptyPage()
+    {
+        using var client = AuthorizedClient();
+        var uniqueName = $"Paciente Busca {Guid.CreateVersion7():N}";
+        var created = await client.PostAsJsonAsync(
+            "/api/v1/patients",
+            Request() with { FullName = uniqueName },
+            CancellationToken.None);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+
+        var name = await client.GetAsync($"/api/v1/patients?search={uniqueName}", CancellationToken.None);
+        var phone = await client.GetAsync("/api/v1/patients?search=%2B999000000000", CancellationToken.None);
+        var beyond = await client.GetAsync($"/api/v1/patients?search={uniqueName}&page=2&pageSize=1", CancellationToken.None);
+
+        Assert.Equal(HttpStatusCode.OK, name.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, phone.StatusCode);
+        var nameDocument = await JsonDocument.ParseAsync(await name.Content.ReadAsStreamAsync(CancellationToken.None));
+        Assert.Equal(1, nameDocument.RootElement.GetProperty("page").GetInt32());
+        Assert.Equal(25, nameDocument.RootElement.GetProperty("pageSize").GetInt32());
+        var beyondDocument = await JsonDocument.ParseAsync(await beyond.Content.ReadAsStreamAsync(CancellationToken.None));
+        Assert.Empty(beyondDocument.RootElement.GetProperty("items").EnumerateArray());
+        Assert.Equal(1, beyondDocument.RootElement.GetProperty("totalCount").GetInt32());
+    }
+
+    [Fact]
+    public async Task Search_RejectsInvalidParametersAndEnforcesAuthenticationAndScope()
+    {
+        using var authorized = AuthorizedClient();
+        var invalidSearch = await authorized.GetAsync("/api/v1/patients?search=ab", CancellationToken.None);
+        var invalidPage = await authorized.GetAsync("/api/v1/patients?page=0", CancellationToken.None);
+        var invalidStatus = await authorized.GetAsync("/api/v1/patients?administrativeStatus=UNKNOWN", CancellationToken.None);
+        var invalidSort = await authorized.GetAsync("/api/v1/patients?sort=createdAt", CancellationToken.None);
+        var unknown = await authorized.GetAsync("/api/v1/patients?name=Paciente", CancellationToken.None);
+
+        using var anonymous = fixture.CreateClient();
+        var unauthorized = await anonymous.GetAsync("/api/v1/patients", CancellationToken.None);
+
+        using var noScope = fixture.CreateClient();
+        Authenticate(noScope, "patients.profile.read,people.person.read", string.Empty);
+        var noScopeResponse = await noScope.GetAsync("/api/v1/patients", CancellationToken.None);
+
+        using var wrongScope = fixture.CreateClient();
+        Authenticate(wrongScope, "patients.profile.read,people.person.read", Guid.CreateVersion7().ToString("D"));
+        var scopeResponse = await wrongScope.GetAsync(
+            $"/api/v1/patients?primaryUnitId={fixture.ActiveUnitId:D}",
+            CancellationToken.None);
+
+        Assert.All([invalidSearch, invalidPage, invalidStatus, invalidSort, unknown],
+            response => Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode));
+        Assert.Equal(HttpStatusCode.Unauthorized, unauthorized.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, noScopeResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, scopeResponse.StatusCode);
+    }
+
     private HttpClient AuthorizedClient(string? idempotencyKey = null, bool addIdempotencyKey = true)
     {
         var client = fixture.CreateClient();

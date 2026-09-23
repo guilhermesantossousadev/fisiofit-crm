@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: imp_002_design_done_patient_search_list_ready
+  status: imp_002_done_patient_search_list
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: implementar IMP-002 Patient Search / List conforme design aprovado
+  current_priority: IMP-002 concluído; revisar o resultado e decidir futuramente sobre o candidato IMP-003-DESIGN
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,11 +39,11 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** design do segundo vertical slice backend concluído
-**MARCO CONCLUÍDO:** IMP-002-DESIGN — Patient Search / List — DONE / PASS
-**PRÓXIMO MARCO:** IMP-002 — Patient Search / List
-**ÚLTIMA TAREFA CONCLUÍDA:** IMP-002-DESIGN — busca/listagem administrativa sem join cross-schema
-**PRÓXIMA TAREFA:** implementar somente IMP-002 conforme `docs/implementation/IMP_002_PATIENT_SEARCH_LIST_DESIGN.md`
+**FASE ATUAL:** segundo vertical slice backend concluído
+**MARCO CONCLUÍDO:** IMP-002 — PATIENT SEARCH / LIST — DONE / PASS
+**PRÓXIMO MARCO CANDIDATO:** IMP-003-DESIGN — Patient Relationships — `TODO`; ainda não desenhado, aprovado, `READY` ou iniciado
+**ÚLTIMA TAREFA CONCLUÍDA:** IMP-002 — busca/listagem administrativa backend sem join cross-schema
+**PRÓXIMA TAREFA AUTORIZADA:** revisar/aceitar o resultado em `docs/implementation/IMP_002_PATIENT_SEARCH_LIST.md`; não iniciar IMP-003
 
 | Domínio | Status |
 |---|---|
@@ -61,9 +61,13 @@ Sequência oficial imediata:
 1. `BOOT-001` — Solution Skeleton — concluído;
 2. `IMP-001-DESIGN` — primeiro slice pequeno e verificável — concluído;
 3. `IMP-000` — Organization / Unit Baseline — concluído e validado em PostgreSQL;
-4. `IMP-001` — adulto/self-payer backend POST/GET — concluído, mantendo minors/payer diferente e produção externa gated.
+4. `IMP-001` — adulto/self-payer backend POST/GET — concluído, mantendo minors/payer diferente e produção externa gated;
+5. `IMP-002` — busca/listagem administrativa backend — `DONE / PASS`, sem migration ou persistence cross-context;
+6. `IMP-003-DESIGN — Patient Relationships` — próximo trabalho candidato em `TODO`, ainda não selecionado para execução.
 
-Modelagem conceitual, máquinas de estado, catálogo final de eventos, autorização conceitual, arquitetura física, modelo lógico, contratos de aplicação/API e o skeleton físico estão concluídos. IMP-000 e IMP-001 estão `DONE / PASS`. IMP-002-DESIGN definiu o próximo recorte: listagem/busca administrativa com Patients como query/composition owner, People como owner do filtro civil e Organization reutilizado para Unit, sem join ou persistence cross-context. IMP-002 está `READY`.
+Modelagem conceitual, máquinas de estado, catálogo final de eventos, autorização conceitual, arquitetura física, modelo lógico, contratos de aplicação/API e o skeleton físico estão concluídos. IMP-000, IMP-001, IMP-002-DESIGN e IMP-002 estão `DONE / PASS`. O `DONE` de IMP-002 cobre exclusivamente o backend de `GET /api/v1/patients`: busca administrativa por nome, CPF e telefone; filtros por Unit e status; paginação e ordenação; autorização e `UNIT_SCOPE`; composição People/Patients/Organization; e proteção de PII. Não inclui frontend nem relacionamentos. Nenhum próximo slice foi iniciado.
+
+Validação de IMP-002: build `PASS` com 0 warnings e 0 errors; UnitTests 34/34; IntegrationTests 27/27 em PostgreSQL real; ApiTests 12/12; ArchitectureTests 14/14; total 86/86 `PASS`.
 
 ---
 
@@ -897,11 +901,14 @@ Só entra quando Plans/Billing estiverem sem blocker.
 | IMP-000 | Organization / Unit Baseline | P0 | DONE — PASS |
 | IMP-001 | Register Patient Vertical Slice | P0 | DONE — PASS (adult + SELF + backend + administrative POST/GET only) |
 | IMP-002-DESIGN | Patient Search / List Design | P0 | DONE — PASS |
-| IMP-002 | Patient Search / List | P0 | READY |
+| IMP-002 | Patient Search / List | P0 | DONE — PASS |
+| IMP-003-DESIGN | Patient Relationships Design | P0 | TODO — CANDIDATE; não desenhado/aprovado |
 
 > Escopo normativo de IMP-001: `docs/implementation/IMP_001_REGISTER_PATIENT_DESIGN.md`; resultado executado: `docs/implementation/IMP_001_REGISTER_PATIENT.md`. `DONE` significa somente adulto + `SELF` + backend + POST/GET administrativo. People/Patients não estão completos. Menores, payer diferente, UI e ativação externa/produção sem IAM/Audit concretos permanecem GATED.
 
-> Escopo normativo de IMP-002: `docs/implementation/IMP_002_PATIENT_SEARCH_LIST_DESIGN.md`. `READY` significa somente GET collection administrativo, filtros/search/paginação/sort aprovados e composição Patients/People/Organization. Não inclui frontend, detalhe novo, update, relacionamentos, fuzzy/dedup, Reports ou infraestrutura de busca.
+> Escopo normativo de IMP-002: `docs/implementation/IMP_002_PATIENT_SEARCH_LIST_DESIGN.md`; resultado executado: `docs/implementation/IMP_002_PATIENT_SEARCH_LIST.md`. `DONE` significa exclusivamente backend-only com `GET /api/v1/patients`, busca administrativa por nome/CPF/telefone, filtros por Unit/status, paginação/ordenação, autorização + `UNIT_SCOPE`, composição People/Patients/Organization e proteção de PII. Não inclui frontend, detalhe novo, update, relacionamentos, fuzzy/dedup, Reports ou infraestrutura de busca.
+
+> `IMP-003-DESIGN — Patient Relationships` é apenas o próximo trabalho candidato. Permanece `TODO`: não foi desenhado, aprovado, promovido para `READY` ou iniciado.
 
 ---
 
@@ -1513,19 +1520,82 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. revisar/aceitar `IMP-002-DESIGN` sem ampliar o slice;
-2. implementar `IMP-002 — Patient Search / List` conforme o documento normativo;
-3. preservar os gates de IMP-001 e não iniciar frontend, guardian/payer ou busca fuzzy.
+1. revisar/aceitar o resultado de `IMP-002 — Patient Search / List` sem ampliar o slice;
+2. manter frontend, guardian/payer, busca fuzzy e infraestrutura de busca fora de execução;
+3. decidir explicitamente, em trabalho futuro, se `IMP-003-DESIGN — Patient Relationships` será selecionado; ele permanece `TODO` e não pode ser iniciado nesta etapa.
 
 ## Em seguida
 
 4. fechar os detalhes deferred de IAM/Audit necessários à ativação externa/produção;
-5. medir query plans/cardinalidade antes de promover índices candidatos ou projection;
-6. desenhar guardian/payer diferente e frontend em slices próprias quando estiverem READY.
+5. medir cardinalidade/latência real antes de promover índices candidatos ou projection;
+6. desenhar guardian/payer diferente e frontend em slices próprias quando forem selecionadas e estiverem READY.
 
 ---
 
 # 24. ÚLTIMO HANDOFF
+
+## HANDOFF — 2026-09-23 — IMP-002 PATIENT SEARCH / LIST DONE
+
+### Objetivo da sessão
+Implementar integralmente e somente o vertical slice backend aprovado para busca/listagem administrativa de pacientes.
+
+### Status atual
+IMP-002 — `DONE / PASS`, implementado e validado. Resultado canônico: `docs/implementation/IMP_002_PATIENT_SEARCH_LIST.md`. `IMP-003-DESIGN — Patient Relationships` é somente o próximo candidato e permanece `TODO`, não desenhado, aprovado, `READY` ou iniciado.
+
+### Concluído
+- implementado `GET /api/v1/patients` com search por nome, CPF completo e telefone internacional completo;
+- implementados Unit/status, defaults 1/25, máximo 100, `totalCount` e sort `name|-name` com desempate estável;
+- Patients materializa candidates scoped; People filtra/ordena/pagina/count; Organization resolve Units distintas da página;
+- permissions, explicit deny e `UNIT_SCOPE` são aplicados antes dos dados, com revalidação People;
+- resposta minimiza PII, mascara CPF/telefone, omite birthDate/personId e usa `Cache-Control: no-store`;
+- inconsistências Person/phone/Unit falham fechadas com 500 sanitizado;
+- nenhum join/persistence cross-context, projection, cache, Reports ou infraestrutura de busca foi criado;
+- nenhum frontend foi implementado; o resultado é exclusivamente backend.
+
+### Arquivos alterados
+- criado contrato purpose-specific `Fisiofit.ModuleContracts/People/PatientSearchContracts.cs`;
+- criados handlers/models People e Patients de busca/listagem;
+- atualizados endpoints e DI do Registry;
+- adicionados testes Unit, Integration/PostgreSQL, API e Architecture;
+- criado `docs/implementation/IMP_002_PATIENT_SEARCH_LIST.md`;
+- atualizado `PROJECT_OS.md`.
+
+### Decisões executadas
+- People é o único owner do filtro civil, normalização, sort, paginação e count;
+- Patients aplica scope/status antes da composição e nunca corta candidates antes de People;
+- CPF/telefone permanecem exact; nome permanece case-insensitive/accent-sensitive contains;
+- Units da página são deduplicadas antes do contrato Organization;
+- índices existentes foram preservados; candidatos continuam dependentes de evidência real.
+
+### Migrations
+Nenhuma. IMP-002 reutiliza exclusivamente as três migrations existentes de Organization, People e Patients.
+
+### Testes executados
+- pré-requisito: Docker Desktop/context `desktop-linux` PASS; baseline 62/62 PASS;
+- build final PASS com 0 warnings e 0 errors;
+- UnitTests 34/34 PASS;
+- IntegrationTests 27/27 PASS em PostgreSQL real;
+- ApiTests 12/12 PASS;
+- ArchitectureTests 14/14 PASS;
+- suíte completa 86/86 PASS;
+- query plans seletivos confirmaram uso possível de `ux_person__cpf_normalized` e `ix_patient_profile__primary_unit_id`;
+- `git diff --check` PASS.
+
+### Blockers
+Nenhum blocker do slice concluído. Os gates anteriores permanecem vigentes e inalterados: IAM/Audit/provisioning para produção, minors/GuardianLink, payer diferente/ResponsiblePayerLink e retenção definitiva dos receipts de IMP-001.
+
+### Riscos
+- coleção de personIds e scans de nome/telefone precisam de medição com cardinalidade real;
+- offset pagination pode variar entre requests concorrentes;
+- qualquer access logging/proxy/APM futuro deve suprimir ou redigir query string desta rota.
+
+### Próximas 3 ações
+1. revisar/aceitar IMP-002 sem iniciar outro slice;
+2. manter os itens deferred/gated fora de implementação;
+3. avaliar futuramente `IMP-003-DESIGN — Patient Relationships` como candidato; não promovê-lo nem iniciá-lo sem desenho e aprovação.
+
+### Instrução para a próxima IA
+Não inicie IMP-003 automaticamente. Preserve `IMP-002` como backend administrativo estrito, sem ampliar busca, UI, projection ou índices. `IMP-003-DESIGN — Patient Relationships` permanece `TODO` até desenho e aprovação explícitos.
 
 ## HANDOFF — 2026-09-19 — IMP-002 PATIENT SEARCH / LIST DESIGN
 
