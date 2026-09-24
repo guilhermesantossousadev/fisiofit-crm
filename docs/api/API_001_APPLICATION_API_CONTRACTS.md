@@ -104,6 +104,7 @@ Transições como `cancel`, `finalize`, `reverse`, `refund`, `close`, `reopen`, 
 | 409 | estado/regra concorrente ou conflito de negócio/idempotência |
 | 412 | `If-Match`/expected version não corresponde |
 | 422 | request sintático válido, mas invariante/regra de domínio impede a intenção |
+| 428 | `If-Match` obrigatório ausente no End de GuardianLink (seção 27.1); não é versão divergente |
 | 429 | limite arquitetural excedido; `Retry-After` quando aplicável |
 | 500 | falha inesperada sanitizada |
 
@@ -499,6 +500,168 @@ Commands: `CreatePerson`, `UpdatePersonIdentity`, `UpdatePersonContact`, `Manage
 
 Commands: `CreatePatientProfile`, `ActivatePatientProfile`, `DeactivatePatientProfile`, `ManageGuardian`, `ManageAdministrativeResponsible`, `ChangeResponsiblePayer`, `ManageEmergencyContact`. Queries: `GetPatientDetails`, `SearchPatients`, `GetPatientAdministrativeSummary`, `GetPatientRelationships`. A API não duplica Person; dados civis são lidos por composição autorizada. O read administrativo nunca incorpora prontuário.
 
+### 27.1 IMP-003A — Guardian HTTP contract reconciliation
+
+**2026-09-23 — contratos definitivos para implementação futura; nenhum endpoint implementado por esta revisão.** Esta especialização de `CMD-018 ManageGuardian` e `QRY-064 GetPatientRelationships` cobre somente PatientProfile e Person já existentes e `kind=GUARDIAN`. Os demais relacionamentos do catálogo não são entregues nem promovidos por este slice. A implementação, quando executada em tarefa própria, pertence a Patients.
+
+Reconciliação com IMP-003-DESIGN, seção 24:
+
+- criação preserva `POST /api/v1/patients/{patientId}/guardians`; `{patientId}` apenas explicita o parâmetro antes chamado `{id}`;
+- consulta publica o mapping de QRY-064 em `/relationships?kind=GUARDIAN`, sem criar GET alternativo em `/guardians`;
+- encerramento publica a ação aditiva `/guardians/{guardianLinkId}/end` de CMD-018, sem novo command ID;
+- `isPrimary` é o nome HTTP definitivo para o mesmo atributo conceitual `isPrimaryLegalGuardian`; não há duas flags nem mudança de cardinalidade. O exemplo anterior do design é substituído; o contrato ainda não foi implementado;
+- Create/End continuam sem `Idempotency-Key` e sem receipt; ETag de criação identifica o vínculo criado, e somente End exige `If-Match`;
+- ausência de `If-Match` é `428`; divergência é `412`, reservado pela seção 6.1 a uma precondition fornecida. Essa extensão é restrita ao novo End e não muda endpoints existentes;
+- não há GET individual de GuardianLink aprovado: Create não anuncia `Location` para uma rota inexistente. QRY-064 fornece identificação e ETag de cada vínculo.
+
+#### 27.1.1 Create — CMD-018
+
+`POST /api/v1/patients/{patientId}/guardians`, `Content-Type: application/json`. `patientId` é UUID não vazio de PatientProfile, não PersonId. Não exige `If-Match` nem exige/consome `Idempotency-Key`.
+
+| Campo do body | Obrigatoriedade | Semântica |
+|---|---|---|
+| `guardianPersonId` | obrigatório, UUID não vazio | Person existente, canônica/CURRENT, distinta da Person do paciente; validada por contrato público People |
+| `effectiveFrom` | obrigatório, `YYYY-MM-DD` | início inclusivo; hoje ou futuro na data de negócio institucional |
+| `effectiveTo` | opcional, data ou null | fim exclusivo maior que `effectiveFrom`; omitido equivale a null |
+| `isPrimary` | obrigatório, boolean | principal legal; `false` é válido, sem exigir que exista outro principal |
+
+```json
+{
+  "guardianPersonId": "01990000-0000-7000-8000-000000000002",
+  "effectiveFrom": "2026-09-23",
+  "effectiveTo": null,
+  "isPrimary": true
+}
+```
+
+Somente esses campos são aceitos. Não se aceita identidade civil inline, `relationshipToPatient`, `endReason`, status, versão ou autoria fornecida pelo cliente. PatientProfile deve estar `ACTIVE`. People continua owner da identidade: Person inexistente/ocultada falha antes da escrita; Person não corrente falha fechada, sem merge/repoint automático. Não há criação de Person.
+
+Períodos são `[effectiveFrom, effectiveTo)`, com fim null sem limite. Proibir overlap do mesmo par paciente/guardian, duplicidade do mesmo início e overlap de principais do paciente, inclusive em períodos finitos ou futuros. Guardians diferentes não principais podem coexistir; zero principal é válido. Retroatividade permanece gated. Validações de conjunto e inserção são atômicas na transação Patients da seção 27.1.4.
+
+Sucesso: `201 Created`, `Cache-Control: no-store`, header `ETag` do vínculo e body `GuardianLinkResult` abaixo. Não retorna EF entity ou dados People; a projeção de identificação é obtida pela consulta autorizada. Nenhum `Location` individual é emitido neste slice.
+
+#### 27.1.2 List — QRY-064
+
+`GET /api/v1/patients/{patientId}/relationships?kind=GUARDIAN`.
+
+| Parâmetro | Contrato |
+|---|---|
+| `patientId` (path) | UUID não vazio de PatientProfile existente e autorizado |
+| `kind` (query) | obrigatório; somente `GUARDIAN` neste slice; ausente, desconhecido ou outro tipo retorna `400 VALIDATION_ERROR` |
+| `effectiveOn` | data `YYYY-MM-DD` opcional; seleciona `effectiveFrom <= d` e (`effectiveTo == null` ou `d < effectiveTo`) |
+| `page` / `pageSize` | offset, inteiros positivos; defaults 1/25 e máximo 100 nesta slice, conforme configuração operacional da seção 18; acima do máximo retorna 400 |
+| `sort` | whitelist `effectiveFrom` ou `-effectiveFrom`; default `-effectiveFrom`, com `guardianLinkId` ascendente como desempate opaco fixo |
+
+Parâmetros/filtros/sorts fora dessa whitelist retornam 400. Sem `effectiveOn`, retorna **todos os períodos autorizados**, históricos, correntes e futuros, paginados; não aplica “hoje” implicitamente. Com o filtro, somente vínculos vigentes na data, mantendo os mesmos DTOs, autorização e ordenação. Consultar o passado é permitido; escrever retroativamente continua proibido. `temporalState` usa `effectiveOn` quando fornecido, senão a data de negócio capturada para a resposta: `FUTURE`, `CURRENT` ou `HISTORICAL`, derivado do período.
+
+Sucesso: `200 OK`, `Cache-Control: no-store`, `{ items, page, pageSize, totalCount }`. `totalCount` conta todos os vínculos após scope/kind/data e antes da paginação; página e count usam uma visão consistente do conjunto Patients no request. Offset não promete snapshot estável entre requests. PatientProfile inativo continua consultável. Paciente existente sem vínculos/filtro sem resultados retorna `200` com `items: []` e `totalCount: 0`; página além do fim retorna `items: []` e o count real. PatientProfile inexistente retorna `404 RESOURCE_NOT_FOUND`.
+
+Cada item de `PatientRelationshipView` para `GUARDIAN` contém os campos de `GuardianLinkResult`, `kind: "GUARDIAN"`, `temporalState` e `guardian: { displayName }`. A leitura People é por IDs da página, minimizada e autorizada. CPF e telefone são **omitidos**, assim como nascimento, endereço, dados clínicos/financeiros e evidence interna. Referência People quebrada ou composição indisponível retorna `500 INTERNAL_ERROR` sanitizado, sem coleção parcial ou fallback permissivo; uma referência histórica inativa não é apagada/filtrada só por estar inativa.
+
+```json
+{
+  "items": [{
+    "guardianLinkId": "01990000-0000-7000-8000-000000000003",
+    "patientId": "01990000-0000-7000-8000-000000000001",
+    "guardianPersonId": "01990000-0000-7000-8000-000000000002",
+    "effectiveFrom": "2026-09-23",
+    "effectiveTo": null,
+    "isPrimary": true,
+    "version": 1,
+    "etag": "\"opaque-link-validator\"",
+    "kind": "GUARDIAN",
+    "temporalState": "CURRENT",
+    "guardian": { "displayName": "Nome de exibição" }
+  }],
+  "page": 1,
+  "pageSize": 25,
+  "totalCount": 1
+}
+```
+
+`opaque-link-validator` é placeholder ilustrativo, não formato/valor a ser gerado. O cliente seleciona o item por `guardianLinkId` e copia seu `etag` completo para `If-Match`. A coleção não emite header ETag utilizável para encerrar um vínculo. Os tokens por item validam somente o recurso GuardianLink, não a projeção People ou o estado derivado por data.
+
+#### 27.1.3 End — CMD-018
+
+`POST /api/v1/patients/{patientId}/guardians/{guardianLinkId}/end`, `Content-Type: application/json`, `If-Match: <etag do vínculo>`. Ambos os IDs são UUIDs não vazios e o vínculo deve pertencer ao paciente da rota. Não exige/consome `Idempotency-Key`.
+
+Body único: `{ "effectiveTo": "2026-10-01" }`. A data é obrigatória, exclusiva, maior que o início e não anterior à data de negócio. Não aceita `endReason` nem altera Person, início ou principalidade.
+
+A ação encerra uma vez um vínculo corrente na data de negócio. Vínculo futuro, histórico, ou já encerrado explicitamente (evidence de End, mesmo com fim agendado) retorna `409 INVALID_STATE_TRANSITION` quando a versão corresponde. Se já há fim finito ainda futuro, End pode antecipá-lo, nunca estendê-lo: o novo fim deve ser menor que o anterior. Fim igual não gera uma segunda operação; retorna 409. O request não corrige passado nem cancela vínculo futuro. PatientProfile inativo pode ter vínculo corrente encerrado sem reativação.
+
+Na transação Patients, validar a versão persistida, reavaliar temporalidade/cardinalidade e definir `effectiveTo` + evidence server-side + nova versão atomicamente. Preservar registro/histórico; não fazer DELETE. Para PatientProfile `ACTIVE`, resolver de People o nascimento mínimo necessário: se ainda menor na data do fim, a união dos períodos dos **outros** guardians deve cobrir continuamente `[effectiveTo, data em que completa 18 anos)`. Uma lacuna ou perda do último vigente retorna `422 GUARDIAN_COVERAGE_REQUIRED`; mera existência de outro vínculo futuro não basta. Nascimento necessário ausente/inconsistente ou dependência indisponível falha fechada com 500 sanitizado. Isso protege o invariant existente sem liberar cadastro/substituição atômica de menores.
+
+Sucesso: `200 OK`, `Cache-Control: no-store`, novo header `ETag` e `GuardianLinkResult` atualizado. Um fim futuro mantém o vínculo temporalmente corrente até a data exclusiva, embora o comando de encerramento já tenha sido aplicado.
+
+#### 27.1.4 GuardianLinkResult, versão e concorrência
+
+`GuardianLinkResult` é DTO HTTP: `{ guardianLinkId, patientId, guardianPersonId, effectiveFrom, effectiveTo, isPrimary, version, etag }`. Create/End retornam somente esses fatos do vínculo, sem campos de persistência/evidence. `version` é inteiro lógico positivo persistido **no GuardianLink**, começa em 1 e aumenta em 1 a cada mutação bem-sucedida; não é versão de PatientProfile, Person, coleção, timestamp ou lock. Leituras, passagem do tempo e mudanças de display name não alteram a versão do vínculo.
+
+O servidor deriva um ETag forte e opaco da identidade do vínculo e dessa versão, estável para o mesmo par e distinto entre vínculos/versões. Usa a sintaxe HTTP de entity-tag entre aspas, sem `W/`, seguindo seção 9; a codificação interna não é contrato do cliente. Não há codec ETag implementado na baseline inspecionada que exija outro formato. O JSON `etag` transporta exatamente a string do header, com aspas escapadas pelo JSON. Header nas respostas Create/End e `etag` na leitura QRY-064 representam a mesma versão persistida. Nenhum ETag de coleção/PatientProfile substitui esse token, nem se espera que o cliente o construa a partir do número.
+
+End aceita exatamente um entity-tag forte concreto em `If-Match`. Header ausente → `428 PRECONDITION_REQUIRED`; vazio/malformado, fraco, lista ou wildcard `*` → `400 VALIDATION_ERROR` (não demonstra a versão lida). Token forte bem formado que não corresponde ao vínculo/versão corrente → `412 CONCURRENCY_CONFLICT`. Body `expectedVersion` não substitui o header. Após parsing sintático e autorização, validar a precondition antes dos conflitos de estado/regras temporais do End, inclusive em retries após mudança da data de negócio. Autenticação e autorização de recurso antecedem exposição de existência/versão; erros não devolvem versão/token corrente de recurso negado.
+
+Todas as mutações do mesmo paciente usam a coordenação já aprovada no design: transação local `READ COMMITTED`, lock do PatientProfile antes de ler períodos/vínculo, nova leitura após eventual espera e validação dos invariants. End compara o token com a versão recarregada e condiciona a atualização ao par `(guardianLinkId, version)` esperado, incrementando a versão na mesma transação; uma atualização que perdeu a comparação retorna 412, sem efeito. O lock do pai coordena o conjunto; **não substitui** a versão persistida verificável do filho. Constraints locais protegem período, identidade e duplicidade como defesa adicional.
+
+- Create/Create equivalentes ou com principais sobrepostos: uma criação tem sucesso, a outra observa o commit e retorna 409; criações compatíveis podem ambas concluir.
+- End/End do mesmo vínculo com o mesmo ETag: uma conclui, a outra retorna 412, sem sobrescrever o primeiro fim. Com token relido após End, nova tentativa retorna 409 de estado.
+- Create/End ou End/End de vínculos diferentes: serializam pelo paciente e reavaliam períodos/cobertura; tokens são por vínculo, mas os invariants do conjunto continuam obrigatórios. Não podem deixar um menor ativo descoberto por corrida.
+
+#### 27.1.5 Autorização e PII
+
+| Operação | Permission Patients | Policy |
+|---|---|---|
+| Create / End | `patients.guardian.manage` | `ACTIVE_ACCOUNT`, explicit deny prevalece, autorização do PatientProfile e `UNIT_SCOPE(primaryUnitId)` |
+| List | `patients.profile.read` | mesmas condições de conta e recurso; acesso administrativo minimizado |
+
+**Proveniência conferida:** AUTH-001 §9 enumera `patients.guardian.manage`; §§8.1, 13 e 26 aprovam leitura administrativa scoped de PatientProfile/vínculos. O literal `patients.profile.read` não está enumerado em AUTH-001 §9: sua concretização foi prevista em IMP-001-DESIGN §5 e já adotada expressamente no design aprovado IMP-002 §5, ambos normativos em PROJECT_OS. Reutiliza-se essa permission aprovada; não se inventa permission nem grant. Essa omissão literal do catálogo AUTH-001 fica registrada, sem alterar AUTH-001 ou bloquear um contrato que reutiliza a aprovação vigente.
+
+Composição/validação People exige também o grant já existente `people.person.read` (AUTH-001 §9), revalidado pelo owner em contrato purpose-specific, como em IMP-001/002. Patients não empresta autoridade a People; somente a projeção necessária do terceiro é retornada após autorizar o paciente. Posse de PersonId/linkId ou permission de escrita não implica leitura administrativa ampla.
+
+Owner/Secretary têm somente capacidades concedidas e vigentes no escopo; `CLINIC` requer grant explícito da ação. Developer/IT não recebe autoridade de negócio, e acesso assistencial mínimo de Physiotherapist não abre esta listagem administrativa. GuardianLink não concede conta, portal, consentimento, Clinical, Billing ou acesso genérico a terceiros. Não há permission nova nem step-up obrigatório novo.
+
+Ausência de autenticação → 401; conta inativa, explicit deny, permission ausente ou ausência de scope administrativo → 403. Após esses checks, lookup scoped do paciente/vínculo inexistente ou fora do escopo → 404 genérico, sem consultar/revelar Person de terceiro antes de autorizar o paciente. Vínculo pertencente a outro paciente também é 404. Essa escolha anti-enumeração aplica-se somente aos novos mappings e segue a opção canônica da seção 6.1; não modifica o GET de paciente existente.
+
+Todos os resultados, inclusive erros, usam `Cache-Control: no-store`. Respostas omitem CPF, telefone, nascimento, stack trace, SQL e dados clínicos/financeiros. Logs omitem também nomes, bodies e tokens de concorrência, conservando somente metadata operacional minimizada. Audit durável continua requisito de ativação: evidence local de criação/encerramento não substitui Audit. IAM de produção e ativação externa continuam gated.
+
+#### 27.1.6 Retry sem Idempotency-Key
+
+Create e End não exigem nem consomem `Idempotency-Key`, inclusive se o cliente a enviar. Nenhum `command_receipt` de GuardianLink é criado; não existe replay garantido da resposta original. O comportamento/receipt/idempotência obrigatória de `POST /api/v1/patients` (IMP-001) permanece inalterado.
+
+Após perda da resposta Create, o cliente consulta QRY-064 sem `effectiveOn`, percorre as páginas e reconcilia guardian/intervalo/principalidade. Se o primeiro commit ocorreu, a repetição do mesmo request encontra duplicidade/overlap e retorna 409, sem segundo vínculo. Se a data de negócio avançou, também pode receber 422 de retroatividade antes do conflito; isso não prova que a primeira tentativa falhou. Se não houve commit, uma nova tentativa só cria após todas as validações atuais. Não presumir falha pelo timeout nem alterar datas para forçar uma operação nova: repetição de Create não é automaticamente nova intenção. Intervalo disjunto com início distinto só representa outro vínculo quando for uma intenção explícita do usuário.
+
+Após perda da resposta End, repetir com o ETag anterior retorna 412 se o primeiro commit ocorreu. Reler o item em QRY-064 e conferir fim/versão permite reconhecer o resultado, mas não prova quem executou uma mutação concorrente. Não atualizar automaticamente o token para reaplicar o End: com versão atual e evidence de encerramento retorna 409, sem novo efeito. Falha antes do commit deixa o token anterior válido, sujeito às demais validações e concorrência.
+
+#### 27.1.7 Error mapping — RFC 9457
+
+Usar `application/problem+json`, `type`, `title`, `status`, `detail` seguro e extensões `code`, `traceId`, `errors` quando houver validação por campo. Reutilizar o padrão de URI `/problems/{code-em-kebab-case}` e códigos canônicos; não serializar exceção, persistence model, valores pessoais rejeitados ou detalhes de recurso negado.
+
+| HTTP | `code` | Condição |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | JSON/UUID/data inválidos, campo obrigatório ausente, campo/query não suportado, paginação/sort/kind inválido ou If-Match não aceito |
+| 401 | `UNAUTHORIZED` | principal ausente/inválido |
+| 403 | `FORBIDDEN` | conta, explicit deny, permission ou scope geral negado, inclusive pelo contrato People |
+| 404 | `RESOURCE_NOT_FOUND` | PatientProfile, Person de criação ou vínculo inexistente/ocultado; vínculo de outro paciente; não revelar qual terceiro ocultado existe |
+| 409 | `CONFLICT` | duplicidade, overlap do mesmo guardian ou principalidade conflitante; sem segundo efeito |
+| 409 | `INVALID_STATE_TRANSITION` | PatientProfile inativo na criação; vínculo não corrente, já encerrado, ou tentativa de manter/estender fim no End |
+| 412 | `CONCURRENCY_CONFLICT` | If-Match fornecido não corresponde à versão persistida do vínculo |
+| 428 | `PRECONDITION_REQUIRED` | If-Match ausente no End; nenhuma mutação |
+| 422 | `BUSINESS_RULE_VIOLATION` | período vazio/invertido, guardian igual ao paciente ou Person não corrente |
+| 422 | `RETROACTIVE_RELATIONSHIP_NOT_SUPPORTED` | criação/fim retroativo, fora do slice aprovado |
+| 422 | `GUARDIAN_COVERAGE_REQUIRED` | End deixaria lacuna de guardian durante a menoridade de paciente ativo |
+| 500 | `INTERNAL_ERROR` | falha interna/dependência ou inconsistência de referência/nascimento, sempre sanitizada |
+
+```json
+{
+  "type": "https://api.fisiofit.example/problems/precondition-required",
+  "title": "Precondition required",
+  "status": 428,
+  "detail": "If-Match is required for this operation.",
+  "code": "PRECONDITION_REQUIRED",
+  "traceId": "opaque-correlation-id"
+}
+```
+
 ## 28. Staff API
 
 Commands: `CreateProfessionalProfile`, `UpdateProfessionalProfile`, `StartEmployment`, `EndEmployment`, `AssignProfessionalToUnit`, `EndProfessionalUnitAssignment`, `SetProfessionalAvailability`, `RegisterProfessionalLeave`, `EndProfessionalLeave`. Queries: `GetProfessionalDetails`, `SearchProfessionals`, `GetProfessionalAvailability`, `GetProfessionalAssignments`, `GetProfessionalLeaves`. Desligamento preserva autoria; Availability concreta permanece gated pela representação deferred.
@@ -663,7 +826,7 @@ Este catálogo define nomes e limites para impedir invenção posterior; ele nã
 | CMD-015 | Patients | CreatePatientProfile | Secretary/Owner | profile.create + Unit scope | personId, unit, links | patientId/status | Patients local | optional | uniqueness |
 | CMD-016 | Patients | ActivatePatientProfile | Secretary/Owner | profile.update | patientId, reason? | id/status/version | Patients local | key | ETag |
 | CMD-017 | Patients | DeactivatePatientProfile | Secretary/Owner | profile.deactivate | patientId, reason | id/status/version | Patients local | key | ETag |
-| CMD-018 | Patients | ManageGuardian | Secretary/Owner | guardian.manage | patientId, personId, vigência/primary | linkId/version | Patients local | no | ETag |
+| CMD-018 | Patients | ManageGuardian | Secretary/Owner | patients.guardian.manage + Unit scope | Create: patientId, guardianPersonId, effectiveFrom, effectiveTo?, isPrimary; End: patientId, guardianLinkId, effectiveTo | GuardianLinkResult + ETag (§27.1) | Patients local | no (ambas as ações) | Create: lock/invariants; End: If-Match sobre versão persistida do vínculo + lock/invariants |
 | CMD-019 | Patients | ManageAdministrativeResponsible | Secretary/Owner | admin_responsible.manage | patientId, personId, vigência | linkId/version | Patients local | no | ETag |
 | CMD-020 | Patients | ChangeResponsiblePayer | Secretary/Owner | payer.change | patientId, payerPersonId, vigência, reason | linkId/version | Patients local | key | ETag |
 | CMD-021 | Patients | ManageEmergencyContact | Secretary/Owner | emergency_contact.manage | patientId, contact/link data | id/version | Patients local | no | ETag |
@@ -853,7 +1016,7 @@ Todas as queries exigem autenticação e permission/policy indicada; `page/pageS
 | QRY-061 | Reports | GetFinancialReport | financial actor | financial.read | definition, period, unit/account | FinancialReport | offset if detail | FIN |
 | QRY-062 | Reports | GetClinicalReport | clinical actor | clinical.read + source policy | approved dimensions/period | MinimizedClinicalReport | no/detail gated | CLIN |
 | QRY-063 | People | GetPersonRelationships | admin actor | person.read + Unit scope | personId, kind, effectiveOn | PersonRelationshipView | offset | PII |
-| QRY-064 | Patients | GetPatientRelationships | admin actor | scoped patient read | patientId, kind, effectiveOn | PatientRelationshipView | offset | PII |
+| QRY-064 | Patients | GetPatientRelationships | admin actor | patients.profile.read + Unit scope; People read na composição (§27.1.5) | patientId, kind, effectiveOn?; IMP-003A somente GUARDIAN | PatientRelationshipView + version/etag por vínculo (§27.1) | offset | PII minimizada; no-store |
 | QRY-065 | Staff | GetProfessionalAssignments | authorized actor | staff/self scope | professionalId, unit, effectiveOn | ProfessionalAssignmentView | offset | PII |
 | QRY-066 | Staff | GetProfessionalLeaves | authorized actor | staff/self scope | professionalId, range, status | ProfessionalLeaveView | offset | PII |
 | QRY-067 | CRM | GetOpportunityTimeline | commercial actor | Unit/owner | opportunityId, activity kind/range | OpportunityTimelineItem | offset | PII |
@@ -868,7 +1031,7 @@ Todas as queries exigem autenticação e permission/policy indicada; `page/pageS
 | QRY-076 | Reports | GetRevenueReport | financial actor | financial.read | unit/period/dimensions | RevenueReport | offset if detail | FIN |
 | QRY-077 | Reports | GetClosingReport | financial actor | financial.read | closing/snapshot/period | ClosingReport | no | FIN |
 
-List sort whitelists follow public fields: People/Patients `name,createdAt`; Opportunities `createdAt,nextActionAt,stage`; Agenda `startsAt`; Classes `weekday,startTime,name`; Clinical timeline `serviceDate,createdAt`; Contracts `acceptedAt,endDate`; Receivables `dueDate,competence,balance`; Payments `confirmedAt,amount`; Expenses `dueDate,competence,amount`; Closings `period`; Audit `occurredAt`. Default is the first field ascending except timelines/transactions/audit, which are descending. `id` is the hidden deterministic tie-breaker, never an arbitrary user sort.
+QRY-064 no IMP-003A usa a whitelist e o default específicos da seção 27.1.2. List sort whitelists follow public fields: People/Patients `name,createdAt`; Opportunities `createdAt,nextActionAt,stage`; Agenda `startsAt`; Classes `weekday,startTime,name`; Clinical timeline `serviceDate,createdAt`; Contracts `acceptedAt,endDate`; Receivables `dueDate,competence,balance`; Payments `confirmedAt,amount`; Expenses `dueDate,competence,amount`; Closings `period`; Audit `occurredAt`. Default is the first field ascending except timelines/transactions/audit, which are descending. `id` is the hidden deterministic tie-breaker, never an arbitrary user sort.
 
 ## 41.1 Implementation Readiness
 
@@ -946,7 +1109,9 @@ Este é também o API Contract Catalog mestre. `Auth` referencia a permission da
 | GET | `/api/v1/patients/{id}` | Patients | GetPatientDetails | QUERY | scoped read | — | 200 admin detail; PII |
 | POST | `/api/v1/patients/{id}/activate` | Patients | ActivatePatientProfile | COMMAND | profile.update | I | 200 status |
 | POST | `/api/v1/patients/{id}/deactivate` | Patients | DeactivatePatientProfile | COMMAND | profile.deactivate | I | 200 status |
-| POST | `/api/v1/patients/{id}/guardians` | Patients | ManageGuardian | COMMAND | guardian.manage | — | 201 link; PII |
+| POST | `/api/v1/patients/{patientId}/guardians` | Patients | CMD-018 ManageGuardian — Create | COMMAND | patients.guardian.manage + UNIT_SCOPE | — | 201 GuardianLinkResult + ETag; no-store; §27.1 |
+| GET | `/api/v1/patients/{patientId}/relationships?kind=GUARDIAN` | Patients | QRY-064 GetPatientRelationships | QUERY | patients.profile.read + UNIT_SCOPE | — | 200 page, etag por item; PII mínima; no-store; §27.1 |
+| POST | `/api/v1/patients/{patientId}/guardians/{guardianLinkId}/end` | Patients | CMD-018 ManageGuardian — End | COMMAND | patients.guardian.manage + UNIT_SCOPE | — | 200 GuardianLinkResult + ETag; If-Match obrigatório; no-store; §27.1 |
 | POST | `/api/v1/patients/{id}/payer-changes` | Patients | ChangeResponsiblePayer | COMMAND | payer.change | I | 201 link; FIN/PII |
 | POST | `/api/v1/professionals` | Staff | CreateProfessionalProfile | COMMAND | profile.create | O | 201 id; PII |
 | GET | `/api/v1/professionals` | Staff | SearchProfessionals | QUERY | staff scope | — | 200 page; PII |
@@ -1110,7 +1275,10 @@ Provider-specific inbound callbacks will use `/api/v1/webhooks/{provider}/{purpo
 | `VALIDATION_ERROR` | all | 400 | syntactic/contract validation failed |
 | `RESOURCE_NOT_FOUND` | all | 404 | resource absent or intentionally concealed |
 | `INVALID_STATE_TRANSITION` | all state machines | 409 | action conflicts with current state |
-| `CONCURRENCY_CONFLICT` | selected roots | 412 | expected version/ETag stale |
+| `CONCURRENCY_CONFLICT` | selected roots / GuardianLink | 412 | expected version/ETag stale; GuardianLink §27.1.4 |
+| `PRECONDITION_REQUIRED` | Patients GuardianLink End | 428 | If-Match ausente; §27.1.4 |
+| `RETROACTIVE_RELATIONSHIP_NOT_SUPPORTED` | Patients GuardianLink | 422 | criação/fim retroativo fora do slice; §27.1 |
+| `GUARDIAN_COVERAGE_REQUIRED` | Patients GuardianLink End | 422 | encerramento deixaria menor ativo sem cobertura contínua; §27.1 |
 | `IDEMPOTENCY_CONFLICT` | selected commands | 409 | same key used with different canonical request |
 | `PERSON_ALREADY_HAS_PROFILE` | Patients/Staff/Identity | 409 | unique contextual profile/account conflict |
 | `PERSON_MERGE_REQUIRES_APPROVAL` | People | 409 | sensitive merge lacks approved workflow |
@@ -1145,6 +1313,7 @@ Não há código para cada regra: somente falhas que clientes precisam tratar de
 
 | Operation | Required? | Key Scope | Replay Result |
 |---|---|---|---|
+| ManageGuardian — Create / End | no; não consome key nem cria receipt | não aplicável | conflito/412 após resposta perdida; reconciliação por QRY-064 (§27.1.6) |
 | MergePerson/ReversePersonMerge | yes | actor + People + operation + key/hash | same merge result |
 | ScheduleAppointment | integrations yes; UI optional | actor/service + Scheduling + operation | same Appointment |
 | GenerateOccurrences | yes/deterministic | schedule + date/discriminator or key | same generated set/count |
@@ -1167,6 +1336,7 @@ Não há código para cada regra: somente falhas que clientes precisam tratar de
 
 | Operation | Resource | Mechanism | Conflict Response |
 |---|---|---|---|
+| ManageGuardian — Create / End | GuardianLink (version persistida) e conjunto do PatientProfile | lock local do pai + invariants; End exige If-Match do filho e atualização condicionada à versão (§27.1.4) | 409 conflito; 428 ausente; 412 divergente |
 | update configuration/schedule | Unit/Calendar/ScheduleRule/ClassSchedule | ETag + overlap check | 412 or 409 conflict |
 | Add/Transfer membership | class/schedule occupancy | local transaction, deterministic lock/version | 409 `PILATES_CLASS_FULL`/overlap |
 | Record/Correct attendance | occurrence/attendance | expected version + unique + append correction | 412/409 |
@@ -1186,6 +1356,7 @@ Não há código para cada regra: somente falhas que clientes precisam tratar de
 | organization mutations | `organization.structure/calendar.manage` | UNIT_SCOPE/CLINIC + current state | sensitive | no/default |
 | Person create/update | `people.person.*`, `people.contact.manage` | UNIT_SCOPE | sensitive | no |
 | MergePerson | `people.person.merge.*` | classification + OWNER_APPROVAL_REQUIRED | sensitive | simple recommended; sensitive required |
+| Guardian Create / End; List (IMP-003A) | `patients.guardian.manage`; `patients.profile.read`, respectivamente | ACTIVE_ACCOUNT + explicit deny + UNIT_SCOPE no PatientProfile; People revalida `people.person.read` (§27.1.5) | sensitive; ativação exige Audit durável | no |
 | Patient/link lifecycle | `patients.*` specific | UNIT_SCOPE; assigned minimum for reads | sensitive | no |
 | Staff lifecycle | `staff.*` specific | UNIT_SCOPE/current relationship | sensitive | end recommended |
 | CRM pipeline/tasks | `crm.*` specific | Unit/assigned owner + current state | standard/sensitive | no |
