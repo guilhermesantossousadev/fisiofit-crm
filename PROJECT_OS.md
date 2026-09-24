@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: imp_002_done_patient_search_list
+  status: imp_003_design_done_guardian_http_reconciled_imp_003a_ready
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: IMP-002 concluído; revisar o resultado e decidir futuramente sobre o candidato IMP-003-DESIGN
+  current_priority: IMP-003A — Guardian Links for Existing Persons — READY; próxima tarefa separada, não iniciada nesta reconciliação
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,11 +39,11 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** segundo vertical slice backend concluído
-**MARCO CONCLUÍDO:** IMP-002 — PATIENT SEARCH / LIST — DONE / PASS
-**PRÓXIMO MARCO CANDIDATO:** IMP-003-DESIGN — Patient Relationships — `TODO`; ainda não desenhado, aprovado, `READY` ou iniciado
-**ÚLTIMA TAREFA CONCLUÍDA:** IMP-002 — busca/listagem administrativa backend sem join cross-schema
-**PRÓXIMA TAREFA AUTORIZADA:** revisar/aceitar o resultado em `docs/implementation/IMP_002_PATIENT_SEARCH_LIST.md`; não iniciar IMP-003
+**FASE ATUAL:** contratos HTTP de Guardian reconciliados; primeiro slice pronto para implementação local em tarefa separada
+**MARCO CONCLUÍDO:** IMP-003-DESIGN — PATIENT RELATIONSHIPS — DONE / PASS
+**PRÓXIMO MARCO:** IMP-003A — GUARDIAN LINKS FOR EXISTING PERSONS — `READY`
+**ÚLTIMA TAREFA CONCLUÍDA:** API-001 / IMP-003A — GUARDIAN HTTP CONTRACT RECONCILIATION — `PASS` (somente documentação)
+**PRÓXIMA TAREFA:** IMP-003A — GUARDIAN LINKS FOR EXISTING PERSONS. Não iniciada nesta sessão; a reconciliação não autoriza ativação externa/produção.
 
 | Domínio | Status |
 |---|---|
@@ -63,11 +63,15 @@ Sequência oficial imediata:
 3. `IMP-000` — Organization / Unit Baseline — concluído e validado em PostgreSQL;
 4. `IMP-001` — adulto/self-payer backend POST/GET — concluído, mantendo minors/payer diferente e produção externa gated;
 5. `IMP-002` — busca/listagem administrativa backend — `DONE / PASS`, sem migration ou persistence cross-context;
-6. `IMP-003-DESIGN — Patient Relationships` — próximo trabalho candidato em `TODO`, ainda não selecionado para execução.
+6. `IMP-003-DESIGN — Patient Relationships` — `DONE / PASS`, exclusivamente design e documentação;
+7. `API-001 / IMP-003A — Guardian HTTP Contract Reconciliation` — `DONE / PASS`, somente documentação;
+8. `IMP-003A — Guardian Links for Existing Persons` — `READY` para implementação local em tarefa separada; não iniciado.
 
-Modelagem conceitual, máquinas de estado, catálogo final de eventos, autorização conceitual, arquitetura física, modelo lógico, contratos de aplicação/API e o skeleton físico estão concluídos. IMP-000, IMP-001, IMP-002-DESIGN e IMP-002 estão `DONE / PASS`. O `DONE` de IMP-002 cobre exclusivamente o backend de `GET /api/v1/patients`: busca administrativa por nome, CPF e telefone; filtros por Unit e status; paginação e ordenação; autorização e `UNIT_SCOPE`; composição People/Patients/Organization; e proteção de PII. Não inclui frontend nem relacionamentos. Nenhum próximo slice foi iniciado.
+Modelagem conceitual, máquinas de estado, catálogo final de eventos, autorização conceitual, arquitetura física, modelo lógico, contratos de aplicação/API e o skeleton físico estão concluídos. IMP-000, IMP-001, IMP-002-DESIGN, IMP-002 e IMP-003-DESIGN estão `DONE / PASS`. A revisão final de IMP-003 preserva os quatro conceitos separados, mantém `relationshipToPatient` fora do primeiro slice por ser opcional e não possuir catálogo aprovado, e adota a idempotência canônica de API-001 (`CMD-018: no`). Nenhuma implementação de relacionamento foi iniciada. Cadastro de menor, pagador diferente, criação/reuso de nova Person, responsável administrativo e contato de emergência permanecem fora de IMP-003A.
 
 Validação de IMP-002: build `PASS` com 0 warnings e 0 errors; UnitTests 34/34; IntegrationTests 27/27 em PostgreSQL real; ApiTests 12/12; ArchitectureTests 14/14; total 86/86 `PASS`.
+
+Validação da reconciliação: API-001 §27.1/§42 publica Create de CMD-018, List de QRY-064 (`kind=GUARDIAN`) e End de CMD-018, com requests/responses, autorização, versão persistida por vínculo, ETag/If-Match, 428/412, retries sem receipts e Problem Details. `API-001-IMP-003A-ROUTE-MAPPING` está `CLOSED`; IMP-003-DESIGN permanece `DONE / PASS` e IMP-003A está `READY`. Nenhum código, migration ou endpoint real foi alterado.
 
 ---
 
@@ -902,13 +906,16 @@ Só entra quando Plans/Billing estiverem sem blocker.
 | IMP-001 | Register Patient Vertical Slice | P0 | DONE — PASS (adult + SELF + backend + administrative POST/GET only) |
 | IMP-002-DESIGN | Patient Search / List Design | P0 | DONE — PASS |
 | IMP-002 | Patient Search / List | P0 | DONE — PASS |
-| IMP-003-DESIGN | Patient Relationships Design | P0 | TODO — CANDIDATE; não desenhado/aprovado |
+| IMP-003-DESIGN | Patient Relationships Design | P0 | DONE — PASS |
+| IMP-003A | Guardian Links for Existing Persons | P0 | READY — contratos reconciliados; implementação não iniciada |
 
 > Escopo normativo de IMP-001: `docs/implementation/IMP_001_REGISTER_PATIENT_DESIGN.md`; resultado executado: `docs/implementation/IMP_001_REGISTER_PATIENT.md`. `DONE` significa somente adulto + `SELF` + backend + POST/GET administrativo. People/Patients não estão completos. Menores, payer diferente, UI e ativação externa/produção sem IAM/Audit concretos permanecem GATED.
 
 > Escopo normativo de IMP-002: `docs/implementation/IMP_002_PATIENT_SEARCH_LIST_DESIGN.md`; resultado executado: `docs/implementation/IMP_002_PATIENT_SEARCH_LIST.md`. `DONE` significa exclusivamente backend-only com `GET /api/v1/patients`, busca administrativa por nome/CPF/telefone, filtros por Unit/status, paginação/ordenação, autorização + `UNIT_SCOPE`, composição People/Patients/Organization e proteção de PII. Não inclui frontend, detalhe novo, update, relacionamentos, fuzzy/dedup, Reports ou infraestrutura de busca.
 
-> `IMP-003-DESIGN — Patient Relationships` é apenas o próximo trabalho candidato. Permanece `TODO`: não foi desenhado, aprovado, promovido para `READY` ou iniciado.
+> Escopo normativo de IMP-003-DESIGN: `docs/implementation/IMP_003_PATIENT_RELATIONSHIPS_DESIGN.md`. O primeiro slice escolhido é `IMP-003A — Guardian Links for Existing Persons`: backend para criar, consultar e encerrar GuardianLink temporal entre PatientProfile e Person já existentes, com múltiplos vínculos, no máximo um principal em períodos sobrepostos, autorização por recurso/`UNIT_SCOPE`, concorrência serializada pelo PatientProfile, `If-Match` no encerramento, histórico e migration somente de Patients. API-001 define `CMD-018` sem `Idempotency-Key`; o slice não cria receipt próprio. Não cria Person, não altera `POST /api/v1/patients` e não libera cadastro de menores ou pagador diferente. API-001 §27.1/§42 contém os contratos definitivos de criação/consulta/encerramento; a versão persistida de GuardianLink sustenta o ETag, com 428 para If-Match ausente e 412 para divergente. IMP-003A está READY para implementação local separada.
+
+> Sequência posterior, ainda não `READY`: IMP-003B-DESIGN — resolução/criação de Person para relacionamentos; IMP-003C-DESIGN — cadastro de menor com GuardianLink atômico; IMP-003D-DESIGN — Responsible Payer lifecycle; IMP-003E-DESIGN — Administrative Responsible, bloqueado por `OQ-M001-005`; IMP-003F-DESIGN — Emergency Contact, bloqueado por `OQ-M001-001`.
 
 ---
 
@@ -1520,19 +1527,147 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. revisar/aceitar o resultado de `IMP-002 — Patient Search / List` sem ampliar o slice;
-2. manter frontend, guardian/payer, busca fuzzy e infraestrutura de busca fora de execução;
-3. decidir explicitamente, em trabalho futuro, se `IMP-003-DESIGN — Patient Relationships` será selecionado; ele permanece `TODO` e não pode ser iniciado nesta etapa.
+1. próxima tarefa: `IMP-003A — GUARDIAN LINKS FOR EXISTING PERSONS`, READY para implementação local separada conforme API-001 §27.1/§42 e IMP-003-DESIGN; não iniciada nesta sessão;
+2. nessa tarefa futura, validar Create/List/End, versão persistida/ETag, concorrência, autorização, privacidade e regressões de IMP-001/002;
+3. preservar os gates de cadastro de menores, pagador diferente, IAM de produção, Audit durável, ativação externa, retenção definitiva dos receipts e retroatividade/correção histórica; nenhum desses fluxos está READY.
 
 ## Em seguida
 
-4. fechar os detalhes deferred de IAM/Audit necessários à ativação externa/produção;
-5. medir cardinalidade/latência real antes de promover índices candidatos ou projection;
-6. desenhar guardian/payer diferente e frontend em slices próprias quando forem selecionadas e estiverem READY.
+4. desenhar IMP-003B, resolução/criação purpose-specific de Person para relacionamentos, sem busca global improvisada;
+5. fechar IAM/Audit e decisões legais necessárias antes de desenhar/ativar cadastro de menores;
+6. desenhar payer, administrative responsible e emergency contact em slices próprias, respeitando seus blockers canônicos.
 
 ---
 
 # 24. ÚLTIMO HANDOFF
+
+## HANDOFF — 2026-09-23 — API-001 / IMP-003A GUARDIAN HTTP CONTRACT RECONCILIATION
+
+### Objetivo e backlog trabalhado
+
+Reconciliar exclusivamente os contratos HTTP de Guardian necessários a IMP-003A. API-001 atualizado; IMP-003-DESIGN — `DONE / PASS`; IMP-003A — `READY`, sem iniciar implementação.
+
+### Contratos publicados e decisões
+
+- CMD-018 Create: `POST /api/v1/patients/{patientId}/guardians`, guardianPersonId, effectiveFrom, effectiveTo opcional e isPrimary; 201;
+- QRY-064: `GET /api/v1/patients/{patientId}/relationships?kind=GUARDIAN`, effectiveOn opcional, paginação/ordenação, histórico completo sem filtro, 200 vazio e 404 paciente inexistente/ocultado;
+- CMD-018 End: `POST /api/v1/patients/{patientId}/guardians/{guardianLinkId}/end`, effectiveTo e If-Match; 200, sem DELETE ou endReason;
+- isPrimary é o nome HTTP do atributo conceitual isPrimaryLegalGuardian; não é nova regra ou segunda flag;
+- GuardianLink possui versão lógica persistida incremental; Create/End emitem ETag e List fornece o mesmo token por item; lock do PatientProfile coordena invariants e não substitui a versão do vínculo;
+- If-Match ausente → 428; divergente → 412; mesmo token concorrente não produz dois encerramentos;
+- períodos semiabertos, overlap/principalidade e cobertura contínua de guardian para menor ativo são preservados;
+- Create/End não exigem nem consomem Idempotency-Key; não criam command_receipt; retry requer reconciliação por QRY-064, sem replay prometido;
+- respostas no-store e PII mínima, CPF/telefone/nascimento omitidos; RFC 9457 sanitizado;
+- não se anuncia Location para GET individual de GuardianLink inexistente; não se publica outro tipo de relacionamento como implementado.
+
+### Autorização conferida
+
+Create/End usam `patients.guardian.manage`, expressa em AUTH-001 §9; List reutiliza `patients.profile.read`. AUTH-001 §§8.1/13/26 sustenta a leitura administrativa, mas seu catálogo §9 omite esse literal. A concretização foi prevista em IMP-001-DESIGN §5 e adotada expressamente em IMP-002-DESIGN §5, documentos normativos aprovados por este PROJECT_OS. API-001 §27.1.5 registra a proveniência; nenhuma permission nova foi inventada. People revalida `people.person.read`; conta ACTIVE, explicit deny, resource authorization e UNIT_SCOPE são obrigatórios. Papéis administrativos/técnicos não ampliam autoridade ou exposição de terceiros.
+
+### Blockers e gates
+
+`API-001-IMP-003A-ROUTE-MAPPING` — `CLOSED`. Nenhum blocker obrigatório aberto para o slice local delimitado. Permanecem gated: cadastro de menores, pagador diferente, IAM de produção, Audit durável, ativação externa, retenção definitiva dos receipts, retroatividade/correção histórica. Criação de Person e demais relacionamentos continuam fora do slice; não foram promovidos para READY.
+
+### Arquivos alterados
+
+- `docs/api/API_001_APPLICATION_API_CONTRACTS.md`;
+- `docs/implementation/IMP_003_PATIENT_RELATIONSHIPS_DESIGN.md`;
+- `PROJECT_OS.md`.
+
+O worktree já continha PROJECT_OS modificado e o design untracked no pre-flight; esse trabalho foi preservado. Nenhum código, migration, endpoint real ou teste foi alterado. Sem commit, push ou merge.
+
+### Validação
+
+- leitura integral dos sete documentos obrigatórios e inspeção de ADR-001..007; conferência complementar da aprovação de permissions em IMP-001/002;
+- 137 command IDs e 77 query IDs preservados; catálogo alterado somente na criação Guardian e nos dois mappings aditivos;
+- exemplos JSON válidos; consistência entre API-001 e IMP-003-DESIGN revisada;
+- `git diff --check` PASS; inspeção adicional do design untracked, diff/stat/status e branch no fechamento;
+- testes executáveis N/A: alteração exclusivamente documental.
+
+### Riscos preservados
+
+Todo writer de vínculos deve participar da mesma coordenação local; a implementação futura deve provar corridas e versionamento persistido. Timeout não comprova falha; não tratar toda repetição de Create como novo vínculo. Conhecer PersonId continua pré-condição, sem busca global improvisada. Histórico e dados pessoais de terceiros continuam protegidos.
+
+### Próximas 3 ações
+
+1. executar em tarefa separada `IMP-003A — GUARDIAN LINKS FOR EXISTING PERSONS`, estritamente conforme os contratos publicados;
+2. nessa implementação, provar concorrência, permissões, ETag/If-Match, temporalidade, minimização e regressão de IMP-001/002;
+3. manter todos os gates e slices posteriores fora de execução até suas decisões próprias.
+
+### Instrução para a próxima IA
+
+Comece por API-001 §27.1/§42 e IMP-003-DESIGN. IMP-003A está READY, mas não foi iniciado nesta reconciliação. Não mudar POST /api/v1/patients, não exigir Idempotency-Key para Guardian, não criar receipts Guardian e não liberar menores, payer diferente ou produção.
+
+## HANDOFF — 2026-09-23 — IMP-003 PATIENT RELATIONSHIPS FINAL CORRECTIVE REVIEW
+
+> Histórico anterior: a reconciliação HTTP acima encerrou o blocker de rotas e substitui este handoff quanto à prontidão de IMP-003A.
+
+### Objetivo da sessão
+Executar a revisão corretiva final e exclusivamente documental de IMP-003-DESIGN, reconciliando API-001, `relationshipToPatient`, principalidade, temporalidade e concorrência, sem implementar código ou migration.
+
+### Status atual
+IMP-003-DESIGN — `DONE / PASS`. Documento normativo: `docs/implementation/IMP_003_PATIENT_RELATIONSHIPS_DESIGN.md`. IMP-003A — `BLOCKED` por `OPEN_DECISION API-001-IMP-003A-ROUTE-MAPPING`. Nenhum relacionamento foi implementado nesta sessão.
+
+### Primeiro slice selecionado
+`IMP-003A — Guardian Links for Existing Persons`: backend futuro para criar, consultar e encerrar GuardianLink temporal entre PatientProfile e Person já existentes. Suporta múltiplos guardians, no máximo um principal em períodos sobrepostos, zero principal permitido, histórico sem DELETE, autorização pelo PatientProfile/Unit e PII mínima. API-001 é canônico: create/end não exigem `Idempotency-Key`; end usa `If-Match`.
+
+### Decisões aprovadas
+- People continua owner de Person, CPF, identidade civil, ContactPoint e deduplicação; fornece contratos purpose-specific mínimos;
+- Patients continua owner de PatientProfile e dos quatro tipos distintos de vínculo;
+- IMP-003A não cria Person e exige `guardianPersonId` conhecido e validado por People;
+- GuardianLink não implica payer, responsável administrativo, contato de emergência, consentimento clínico ou acesso ao portal;
+- `relationshipToPatient` é opcional em MODEL-001, não é obrigatório em DB-001 nem input de CMD-018, e não possui catálogo aprovado; fica expressamente excluído de IMP-003A, sem confundir parentesco com autoridade legal;
+- vigência é `[effectiveFrom, effectiveTo)`, sem sobrescrever passado; retroatividade/correção histórica fica gated;
+- cardinalidade é 0..N guardians para adulto e 1..N vigentes para menor ativo; principalidade é 0..1 em qualquer período, não exatamente um;
+- end deve falhar se produzir intervalo sem guardian para menor ativo; cadastro e substituição atômica de menores continuam fora do slice;
+- create/end seguem `CMD-018` sem `Idempotency-Key`; end exige `If-Match`, e nenhum receipt GuardianLink será criado;
+- toda mutação usa transação Patients local `READ COMMITTED`, lock `FOR UPDATE` do PatientProfile antes de reler períodos e validar overlap/principalidade/cobertura de menor;
+- migration futura é somente de Patients e cria apenas GuardianLink, sem alterar receipt e sem FK cross-schema;
+- `POST /api/v1/patients` e GETs de IMP-001/002 permanecem inalterados.
+
+### Reconciliação API-001
+- já aprovado: `CMD-018 ManageGuardian`, `POST /api/v1/patients/{id}/guardians`, sem idempotency key, concorrência por ETag;
+- já aprovado semanticamente: `QRY-064 GetPatientRelationships`, com `patientId`, `kind`, `effectiveOn` e offset;
+- ausente no Endpoint Catalog: rota HTTP de `QRY-064` e rota de encerramento de `CMD-018`;
+- menor alteração proposta: adicionar `GET /api/v1/patients/{id}/relationships` e `POST /api/v1/patients/{id}/guardians/{guardianLinkId}/end`, este com `If-Match`, sem mudar idempotência;
+- API-001 não foi modificado silenciosamente; a aprovação/publicação desses mappings é blocker explícito antes de IMP-003A.
+
+### Relacionamentos não selecionados
+- AdministrativeResponsibleLink está bloqueado pelo catálogo de ações `OQ-M001-005`;
+- EmergencyContact está bloqueado por `OQ-M001-001`, Person versus contato externo estruturado;
+- ResponsiblePayerLink requer slice próprio e integração futura com Contract/Billing sem reescrever snapshots;
+- cadastro de menor exige Person do menor e guardian, PatientProfile + GuardianLink atômicos em Patients, retry/failure recovery, payer mode e decisões legais/Audit.
+
+### Arquivos alterados
+- criado `docs/implementation/IMP_003_PATIENT_RELATIONSHIPS_DESIGN.md`;
+- atualizado `PROJECT_OS.md`.
+
+### Migrations e código
+Nenhuma migration, código, endpoint ou teste foi criado/alterado. `NO PEOPLE MIGRATION` e `NO ORGANIZATION MIGRATION` para o futuro IMP-003A; uma migration Patients será necessária somente depois do unblock.
+
+### Validação
+- pre-flight: branch exata confirmada; o worktree já continha as duas alterações documentais em revisão;
+- IMP-000, IMP-001 e IMP-002 confirmados `DONE / PASS`;
+- fontes canônicas, ADRs relevantes, código real, migrations, contracts, autorização, receipts e testes existentes inspecionados;
+- `git diff --check` PASS; somente os dois documentos autorizados estão modificados (`PROJECT_OS.md` tracked e o design novo ainda untracked);
+- suítes de código não executadas, pois esta tarefa alterou exclusivamente documentação.
+
+### Blockers
+`OPEN_DECISION API-001-IMP-003A-ROUTE-MAPPING` bloqueia a implementação local de IMP-003A até a alteração explícita de API-001. Ativação externa/produção continua bloqueada por IAM e Audit durável. Cadastro de menores, pagador diferente, criação/reuso de Person, responsável administrativo e contato de emergência mantêm seus predecessores/gates explícitos.
+
+### Riscos
+- não há busca global de People aprovada; IMP-003A aceita somente Person ID já conhecido;
+- retroatividade e correção histórica não possuem autoridade canônica fechada;
+- link jamais pode ser interpretado como concessão automática de acesso, consentimento ou papel financeiro;
+- writers alternativos que ignorem o lock do PatientProfile invalidariam a coordenação; architecture/integration tests devem impedir e exercitar isso.
+
+### Próximas 3 ações
+1. aprovar e publicar em API-001 somente os dois mappings HTTP aditivos descritos pelo design, preservando `CMD-018` sem idempotency key;
+2. reclassificar IMP-003A como `READY` apenas após essa reconciliação documental explícita;
+3. somente depois, autorizar separadamente a implementação de IMP-003A; menores e payer diferente continuam gated.
+
+### Instrução para a próxima IA
+Não implemente IMP-003A enquanto `OPEN_DECISION API-001-IMP-003A-ROUTE-MAPPING` estiver aberta. Primeiro reconcilie API-001 de forma explícita; não altere `POST /api/v1/patients`, não libere menores ou payer diferente e não crie tabelas para os outros três vínculos.
 
 ## HANDOFF — 2026-09-23 — IMP-002 PATIENT SEARCH / LIST DONE
 
