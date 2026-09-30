@@ -15,6 +15,9 @@ internal static class PatientsEndpoints
         endpoints.MapPost("/patients", RegisterPatientAsync);
         endpoints.MapGet("/patients", SearchPatientsAsync);
         endpoints.MapGet("/patients/{patientId:guid}", GetPatientAsync);
+        endpoints.MapPost("/patients/{patientId}/guardians", CreateGuardianAsync);
+        endpoints.MapGet("/patients/{patientId}/relationships", ListRelationshipsAsync);
+        endpoints.MapPost("/patients/{patientId}/guardians/{guardianLinkId}/end", EndGuardianAsync);
         return endpoints;
     }
 
@@ -153,6 +156,55 @@ internal static class PatientsEndpoints
         }
     }
 
+    private static async Task<IResult> CreateGuardianAsync(string patientId, GuardianHttpRequest request, HttpContext context, ManageGuardianLinks handler, ILoggerFactory loggerFactory, CancellationToken ct)
+    {
+        var traceId = context.TraceIdentifier;
+        try
+        {
+            if (!Guid.TryParse(patientId, out var parsedPatientId)) return Problem(PatientApplicationResult<GuardianLinkView>.Fail(400, "VALIDATION_ERROR", "The request is invalid."), traceId);
+            var result = await handler.CreateAsync(new(parsedPatientId, request.GuardianPersonId, request.EffectiveFrom, request.EffectiveTo, request.IsPrimary, PatientRequestActor.FromPrincipal(context.User)), ct);
+            if (!result.Success) return Problem(result, traceId);
+            context.Response.Headers.CacheControl = "no-store"; context.Response.Headers.ETag = result.Value!.Etag;
+            return Results.Json(result.Value, statusCode: StatusCodes.Status201Created);
+        }
+        catch (Exception) { loggerFactory.CreateLogger("Fisiofit.Registry.Patients").LogError("CreateGuardian failed. TraceId: {TraceId}", traceId); return InternalProblem(traceId); }
+    }
+
+    private static async Task<IResult> ListRelationshipsAsync(string patientId, HttpContext context, ManageGuardianLinks handler, ILoggerFactory loggerFactory, CancellationToken ct)
+    {
+        var traceId = context.TraceIdentifier;
+        try
+        {
+            var q = context.Request.Query;
+            if (!Guid.TryParse(patientId, out var parsedPatientId) || q.Keys.Any(key => key is not ("kind" or "effectiveOn" or "page" or "pageSize" or "sort"))) return Problem(PatientApplicationResult<GuardianRelationshipsResponse>.Fail(400, "VALIDATION_ERROR", "The request is invalid."), traceId);
+            DateOnly? effectiveOn = null;
+            if (q["effectiveOn"].Count > 0)
+            {
+                if (!DateOnly.TryParse(q["effectiveOn"].FirstOrDefault(), out var parsed)) return Problem(PatientApplicationResult<GuardianRelationshipsResponse>.Fail(400, "VALIDATION_ERROR", "The request is invalid."), traceId);
+                effectiveOn = parsed;
+            }
+            var result = await handler.ListAsync(parsedPatientId, q["kind"].FirstOrDefault(), effectiveOn, ParseInt(q["page"].FirstOrDefault(), 1), ParseInt(q["pageSize"].FirstOrDefault(), 25), q["sort"].FirstOrDefault(), PatientRequestActor.FromPrincipal(context.User), ct);
+            if (!result.Success) return Problem(result, traceId);
+            context.Response.Headers.CacheControl = "no-store"; return Results.Ok(result.Value);
+        }
+        catch (Exception) { loggerFactory.CreateLogger("Fisiofit.Registry.Patients").LogError("ListRelationships failed. TraceId: {TraceId}", traceId); return InternalProblem(traceId); }
+    }
+
+    private static async Task<IResult> EndGuardianAsync(string patientId, string guardianLinkId, EndGuardianHttpRequest request, HttpContext context, ManageGuardianLinks handler, ILoggerFactory loggerFactory, CancellationToken ct)
+    {
+        var traceId = context.TraceIdentifier;
+        try
+        {
+            if (!Guid.TryParse(patientId, out var parsedPatientId) || !Guid.TryParse(guardianLinkId, out var parsedGuardianLinkId)) return Problem(PatientApplicationResult<GuardianLinkView>.Fail(400, "VALIDATION_ERROR", "The request is invalid."), traceId);
+            var result = await handler.EndAsync(new(parsedPatientId, parsedGuardianLinkId, request.EffectiveTo, context.Request.Headers.IfMatch.FirstOrDefault(), PatientRequestActor.FromPrincipal(context.User)), ct);
+            if (!result.Success) return Problem(result, traceId);
+            context.Response.Headers.CacheControl = "no-store"; context.Response.Headers.ETag = result.Value!.Etag; return Results.Ok(result.Value);
+        }
+        catch (Exception) { loggerFactory.CreateLogger("Fisiofit.Registry.Patients").LogError("EndGuardian failed. TraceId: {TraceId}", traceId); return InternalProblem(traceId); }
+    }
+
+    private static int ParseInt(string? value, int fallback) => int.TryParse(value, out var parsed) ? parsed : value is null ? fallback : 0;
+
     private static IResult Problem<T>(PatientApplicationResult<T> result, string traceId)
     {
         var extensions = new Dictionary<string, object?>(StringComparer.Ordinal)
@@ -191,6 +243,8 @@ internal static class PatientsEndpoints
         StatusCodes.Status403Forbidden => "Forbidden",
         StatusCodes.Status404NotFound => "Resource not found",
         StatusCodes.Status409Conflict => "Conflict",
+        StatusCodes.Status412PreconditionFailed => "Precondition failed",
+        StatusCodes.Status428PreconditionRequired => "Precondition required",
         StatusCodes.Status422UnprocessableEntity => "Business rule violation",
         StatusCodes.Status503ServiceUnavailable => "Dependency unavailable",
         _ => "Request failed"
@@ -206,6 +260,8 @@ internal static class PatientsEndpoints
         string? PayerMode);
 
     private sealed record PhoneHttpRequest(string? CountryCode, string? AreaCode, string? Number);
+    private sealed record GuardianHttpRequest(Guid GuardianPersonId, DateOnly EffectiveFrom, DateOnly? EffectiveTo, bool IsPrimary);
+    private sealed record EndGuardianHttpRequest(DateOnly EffectiveTo);
 
     private sealed record RegisterPatientHttpResponse(Guid PatientId, Guid PersonId, string Status);
 }

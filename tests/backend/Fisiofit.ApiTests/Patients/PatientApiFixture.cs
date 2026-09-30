@@ -60,6 +60,9 @@ public sealed class PatientApiFixture : IAsyncLifetime
     public HttpClient CreateClient() =>
         (factory ?? throw new InvalidOperationException("Fixture is not initialized.")).CreateClient();
 
+    public AsyncServiceScope CreateScope() =>
+        (factory ?? throw new InvalidOperationException("Fixture is not initialized.")).Services.CreateAsyncScope();
+
     private sealed class PatientWebApplicationFactory(string connectionString)
         : WebApplicationFactory<Program>
     {

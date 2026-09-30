@@ -131,7 +131,7 @@ public sealed class PatientRegistrationPersistenceTests(PatientRegistrationPostg
         Assert.All(people.Model.GetEntityTypes(), entity => Assert.Equal("people", entity.GetSchema()));
         Assert.All(patients.Model.GetEntityTypes(), entity => Assert.Equal("patients", entity.GetSchema()));
         Assert.Equal(3, people.Model.GetEntityTypes().Count());
-        Assert.Equal(2, patients.Model.GetEntityTypes().Count());
+        Assert.Equal(3, patients.Model.GetEntityTypes().Count());
     }
 
     private static CreatePersonForPatientRegistrationRequest Request(string operationKey, string? cpf) =>

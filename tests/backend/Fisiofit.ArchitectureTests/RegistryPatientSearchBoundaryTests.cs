@@ -53,7 +53,7 @@ public sealed class RegistryPatientSearchBoundaryTests
             .Select(File.ReadAllText)
             .ToArray();
 
-        Assert.Equal(3, migrationFiles.Length);
+        Assert.Equal(4, migrationFiles.Length);
         Assert.All(searchSources, source =>
         {
             Assert.DoesNotContain("Redis", source, StringComparison.OrdinalIgnoreCase);

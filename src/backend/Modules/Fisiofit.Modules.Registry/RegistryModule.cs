@@ -58,6 +58,7 @@ public static class RegistryModule
         services.AddScoped<ICreatePersonForPatientRegistration, CreatePersonForPatientRegistration>();
         services.AddScoped<IGetPersonPatientRegistrationData, GetPersonPatientRegistrationData>();
         services.AddScoped<ISearchPeopleForPatientList, SearchPeopleForPatientList>();
+        services.AddScoped<IGetPersonForGuardianLink, GetPersonForGuardianLink>();
 
         services.AddDbContext<PatientsDbContext>(options =>
         {
@@ -77,6 +78,7 @@ public static class RegistryModule
         services.AddScoped<RegisterPatient>();
         services.AddScoped<GetPatientDetails>();
         services.AddScoped<SearchPatients>();
+        services.AddScoped<ManageGuardianLinks>();
 
         return services;
     }
