@@ -65,7 +65,8 @@ public sealed class RegistryPatientRegistrationBoundaryTests
         var contracts = new[]
         {
             typeof(ICreatePersonForPatientRegistration),
-            typeof(IGetPersonPatientRegistrationData)
+            typeof(IGetPersonPatientRegistrationData),
+            typeof(IGetPersonForGuardianLink)
         };
 
         var exposed = contracts
@@ -106,11 +107,13 @@ public sealed class RegistryPatientRegistrationBoundaryTests
                 && !file.EndsWith("ModelSnapshot.cs", StringComparison.Ordinal))
             .ToArray();
 
-        Assert.Single(migrationFiles);
-        var source = File.ReadAllText(migrationFiles[0]);
-        Assert.Contains($"schema: \"{ownerSchema}\"", source, StringComparison.Ordinal);
-        Assert.All(forbiddenSchemas, forbidden =>
-            Assert.DoesNotContain($"schema: \"{forbidden}\"", source, StringComparison.Ordinal));
+        Assert.NotEmpty(migrationFiles);
+        foreach (var migrationFile in migrationFiles)
+        {
+            var source = File.ReadAllText(migrationFile);
+            Assert.Contains($"schema: \"{ownerSchema}\"", source, StringComparison.Ordinal);
+            Assert.All(forbiddenSchemas, forbidden => Assert.DoesNotContain($"schema: \"{forbidden}\"", source, StringComparison.Ordinal));
+        }
     }
 
     private static IEnumerable<Type> Flatten(Type type)

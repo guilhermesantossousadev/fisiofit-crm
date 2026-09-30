@@ -146,6 +146,31 @@ namespace Fisiofit.Modules.Registry.Patients.Infrastructure.Migrations.Patients
                             t.HasCheckConstraint("ck_patient_profile__administrative_status", "administrative_status IN ('ACTIVE', 'INACTIVE')");
                         });
                 });
+            modelBuilder.Entity("Fisiofit.Modules.Registry.Patients.Domain.GuardianLink", b =>
+                {
+                    b.Property<Guid>("Id").HasColumnType("uuid").HasColumnName("guardian_link_id");
+                    b.Property<Guid>("CreatedByActorId").HasColumnType("uuid").HasColumnName("created_by_actor_id");
+                    b.Property<DateTimeOffset>("CreatedAt").HasColumnType("timestamp with time zone").HasColumnName("created_at");
+                    b.Property<Guid?>("EndedByActorId").HasColumnType("uuid").HasColumnName("ended_by_actor_id");
+                    b.Property<DateTimeOffset?>("EndedAt").HasColumnType("timestamp with time zone").HasColumnName("ended_at");
+                    b.Property<DateOnly>("EffectiveFrom").HasColumnType("date").HasColumnName("effective_from");
+                    b.Property<DateOnly?>("EffectiveTo").HasColumnType("date").HasColumnName("effective_to");
+                    b.Property<Guid>("GuardianPersonId").HasColumnType("uuid").HasColumnName("guardian_person_id");
+                    b.Property<bool>("IsPrimary").HasColumnType("boolean").HasColumnName("is_primary_legal_guardian");
+                    b.Property<Guid>("PatientProfileId").HasColumnType("uuid").HasColumnName("patient_profile_id");
+                    b.Property<int>("Version").HasColumnType("integer").HasColumnName("version");
+                    b.HasKey("Id").HasName("pk_guardian_link");
+                    b.HasIndex("GuardianPersonId").HasDatabaseName("ix_guardian_link__guardian_person_id");
+                    b.HasIndex("PatientProfileId", "EffectiveFrom", "EffectiveTo").HasDatabaseName("ix_guardian_link__patient_period");
+                    b.HasIndex("PatientProfileId", "GuardianPersonId", "EffectiveFrom").IsUnique().HasDatabaseName("ux_guardian_link__patient_guardian_start");
+                    b.HasIndex("PatientProfileId", "IsPrimary").HasFilter("is_primary_legal_guardian = TRUE AND effective_to IS NULL").HasDatabaseName("ix_guardian_link__open_primary");
+                    b.ToTable("guardian_link", "patients", t => { t.HasCheckConstraint("ck_guardian_link__period", "effective_to IS NULL OR effective_to > effective_from"); t.HasCheckConstraint("ck_guardian_link__version", "version > 0"); t.HasCheckConstraint("ck_guardian_link__end_evidence", "(ended_at IS NULL AND ended_by_actor_id IS NULL) OR (ended_at IS NOT NULL AND ended_by_actor_id IS NOT NULL)"); });
+                });
+
+            modelBuilder.Entity("Fisiofit.Modules.Registry.Patients.Domain.GuardianLink", b =>
+                {
+                    b.HasOne("Fisiofit.Modules.Registry.Patients.Domain.PatientProfile", null).WithMany().HasForeignKey("PatientProfileId").OnDelete(DeleteBehavior.Restrict).IsRequired().HasConstraintName("fk_guardian_link__patient_profile");
+                });
 #pragma warning restore 612, 618
         }
     }

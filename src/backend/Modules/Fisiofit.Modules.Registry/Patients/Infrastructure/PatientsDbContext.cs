@@ -10,6 +10,7 @@ internal sealed class PatientsDbContext(DbContextOptions<PatientsDbContext> opti
 
     public DbSet<PatientProfile> PatientProfiles => Set<PatientProfile>();
     public DbSet<PatientCommandReceipt> CommandReceipts => Set<PatientCommandReceipt>();
+    public DbSet<GuardianLink> GuardianLinks => Set<GuardianLink>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

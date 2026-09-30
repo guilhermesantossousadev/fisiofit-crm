@@ -16,17 +16,19 @@ builder.Services.AddProblemDetails(options =>
 {
     options.CustomizeProblemDetails = context =>
     {
+        var code = context.ProblemDetails.Status switch
+        {
+            StatusCodes.Status400BadRequest => "VALIDATION_ERROR",
+            StatusCodes.Status401Unauthorized => "UNAUTHORIZED",
+            StatusCodes.Status403Forbidden => "FORBIDDEN",
+            StatusCodes.Status404NotFound => "RESOURCE_NOT_FOUND",
+            StatusCodes.Status409Conflict => "CONFLICT",
+            _ => "INTERNAL_ERROR"
+        };
         context.ProblemDetails.Extensions.TryAdd(
             "code",
-            context.ProblemDetails.Status switch
-            {
-                StatusCodes.Status400BadRequest => "VALIDATION_ERROR",
-                StatusCodes.Status401Unauthorized => "UNAUTHORIZED",
-                StatusCodes.Status403Forbidden => "FORBIDDEN",
-                StatusCodes.Status404NotFound => "RESOURCE_NOT_FOUND",
-                StatusCodes.Status409Conflict => "CONFLICT",
-                _ => "INTERNAL_ERROR"
-            });
+            code);
+        context.ProblemDetails.Type = $"https://api.fisiofit.example/problems/{code.ToLowerInvariant().Replace('_', '-')}";
         context.ProblemDetails.Extensions.TryAdd("traceId", context.HttpContext.TraceIdentifier);
         if (context.ProblemDetails.Status >= StatusCodes.Status500InternalServerError)
         {
@@ -52,6 +54,22 @@ builder.Services
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path;
+    if (path.StartsWithSegments("/api/v1/patients")
+        && (path.Value?.Contains("/guardians", StringComparison.Ordinal) == true
+            || path.Value?.EndsWith("/relationships", StringComparison.Ordinal) == true))
+    {
+        context.Response.OnStarting(() =>
+        {
+            context.Response.Headers.CacheControl = "no-store";
+            return Task.CompletedTask;
+        });
+    }
+
+    await next();
+});
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapHealthChecks("/health");

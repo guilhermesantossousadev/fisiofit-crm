@@ -88,7 +88,7 @@ public sealed class PatientSearchPostgreSqlTests(PatientRegistrationPostgreSqlFi
 
         await using var patients = fixture.CreatePatientsDbContext();
         await using var people = fixture.CreatePeopleDbContext();
-        Assert.Single(await patients.Database.GetAppliedMigrationsAsync());
+        Assert.Equal(2, (await patients.Database.GetAppliedMigrationsAsync()).Count());
         Assert.Single(await people.Database.GetAppliedMigrationsAsync());
     }
 

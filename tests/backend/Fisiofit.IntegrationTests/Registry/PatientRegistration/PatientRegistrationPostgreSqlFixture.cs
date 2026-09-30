@@ -3,6 +3,7 @@ using Fisiofit.Modules.Registry.Organization.Infrastructure;
 using Fisiofit.Modules.Registry.Patients.Infrastructure;
 using Fisiofit.Modules.Registry.People.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -64,13 +65,14 @@ public sealed class PatientRegistrationPostgreSqlFixture : IAsyncLifetime
                     PeopleDbContext.Schema))
             .Options);
 
-    internal PatientsDbContext CreatePatientsDbContext() => new(
+    internal PatientsDbContext CreatePatientsDbContext(params IInterceptor[] interceptors) => new(
         new DbContextOptionsBuilder<PatientsDbContext>()
             .UseNpgsql(
                 ConnectionString,
                 npgsql => npgsql.MigrationsHistoryTable(
                     PatientsDbContext.MigrationsHistoryTable,
                     PatientsDbContext.Schema))
+            .AddInterceptors(interceptors)
             .Options);
 }
 
