@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: imp_003_design_done_guardian_http_reconciled_imp_003a_ready
+  status: iam_001_design_pass_implementation_and_assisted_use_blocked
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: ROADMAP-MVP-001 — revisão do roadmap para MVP operacional — DONE / PASS; próxima recomendação: IAM-001-DESIGN (NEEDS_DESIGN)
+  current_priority: IAM-001-DESIGN — Identity & Access mínimo para uso administrativo assistido — DONE / PASS; próxima ação: decidir IAM-OD-001..005 e desenhar AUD-001-DESIGN
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,11 +39,15 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** ROADMAP-MVP-001 concluído como análise documental; nenhum slice funcional iniciado.
+**FASE ATUAL:** IAM-001-DESIGN concluído como análise documental; nenhum slice IAM funcional iniciado.
 **MARCO CONCLUÍDO:** IMP-003A — GUARDIAN LINKS FOR EXISTING PERSONS — `DONE / PASS`
 **PRÓXIMO MARCO:** M1 — Administrative Access; não iniciar implementação sem design IAM/Audit aprovado.
-**ÚLTIMA TAREFA CONCLUÍDA:** ROADMAP-MVP-001 — REVISÃO DO ROADMAP PARA MVP OPERACIONAL — `DONE / PASS` (2026-09-30, documental)
-**PRÓXIMA TAREFA:** IAM-001-DESIGN — Identity & Access mínimo para uso administrativo assistido — `NEEDS_DESIGN`; preservar dependências de Audit, Unit scope, revogação, GuardianLink, menores e pagador diferente.
+**ÚLTIMA TAREFA CONCLUÍDA:** IAM-001-DESIGN — Identity & Access mínimo para uso administrativo assistido — `DONE / PASS` (2026-09-30, documental).
+**PRÓXIMA TAREFA:** decidir IAM-OD-001..005 e executar AUD-001-DESIGN; não iniciar IAM-001-IMP enquanto credential, sessão/revogação, bootstrap e escopo da Secretária estiverem abertos.
+
+**IAM-001-DESIGN STATUS:** `PASS / DONE` — ownership, boundaries, modelo mínimo, threats, testes e gates estão documentados em `docs/implementation/IAM_001_MINIMUM_ADMIN_ACCESS_DESIGN.md`.
+**IMPLEMENTATION READINESS:** `BLOCKED` — IAM-OD-001 (login identifier), IAM-OD-002 (credential), IAM-OD-003 (session/revocation), IAM-OD-004 (bootstrap) e IAM-OD-005 (grants/Unit padrão da Secretária), além de AUD-001-DESIGN.
+**ASSISTED-USE READINESS:** `BLOCKED` — exige IAM-001-IMP, AUD-001-IMP, WEB-001 e gates operacionais do roadmap; este PASS não libera piloto nem produção.
 
 | Domínio | Status |
 |---|---|
@@ -939,6 +943,23 @@ histórica e retenção definitiva de receipts. Próximo handoff recomendado:
 `IAM-001-DESIGN — Identity & Access mínimo para uso administrativo assistido`
 (`NEEDS_DESIGN`), coordenado com `AUD-001-DESIGN`; não iniciar implementação.
 
+## IAM-001-DESIGN — Identity & Access mínimo para uso administrativo assistido
+
+| ID | Tarefa | Prioridade | Status |
+|---|---|---:|---|
+| IAM-001-DESIGN | Definir IAM mínimo para login real, lifecycle, grants/deny, UNIT_SCOPE, revogação, bootstrap e boundary de teste | P0 | DONE — PASS (design documental, 2026-09-30) |
+
+Documento canônico do slice: `docs/implementation/IAM_001_MINIMUM_ADMIN_ACCESS_DESIGN.md`.
+O design mantém Access owner de conta/credential/sessão/grants, sem FK ou escrita
+cross-context. `UserAccount` é separado de Person e ProfessionalProfile. Não
+seleciona silenciosamente login identifier, credential/provider, sessão/token ou
+bootstrap: IAM-OD-001..005 são blockers de `IAM-001-IMP`. Audit é boundary futuro,
+não tabela substituta em Access.
+
+**DESIGN STATUS:** `PASS / DONE`. **IMPLEMENTATION READINESS:** `BLOCKED` por
+IAM-OD-001..005 e AUD-001-DESIGN. **ASSISTED-USE READINESS:** `BLOCKED` por
+IAM-001-IMP, AUD-001-IMP, WEB-001 e gates operacionais; não declarar produção.
+
 ---
 
 ## EPIC IAM — Identity & Access
@@ -1562,6 +1583,57 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 ---
 
 # 24. ÚLTIMO HANDOFF
+
+## HANDOFF — 2026-09-30 — IAM-001-DESIGN
+
+### Objetivo e resultado
+
+Definir exclusivamente o menor IAM seguro para uso administrativo assistido, sem
+código, migration, frontend, AUD-001, commit, push ou merge. Resultado:
+`IAM-001-DESIGN — DONE / PASS` documental em
+`docs/implementation/IAM_001_MINIMUM_ADMIN_ACCESS_DESIGN.md`.
+
+### Estado confirmado
+
+Access continua shell sem persistência/autenticação real. O Host normal não tem
+scheme de produção; `TestAuthenticationHandler` e headers `X-Test-*` vivem apenas
+em API tests. Patients já avalia actor/permission/explicit deny/Unit recebidos em
+claims, prova de comportamento que não equivale a IAM real. Staff e Audit durável
+continuam não implementados.
+
+### Decisões e blockers
+
+Ownership foi preservado: Access possui UserAccount, credential/sessão/grants e
+revogação; People/Staff/Organization mantêm Person/ProfessionalProfile/Unit. O
+design exige decisão atual por request, deny precedence e Unit scope persistido,
+mas não escolhe por inferência: IAM-OD-001 login identifier; IAM-OD-002
+credential/provider; IAM-OD-003 session/revocation; IAM-OD-004 bootstrap; IAM-OD-005
+grants/Unit padrão da Secretária. Esses itens e AUD-001-DESIGN bloqueiam IAM-001-IMP.
+
+### Readiness
+
+- Design: `PASS / DONE`.
+- Implementação: `BLOCKED` pelos cinco IAM-OD e AUD-001-DESIGN.
+- Uso assistido: `BLOCKED` também por IAM-001-IMP, AUD-001-IMP, WEB-001 e gates
+  operacionais; nenhuma liberação de piloto ou produção foi declarada.
+
+### Validação
+
+Somente revisão documental e inspeção de código/configuração de autenticação.
+Não executar build/test pois nenhum código foi alterado. Executar no fechamento:
+`git diff --check`, `git diff --stat`, `git status`, branch e inspeção de untracked.
+
+### Próximas 3 ações
+
+1. aprovar as menores decisões IAM-OD-001..005;
+2. desenhar `AUD-001-DESIGN` para evidência durável e atomicidade;
+3. somente então reconciliar API-001 e planejar `IAM-001-IMP`.
+
+### Instrução para a próxima IA
+
+Não inicie código, migration, frontend ou Audit. Não selecione JWT, provider,
+credential, login identifier, bootstrap ou Unit default por conveniência. Preserve
+test auth fora do Host normal e Access sem escrita/FK cross-context.
 
 ## HANDOFF — 2026-09-30 — ROADMAP-MVP-001
 
