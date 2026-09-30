@@ -21,7 +21,7 @@ project:
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: revisão do roadmap para MVP operacional; IMP-003A — Guardian Links for Existing Persons — DONE / PASS
+  current_priority: ROADMAP-MVP-001 — revisão do roadmap para MVP operacional — DONE / PASS; próxima recomendação: IAM-001-DESIGN (NEEDS_DESIGN)
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,11 +39,11 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** Guardian Links for Existing Persons implementado e auditado localmente; roadmap para MVP operacional é o próximo trabalho, sem iniciar outro slice.
+**FASE ATUAL:** ROADMAP-MVP-001 concluído como análise documental; nenhum slice funcional iniciado.
 **MARCO CONCLUÍDO:** IMP-003A — GUARDIAN LINKS FOR EXISTING PERSONS — `DONE / PASS`
-**PRÓXIMO MARCO:** REVISÃO DO ROADMAP PARA MVP OPERACIONAL — não iniciar funcionalidades sem design aprovado.
-**ÚLTIMA TAREFA CONCLUÍDA:** IMP-003A — GUARDIAN LINKS FOR EXISTING PERSONS — `DONE / PASS` (2026-09-28)
-**PRÓXIMA TAREFA:** REVISÃO DO ROADMAP PARA MVP OPERACIONAL: autenticação real, interface administrativa, pacientes, profissionais, agenda, turmas e operação assistida; preservar as dependências de GuardianLink, cadastro de menores e pagador diferente.
+**PRÓXIMO MARCO:** M1 — Administrative Access; não iniciar implementação sem design IAM/Audit aprovado.
+**ÚLTIMA TAREFA CONCLUÍDA:** ROADMAP-MVP-001 — REVISÃO DO ROADMAP PARA MVP OPERACIONAL — `DONE / PASS` (2026-09-30, documental)
+**PRÓXIMA TAREFA:** IAM-001-DESIGN — Identity & Access mínimo para uso administrativo assistido — `NEEDS_DESIGN`; preservar dependências de Audit, Unit scope, revogação, GuardianLink, menores e pagador diferente.
 
 | Domínio | Status |
 |---|---|
@@ -919,6 +919,28 @@ Só entra quando Plans/Billing estiverem sem blocker.
 
 ---
 
+## ROADMAP-MVP-001 — Roadmap para MVP operacional
+
+| ID | Tarefa | Prioridade | Status |
+|---|---|---:|---|
+| ROADMAP-MVP-001 | Revisar estado real e reorganizar roadmap para MVP operacional | P0 | DONE — PASS (análise documental, 2026-09-30) |
+
+Análise canônica: `docs/implementation/ROADMAP_MVP_OPERACIONAL.md`. A sequência
+proposta é M0 Foundation concluída; M1 Administrative Access; M2 Patient
+Administration; M3 Staff Foundation; M4 Scheduling Core; M5 Pilates Operational
+Flow; M6 Assisted Clinic Pilot. Isto é proposta de ordenação, não promoção de
+implementações futuras a `READY`.
+
+Blockers preservados: IAM físico e Audit durável para uso assistido; definição de
+bootstrap/recovery e scope padrão de Secretária; Staff/Scheduling não implementados;
+decisão de Enrollment antes de membership Pilates; menores, payer diferente,
+responsável administrativo, contato de emergência, retroatividade/correção
+histórica e retenção definitiva de receipts. Próximo handoff recomendado:
+`IAM-001-DESIGN — Identity & Access mínimo para uso administrativo assistido`
+(`NEEDS_DESIGN`), coordenado com `AUD-001-DESIGN`; não iniciar implementação.
+
+---
+
 ## EPIC IAM — Identity & Access
 
 | ID | Tarefa | Prioridade | Status |
@@ -1540,6 +1562,40 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 ---
 
 # 24. ÚLTIMO HANDOFF
+
+## HANDOFF — 2026-09-30 — ROADMAP-MVP-001
+
+### Objetivo e resultado
+
+Revisar somente documentação e estado real após IMP-003A, sem código, migration,
+testes, commit, push ou merge. Resultado: `DONE / PASS` documental em
+`docs/implementation/ROADMAP_MVP_OPERACIONAL.md`.
+
+### Estado confirmado
+
+Organization/People/Patients e GuardianLink têm somente os slices implementados e
+testados descritos em IMP-000..003A. IAM real, Audit durável, frontend de negócio,
+Staff, Scheduling, Pilates e demais contexts não estão implementados; autenticação
+atual de endpoints é infraestrutura de testes. Não declarar produção READY.
+
+### Sequência e gates
+
+M1 Administrative Access precede UI/uso real; M2 expõe o fluxo existente de adulto
+SELF; M3–M5 adicionam Staff, agenda e turmas como verticais posteriores; M6 é piloto
+assistido. Menores, non-self payer e relacionamentos não selecionados permanecem
+gated. Bootstrap/recovery IAM, Audit mínimo, Unit scope, revogação e decisão de
+Enrollment para membership são pendências explícitas.
+
+### Próximas 3 ações
+
+1. desenhar `IAM-001-DESIGN`, sem escolher provider externo silenciosamente;
+2. desenhar em coordenação `AUD-001-DESIGN` para evidência durável mínima;
+3. somente após aprovação, planejar a implementação M1 e a UI administrativa.
+
+### Instrução para a próxima IA
+
+Não iniciar implementação por este handoff. Consulte ROADMAP-MVP-001, preserve os
+gates e não promova tarefa a READY se seu design ou dependência obrigatória faltar.
 
 ## HANDOFF — 2026-09-28 — IMP-003A GUARDIAN LINKS FINAL AUDIT
 
