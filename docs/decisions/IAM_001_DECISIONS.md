@@ -196,6 +196,14 @@ para recovery self-service sem assumir contato civil como credential.
 
 ## 9. Reconciliação obrigatória antes de IAM-001-IMP
 
+> Registro histórico dos requisitos de 2026-10-01, agora atendidos por
+> IAM-001-CONTRACTS em API-001 §24.1, DB-001 §14.1, AUTH-001 §§47/49 e
+> STATE-001 (UserAccount/Sessão M1). IAM-OD-001..007 não foram reabertas.
+> Estado atual: contratos DONE / PASS; IAM-001-IMP BLOCKED pelos gates
+> residuais de IAM-001-DESIGN §29; uso assistido/produção BLOCKED.
+> Próxima tarefa única: AUD-001-DESIGN. A redação abaixo preserva o requisito
+> original, não uma pendência atual de reconciliação.
+
 Esta tarefa não modifica contratos HTTP ou modelo lógico. `IAM-001-CONTRACTS` deve
 reconciliar, em conjunto, os seguintes pontos:
 

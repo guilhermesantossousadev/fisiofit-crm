@@ -1,7 +1,7 @@
 # IAM-001-DESIGN — Identity & Access mínimo para uso administrativo assistido
 
 **Status:** PASS (design documental)  
-**Implementation readiness:** NEEDS_CONTRACT_RECONCILIATION — IAM-OD-001..007 estão aprovadas; reconciliar API-001/DB-001/AUTH-001/STATE-001 antes de IAM-001-IMP.
+**Implementation readiness:** BLOCKED — contratos M1 reconciliados por IAM-001-CONTRACTS; slices e pré-requisitos residuais em §29. IAM-OD-001..007 permanecem APPROVED.
 **Assisted-use readiness:** BLOCKED — IAM implementado/validado, Audit durável e WEB-001 ainda são necessários.  
 **Data:** 2026-09-30  
 **Fontes:** `PROJECT_OS.md`, `ROADMAP_MVP_OPERACIONAL.md`, AUTH-001, API-001, DB-001, ARC-003, Context/Ownership Map, MODEL-001/005, STATE-001, `docs/decisions/IAM_001_DECISIONS.md` e código atual.
@@ -19,7 +19,7 @@ Isso valida o comportamento de Patients, mas não autenticação, persistência,
 ## 3. Escopo
 
 - conta administrativa real e lifecycle mínimo;
-- identificador de login e credential somente depois de decisão formal;
+- username e credential local conforme IAM-OD-001/002 aprovadas;
 - login, current session, logout e invalidação/revogação;
 - grants diretos persistidos de permissions, explicit denies e `UNIT_SCOPE`;
 - bootstrap único e recovery administrativo mínimo;
@@ -56,11 +56,11 @@ IAM-OD-001 aprova username independente, próprio de Access, único após trim/n
 
 Contrato conceitual de login: receber username e prova de credential; normalizar, aplicar limite de abuso antes/depois da verificação, localizar a conta, verificar status e credential, criar/rotacionar a sessão opaca aprovada e retornar apenas a representação pública da sessão. Conta ausente, identifier inválido, credential inválida, `PENDING`, `DISABLED` e `LOCKED` retornam resposta externa indistinguível, sem revelar a existência da conta. PII, senha, hash, token e header de autenticação não vão para logs.
 
-API-001 não publica login/logout/current-session: somente lifecycle administrativo de `UserAccount` e `TerminateUserSessions`. A reconciliação de API-001 é obrigatória antes do código; nenhuma rota definitiva é inventada aqui.
+API-001 §24.1 agora publica os contratos de login/logout/current-session e lifecycle; esta reconciliação é documental e não significa endpoints implementados.
 
 ## 10. Session/token
 
-IAM-OD-003 aprova sessão opaca server-side para web, identificada por cookie `Secure`/`HttpOnly`/`SameSite` apropriado e proteção CSRF a definir no contrato web. O servidor guarda somente derivado do segredo, expiry, revogação e `accessVersion`; cada request resolve sessão, conta, grants, denies e Units atuais. JWT autoportante sem verificação atual de revogação é rejeitado. Expiração, logout, múltiplas sessões, revogação por sessão/conta e proteção contra fixation/theft são obrigatórios.
+IAM-OD-003 aprova sessão opaca server-side para web, identificada por cookie `Secure`/`HttpOnly`/`SameSite` apropriado e proteção CSRF definida em API-001 §24.1. O servidor guarda somente derivado do segredo, expiry, revogação e `accessVersion`; cada request resolve sessão, conta, grants, denies e Units atuais. JWT autoportante sem verificação atual de revogação é rejeitado. Expiração, logout, múltiplas sessões, revogação por sessão/conta e proteção contra fixation/theft são obrigatórios.
 
 ## 11. Logout/revocation
 
@@ -109,7 +109,7 @@ IAM-OD-007 aprova reset administrativo controlado: governante autorizada invalid
 
 ## 20. Security controls
 
-TLS é obrigatório fora de Development. Exigir proteção contra enumeração, rate limit e proteção de brute force; rotação de sessão após login/elevação; expiração e revogação; segredos fora do Git; logs redigidos; e proteção CSRF/cookie ou bearer conforme a estratégia decidida. Persistência indisponível falha fechada para login/autorização administrativa. Não transformar este slice em plataforma de segurança: MFA, step-up e suporte privilegiado seguem gated.
+TLS é obrigatório fora de Development. Exigir proteção contra enumeração, rate limit e proteção de brute force; rotação de sessão após login/elevação; expiração e revogação; segredos fora do Git; logs redigidos; e proteção CSRF/cookie conforme API-001 §24.1. Persistência indisponível falha fechada para login/autorização administrativa. Não transformar este slice em plataforma de segurança: MFA, step-up e suporte privilegiado seguem gated.
 
 ## 21. Test authentication boundary
 
@@ -133,7 +133,7 @@ Patients deve receber um actor/decision atual e continuar a validar seu recurso/
 
 ## 25. HTTP contracts
 
-API-001 já prevê `CreateUserAccount`, disable, role/permission grants, revogação e busca de contas, mas não login, logout, current-session, revoke-session individual, activate/reset credential nem `UNIT_SCOPE` como contrato explícito. Antes de IAM-001-IMP, reconciliar API-001 para publicar apenas o conjunto mínimo escolhido: login anônimo, logout autenticado, current session, criação/bootstrap de conta, disable, grants/revokes e Unit grant/revoke; `TerminateUserSessions` pode cobrir revogação por conta. Rotas, payloads, permissions e respostas somente entram após as decisões abertas; não foram alterados nesta tarefa.
+API-001 §24.1 contém os contratos M1 reconciliados de login, ativação, logout, current-session, conta/lifecycle, reset, gestão de sessões, permission/deny e Units. Bootstrap é comando operacional local, sem endpoint. Logout/current-session e leituras SELF minimizadas dispensam grants de governança; RevokeSession/TerminateUserSessions exigem identity.session.terminate inclusive SELF. AUTH-001 §49 é a fonte da autorização. Nenhuma rota foi implementada.
 
 ## 26. Frontend contract
 
@@ -149,11 +149,51 @@ Login retorna problema genérico equivalente para identifier/credential inválid
 
 ## 29. Implementation slice
 
-**Candidato: IAM-001-IMP — Local Administrative Access Foundation.** Só pode iniciar após IAM-001-CONTRACTS e AUD-001-DESIGN.
+**IAM-001-IMP — BLOCKED**, composto por dois slices sequenciais. Os contratos
+M1 estão reconciliados; esta seção remove o gate já cumprido de contratos e
+mantém dependências reais. Não iniciar código nesta tarefa documental.
 
-**In scope:** Access schema/DbContext owner-local; uma estratégia de credential/session aprovada; login/logout/current-session; lifecycle; grants/denies/Unit; bootstrap/recovery mínimo; adaptação do actor de Patients para decisão atual; contratos/API reconciliados; migrations e testes. **Out:** MFA, Staff, UI, roles como fonte implícita, Clinical/Finance, provider não decidido, impersonation e AuditRecord.
+| Slice | Escopo coeso e resultado | Gates para implementação |
+|---|---|---|
+| IAM-001A — Account, Credential & Session Foundation | persistência Identity mínima; username; bootstrap PENDING e ativação; login/current-session/logout; criação sem grants, disable/reactivate/reset; leituras minimizadas; revoke/terminate; proteção CSRF, abuso, concorrência e avaliação atual de acesso | AUD-001-DESIGN deve fechar o contrato de evidência e seu comportamento sob falha; sem sink fictício que declare durabilidade |
+| IAM-001B — Administrative Grants & Unit Access | após A, mutations de ALLOW/DENY/Unit, criação com grants iniciais, delegação/no-self-escalation e adaptação do actor de Patients para autorização atual | A validado; mecanismo de step-up e delegação concreta aprovado/testável para essas ações (AUTH-GAP-006) |
 
-**PASS:** login de conta ACTIVE; request de paciente só passa com permission + Unit vigente e sem deny; logout/disable/revoke/grant change têm efeito no próximo request; test auth continua isolado; PostgreSQL confirma constraints/concurrency; Audit boundary está integrado conforme AUD-001 aprovado. A implementação não declara uso assistido pronto sem AUD-001-IMP e WEB-001.
+A inclui bootstrap/ativação/lifecycle/reset porque login sem provisionamento
+seguro e revogação exigiria seed, senha padrão ou conta impossível de recuperar.
+Separá-los como um terceiro slice não produz fundação utilizável com segurança.
+A já lê as estruturas de grants/deny/Unit definidas em DB-001 para decidir acesso;
+B acrescenta a superfície de administração protegida, sem trocar o modelo.
+O bootstrap de A cria somente autoridade Identity enumerada: nenhum dado de
+negócio fica acessível por conveniência. Mutations de grants e rotas de Patients
+com autenticação real permanecem fechadas até B. Fixtures com grants em testes
+não são seed de produção; TestAuthenticationHandler continua apenas nos API tests.
+
+**PASS de A:** PostgreSQL real prova unicidade username/Person, bootstrap único,
+ativação atômica e replay negado; testes HTTP provam anti-enumeração, CSRF,
+current-session, logout, SELF versus outra conta, expiry/revoke e todos os
+estados; reset/disable/lock versus login/ativação não deixam acesso válido.
+Falhas de dependências negam acesso; Audit segue o contrato aprovado, sem
+AuditRecord/Outbox improvisados em Access. A não libera uso assistido.
+
+**PASS de B:** quatro permissions administrativas e Unit grants independentes;
+deny prevalente; delegação e ausência de autoelevação direta/circular;
+step-up nas mutations; ETag/receipt e mudanças simultâneas; efeito na próxima
+request; Patients conserva sua resource policy e Unit atual. Testes de arquitetura
+provam ausência de FK, EF entity ou persistence cross-context.
+
+**Gates distintos:** AUD-001-DESIGN permanece pré-requisito contratual de A,
+conforme este design; AUD-001-IMP não impede escrita de código local, mas é
+obrigatório para uso assistido. Step-up impede B, não o login de A. Limites de
+rate/slowdown/lockout/expiração são configuração operacional validada em testes,
+sem números arbitrários nem blocker estrutural novo. Canal assistido de entrega,
+perfil enumerado/delegação do bootstrap e procedimento de perda da única conta
+governante precisam estar aprovados antes de habilitar o ambiente; não rearmar
+bootstrap nem inventar bypass de recovery. Configuração ausente falha fechada.
+
+**Fora de ambos:** MFA completo/IdP externo, Staff, UI, Clinical/Finance, roles
+como autorização implícita, impersonation e implementação de Audit. Uso assistido
+exige A+B, AUD-001-IMP, WEB-001, HTTPS/operação, migrations verificadas,
+backup/restore e aceite de piloto. Produção permanece BLOCKED.
 
 ## 30. Test plan
 
@@ -175,8 +215,13 @@ o impacto preciso. Ele não altera API-001, DB-001, AUTH-001 ou STATE-001.
 
 ## 32. Gates
 
-Design: PASS porque ownership, lifecycle, auth boundary, credential/session/bootstrap, grants/deny/Unit, test boundary, Audit boundary, persistence, contracts, security, slice e testes estão explícitos. Implementação: NEEDS_CONTRACT_RECONCILIATION por API-001/DB-001/AUTH-001/STATE-001; AUD-001-DESIGN continua pré-requisito do uso assistido. Uso assistido: BLOCKED adicionalmente por IAM-001-IMP, AUD-001-IMP, WEB-001, HTTPS/operação, migrations, backup/restore e validação de piloto. Produção pública/regulatória não é declarada.
+IAM-001-DESIGN: PASS. IAM-001-CONTRACTS: DONE / PASS documental após
+revalidação de API-001/DB-001/AUTH-001/STATE-001. IAM-001-IMP: BLOCKED conforme
+§29; AUD-001-DESIGN para A e step-up/delegação para B. Uso assistido e produção:
+BLOCKED; contratos não equivalem a software implementado nem Audit durável.
 
 ## 33. Next action
 
-Executar exclusivamente `IAM-001-CONTRACTS` para reconciliar API-001, DB-001, AUTH-001 e STATE-001 com as decisões aprovadas. Não iniciar código, migration, frontend ou AUD-001 nesta tarefa.
+Próxima tarefa única: AUD-001-DESIGN, para contrato de evidência durável mínima,
+atomicidade e tratamento de falhas. Não iniciar IAM-001A/B, frontend, migration
+ou implementação Audit neste fechamento documental.

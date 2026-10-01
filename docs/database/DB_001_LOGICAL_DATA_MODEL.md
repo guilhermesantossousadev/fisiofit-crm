@@ -150,7 +150,82 @@ Todo JSONB possui versão lógica, tamanho/shape validável e não substitui col
 
 ## 14. Identity
 
-Tabelas: `user_account`, `role`, `permission`, `role_permission`, `user_role_assignment`, `permission_grant`, `command_receipt` e `inbox_message` R2. `user_account.person_id` é referência People sem FK. Uma partial unique lógica impede mais de uma conta interna ativa por Person. Assignments/grants têm scope, vigência, concedente e revogação; não armazenam Patient/Clinical/Finance. Sessão, credential provider, MFA e recovery permanecem deferred, portanto nenhuma tabela é inventada para eles.
+Tabelas: `user_account`, `role`, `permission`, `role_permission`, `user_role_assignment`, `permission_grant`, `command_receipt` e `inbox_message` R2. `user_account.person_id` é referência People sem FK. Uma partial unique lógica impede mais de uma conta interna ativa por Person. Assignments/grants têm scope, vigência, concedente e revogação; não armazenam Patient/Clinical/Finance. IAM-001-CONTRACTS acrescenta credential local, sessão opaca, artefato de ativação/reset, Unit grants e marcador de bootstrap em §14.1; MFA/step-up e IdP externo permanecem deferred.
+
+### 14.1 IAM-001-CONTRACTS — estruturas lógicas mínimas
+
+Reconciliação IAM-OD-001..007, owner Access/IdentityDbContext. Nenhuma migration,
+SQL ou EF entity é criada nesta tarefa. PKs seguem ADR-006; tempos são instantes
+UTC. FKs somente internas a `identity`, sem cascade delete de histórico.
+
+| Tabela | Campos lógicos mínimos | Constraints e índices |
+|---|---|---|
+| user_account | id, person_id?, account_type, login_identifier, normalized_login_identifier, status, access_version, version, created_at, activated_at?, disabled_at?, locked_at?, failed_attempt_count, last_failed_at?, last_authenticated_at? | username normalizado unique global, inclusive DISABLED; status PENDING/ACTIVE/LOCKED/DISABLED; partial unique person_id não nulo para conta interna ACTIVE; versões monotônicas, contadores não negativos |
+| credential | user_account_id, password_hash, changed_at, invalidated_at?, version | PK/FK account; no máximo uma credential corrente por conta; hash versionado PasswordHasher, sem plaintext; reset invalida, ativação substitui |
+| session | id, user_account_id, secret_digest, issued_access_version, created_at, expires_at, last_seen_at, revoked_at?, revocation_reason_code? | FK account; digest único; expiry > criação; índice account/revoked/expiry; ID público difere do segredo; lookup pelo digest |
+| activation_artifact | id, user_account_id, purpose, secret_digest, created_at, expires_at, consumed_at?, revoked_at?, version | FK account; purpose ACTIVATION/RESET; digest único; expiry > criação; índice account/pending; emissão revoga anteriores e consumo é compare-and-set |
+| permission_grant | id, user_account_id, permission_id, effect, scope_type, unit_id?, effective_from, effective_to?, grant_origin, bootstrap_state_id?, granted_by?, revoked_at?, revoked_by?, version | FKs account/permission/bootstrap e atores internos; effect ALLOW/DENY obrigatório; scope consistente; concedente obrigatório salvo BOOTSTRAP; Unit opaca; índice account/permission/effect/Unit/período; fim > início |
+| unit_access_grant | id, user_account_id, unit_id, effective_from, effective_to?, granted_by, revoked_at?, revoked_by?, version | FKs account/atores; unit_id externo NOT NULL sem FK; fim > início; índice account/Unit/período/revogação; grants separados por Unit |
+| bootstrap_state | singleton_id, consumed_at, initial_user_account_id, version | PK singleton fixa; FK interna account; registro único inserido no consumo e jamais apagado/rearmado; concorrência só permite um vencedor |
+
+`person_id` é opcional para bootstrap e validado pelo owner People quando
+informado. `unit_id` de ambos os grants é referência Organization sem FK. Para
+permission de negócio M1, ALLOW exige scope UNIT e unit_id; DENY pode ser UNIT ou
+ACCOUNT (sem Unit, aplica àquela permission em todas as Units). Permissions de
+governança Identity podem ter scope ACCOUNT dentro da delegação autorizada,
+sem converter-se em acesso global a dados de negócio. Não há wildcard deny ou
+wildcard permission novo. Grant de permission não cria grant de Unit.
+SELF em permission_grant é restrito à gestão das próprias sessões conforme AUTH
+§49, sem unit_id; ACCOUNT usa a delegação vigente para o alvo Identity. A versão
+da conta protege também a atualização dessa autoridade. Nenhum desses escopos
+substitui UNIT para ALLOW de negócio. Falta de delegação verificável nega.
+
+Vigência usa intervalo [effective_from, effective_to), com fim nulo aberto;
+revoked_at desativa imediatamente. Grants históricos não são apagados. Todas as
+mutações de grants checam versão da conta, incrementam version/access_version e
+persistem efeito/revogação atomicamente no owner. Version também protege conta,
+credential e artefato quando concorrentes; sem last-write-wins. Ativação revalida
+a unicidade por Person, inclusive disputa entre duas contas PENDING.
+
+Login só emite sessão para ACTIVE com credential válida; grava
+issued_access_version e serializa com disable/reset/lock/terminate. Em cada
+request, divergência para access_version atual invalida sessão. Sessão guarda
+somente derivado; cookie e artefato brutos não entram no banco/receipt/audit.
+Reset invalida credential, revoga sessões e artefatos, incrementa versões e
+entra em PENDING em uma transação. Ativação consome um único artefato válido e
+substitui credential, passando a ACTIVE atomicamente; replay não reativa conta.
+
+Bootstrap consome singleton, cria conta PENDING, grants Identity explicitamente
+permitidos e artefato na mesma transação; consulta de governante ativa sozinha
+não é exclusão concorrente. O marcador sobrevive a disable/reset da conta.
+Grants iniciais do bootstrap registram origem operacional BOOTSTRAP; granted_by
+pode ser nulo somente nesse caso, vinculado ao bootstrap_state. Os demais grants
+exigem concedente UserAccount interno. Isso não simula ator humano autenticado
+antes da primeira ativação nem cria FK para operador externo.
+Segredo de deployment não é coluna. Canal de entrega não persiste segredo em
+command_receipt; sua operacionalização permanece requisito do slice futuro.
+
+`command_receipt` preserva a chave/hash canônico e resposta minimizada dos
+comandos administrativos (§24.1 API-001), sem senha/artefato. Login/ativação não
+usam receipt de payload secreto. Roles/inbox existentes permanecem reservados;
+esta reconciliação não cria role management, Outbox Identity, AuditRecord local,
+FK People/Organization ou transação distribuída. Retenção/purge de sessões,
+artefatos e receipts exige política antes da operação, nunca eliminação de
+histórico por conveniência. Parâmetros físicos do hash, digest criptográfico e
+limites temporais serão verificados no slice; não inventar criptografia própria.
+
+Estado de sessão é derivado, conforme STATE-001: REVOKED se revoked_at preenchido
+ou issued_access_version divergir; EXPIRED ao atingir expiração absoluta ou por
+inatividade; caso contrário ACTIVE, ainda exigindo conta ACTIVE e autorização
+atual. last_seen_at é monotônico, nunca após expires_at, e só avança para sessão
+válida; não ressuscita sessão. Revoke individual altera somente a sessão e version
+da conta, preservando access_version; terminate-all altera também access_version.
+Login/logout/expiry não precisam criar novos estados de UserAccount. Lock invalida
+sessões; disable invalida também credential/artefatos. Reset/ativação reiniciam
+contadores de falhas de maneira atômica, sem apagar evidência de segurança de Audit.
+Username único é protegido no banco, inclusive concorrência entre create/change;
+conflito nunca se resolve por sobrescrita. Receipts são únicos por ator, operação
+e key; hash divergente não produz efeito. Nenhum distributed lock é necessário.
 
 ## 15. Organization
 
@@ -474,6 +549,11 @@ No legal period is invented. Retention for Clinical, Documents, Audit, Outbox/In
 | identity | role_permission | Identity & Access | Role composition |
 | identity | user_role_assignment | Identity & Access | Role assignment |
 | identity | permission_grant | Identity & Access | scoped direct grant/revocation |
+| identity | credential | Identity & Access | local credential (§14.1) |
+| identity | session | Identity & Access | opaque server-side session (§14.1) |
+| identity | activation_artifact | Identity & Access | one-use activation/reset (§14.1) |
+| identity | unit_access_grant | Identity & Access | explicit temporal Unit grant (§14.1) |
+| identity | bootstrap_state | Identity & Access | one-shot consumption (§14.1) |
 | identity | command_receipt | Identity & Access | critical command idempotency |
 | identity | inbox_message | Identity & Access | R2 receipt |
 | organization | clinic | Organization | Clinic |
@@ -626,10 +706,10 @@ Campos triviais de auditoria técnica são omitidos abaixo. Todas as PKs princip
 
 | Schema.Table | Purpose / important fields | Internal relationships | Lifecycle / constraints | Sensitivity |
 |---|---|---|---|---|
-| identity.user_account | conta ligada a `person_id`; status, account type, activated/disabled timestamps | assignments/grants | uma ativa por Person; auth provider deferred | SECURITY, PERSONAL |
+| identity.user_account | conta com `person_id` opcional; login normalizado, lifecycle/access_version/version e timestamps (§14.1) | assignments/grants | uma ACTIVE interna por Person não nula; credential local (§14.1) | SECURITY, PERSONAL |
 | identity.role / permission | vocabulário de capability | role_permission | nomes estáveis únicos | SECURITY |
 | identity.user_role_assignment | role, scope type/ref, effective period, grantor/revoker | UserAccount/Role | vigência; no self-escalation no use case | SECURITY, AUDIT |
-| identity.permission_grant | permission direta, scope, vigência e resultado de revogação | UserAccount/Permission | deny/deferred never allow | SECURITY, AUDIT |
+| identity.permission_grant | permission direta, effect ALLOW/DENY, scope/Unit, vigência e revogação (§14.1) | UserAccount/Permission | deny/deferred never allow | SECURITY, AUDIT |
 | organization.clinic | instituição, name, status, IANA `time_zone_id` | Units/calendars | ACTIVE/INACTIVE, sem delete | PUBLIC_INTERNAL |
 | organization.unit | unidade da Clinic, name/status | Clinic, Rooms | exatamente uma Clinic | PUBLIC_INTERNAL |
 | organization.room | sala informativa, name/status/description | Unit | sem capacidade/reserva | PUBLIC_INTERNAL |
@@ -914,7 +994,7 @@ Every arrow is a public contract/event/opaque ID; none is a cross-schema navigat
 ## 47. Deferred Decisions
 
 - dispatcher/scheduler/provider, retry policy, dead-letter, replay UI, broker and Outbox/Inbox retention;
-- concrete IAM provider, credentials, sessions, MFA/step-up, revocation mechanism and recovery;
+- MFA/step-up, IdP externo e recovery self-service; credential local, sessão/revogação e reset administrativo M1 definidos em §14.1;
 - financial approval bands, discount/negotiation limits, reversal/refund/transfer thresholds;
 - treatment of already-overdue Receivables on cancellation and detailed operation precedence;
 - reallocation semantics and affected allocations on reversal;
