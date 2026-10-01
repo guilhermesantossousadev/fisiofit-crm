@@ -13,6 +13,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../../src/backend/Fisiofit.BuildingBlocks/Fisiofit.BuildingBlocks.csproj" />
+    <ProjectReference Include="../../../src/backend/Fisiofit.ModuleContracts/Fisiofit.ModuleContracts.csproj" />
+    <ProjectReference Include="../../../src/backend/Modules/Fisiofit.Modules.Audit/Fisiofit.Modules.Audit.csproj" />
     <ProjectReference Include="../../../src/backend/Modules/Fisiofit.Modules.Registry/Fisiofit.Modules.Registry.csproj" />
   </ItemGroup>
 </Project>

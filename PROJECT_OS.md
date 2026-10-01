@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: aud_001_design_pass_aud_001a_ready_iam_001a_after_aud_001a_assisted_use_blocked
+  status: aud_001a_pass_iam_001a_ready_assisted_use_blocked
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: AUD-001-DESIGN — DONE / PASS; próxima ação: AUD-001A
+  current_priority: AUD-001A — DONE / PASS; próxima ação: IAM-001A
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,15 +39,15 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** AUD-001-DESIGN concluído como design documental; nenhum slice funcional iniciado.
-**MARCO CONCLUÍDO:** IMP-003A — GUARDIAN LINKS FOR EXISTING PERSONS — `DONE / PASS`
+**FASE ATUAL:** AUD-001A validado; IAM-001A está READY para o próximo slice M1.
+**MARCO CONCLUÍDO:** AUD-001A — DURABLE ADMINISTRATIVE AUDIT FOUNDATION — `DONE / PASS`
 **PRÓXIMO MARCO:** M1 — Administrative Access; não iniciar implementação sem design IAM/Audit aprovado.
-**ÚLTIMA TAREFA CONCLUÍDA:** AUD-001-DESIGN — Audit durável mínimo — `DONE / PASS` (2026-10-01, documental).
-**PRÓXIMA TAREFA:** `AUD-001A` — Durable Administrative Audit Foundation; somente foundation + IAM evidence aprovada.
+**ÚLTIMA TAREFA CONCLUÍDA:** AUD-001A — Durable Administrative Audit Foundation — `DONE / PASS` (2026-10-01, código + PostgreSQL/Testcontainers).
+**PRÓXIMA TAREFA:** `IAM-001A` — Account, Credential & Session Foundation.
 
 **IAM-001-DESIGN STATUS:** `PASS / DONE` — ownership, boundaries, modelo mínimo, threats, testes e gates estão documentados em `docs/implementation/IAM_001_MINIMUM_ADMIN_ACCESS_DESIGN.md`.
 **AUD-001-DESIGN STATUS:** `PASS / DONE` — ownership, evidence model, fail-closed IAM, PII, idempotência e slice em `docs/implementation/AUD_001_DURABLE_AUDIT_DESIGN.md`.
-**IMPLEMENTATION READINESS:** `AUD-001A READY`; IAM-001A é `READY AFTER AUD-001A`. IAM-001B continua dependente de A e step-up/delegação concretos.
+**IMPLEMENTATION READINESS:** `AUD-001A DONE / PASS`; IAM-001A é `READY`. IAM-001B continua dependente de A e step-up/delegação concretos.
 **ASSISTED-USE READINESS:** `BLOCKED` — exige AUD-001A, IAM-001A/B aplicáveis, AUD-001B para evidência de criação Patients, WEB-001 e gates operacionais; este PASS não libera piloto.
 **PRODUCTION READINESS:** `BLOCKED` — sem implementação IAM/Audit e validação operacional; nenhum PASS documental declara produção pronta.
 
@@ -986,7 +986,7 @@ fechamento das decisões; elas permanecem APPROVED.
 |---|---|---:|---|
 | IAM-001-CONTRACTS | Reconciliar contratos IAM-OD-001..007 em API/DB/AUTH/STATE | P0 | DONE — PASS (documental, 2026-10-01) |
 | IAM-001-IMP | Implementação IAM M1, composta pelos slices abaixo | P0 | BLOCKED |
-| IAM-001A | Account, Credential & Session Foundation | P0 | BLOCKED — AUD-001-DESIGN |
+| IAM-001A | Account, Credential & Session Foundation | P0 | READY |
 | IAM-001B | Administrative Grants & Unit Access | P0 | BLOCKED — A e step-up/delegação |
 
 API-001 §24.1 separa logout/current-session de gestão de sessões: revoke/terminate
@@ -1619,9 +1619,9 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. executar `AUD-001A`, limitado à foundation Audit e evidências IAM aprovadas;
-2. validar persistência append-only, redaction, idempotência, indisponibilidade/unknown outcome e boundaries;
-3. só então iniciar IAM-001A; não iniciar AUD-001B, Patients, UI ou step-up automaticamente.
+1. executar `IAM-001A`, limitado a Account, Credential e Session Foundation;
+2. consumir a evidence Audit purpose-specific com fail-closed onde o contrato aprovado exigir;
+3. não iniciar IAM-001B, AUD-001B, Patients, UI ou step-up automaticamente.
 
 ## Em seguida
 
@@ -1633,6 +1633,32 @@ recorte e dependem de seus designs/decisões próprios.
 ---
 
 # 24. ÚLTIMO HANDOFF
+
+## HANDOFF — 2026-10-01 — AUD-001A VALIDATION
+
+### Resultado validado
+
+`AUD-001A — DONE / PASS`. O build canônico passou com 0 warnings/0 errors e a
+suíte canônica passou 133/133: Unit 47/47, Integration PostgreSQL/Testcontainers
+49/49, Architecture 15/15 e API 22/22. A migration foi aplicada em PostgreSQL
+limpo e confirmou schema/history Audit, índices e ausência de FK cross-context.
+
+### Correções e gates
+
+- Replay usa equivalência estruturada para metadata `jsonb` e precisão temporal
+  persistida pelo PostgreSQL; mesma `evidenceId` concorrente produz um único
+  registro e `AlreadyRecorded` para o replay equivalente.
+- Falha de conexão Npgsql antes de commit é `PersistenceFailure`; commit
+  cancelado é `UnknownOutcome` e a reconciliação posterior por `evidenceId` não
+  duplica registro. AuditRecord permanece append-only.
+- IAM-001A é `READY`. Uso assistido e produção permanecem `BLOCKED` pelos slices
+  IAM restantes, AUD-001B/Patients, WEB-001, retenção/legal-hold, backup/restore
+  e gates operacionais.
+
+### Próxima tarefa
+
+`IAM-001A — Account, Credential & Session Foundation`; não iniciar IAM-001B ou
+outros slices automaticamente.
 
 ## HANDOFF — 2026-10-01 — AUD-001-DESIGN
 
