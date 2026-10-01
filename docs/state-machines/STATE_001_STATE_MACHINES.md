@@ -104,7 +104,7 @@ Classificação de status:
 | Person / Unit / Room | respectivos owners | sem máquina formal nesta tarefa | — | atributos de disponibilidade/inativação simples | — | regra central de não artificializar |
 | PersonMerge | People | DEFERRED | — | estados candidatos existentes, reversal ainda depende de policy | — | MODEL-001; OQ-M001-006 |
 | ProfessionalLeave | Staff | DEFERRED | — | candidatos PLANNED/ACTIVE/ENDED/CANCELLED | — | MODEL-001; DOM-020 futuro |
-| UserAccount | Identity & Access | DEFERRED | — | não aprofundado | — | IAM/AUTH futuros |
+| UserAccount | Identity & Access | PERSISTED_STATE | PENDING, ACTIVE, LOCKED, DISABLED | § adicional IAM-001-CONTRACTS | nenhuma exclusão operacional | IAM-OD-006, AUTH-001 §49 |
 | PrivacyRequest | Privacy & Audit | DEFERRED | — | não definido | — | MODEL-005 |
 
 ## 8. CRM — Opportunity
@@ -1537,7 +1537,7 @@ Nenhuma para iniciar AUTH-001. AUTH-001 deverá fechar atores, permissions e al�
 
 ### BLOCKING BEFORE IMPLEMENTATION
 
-STATE-OQ-001 a 008; matriz de permissions/alçadas; autenticação/MFA/session; concorrência de capacidade, agenda e finanças. IDs/timezone/Money/arredondamento foram fechados posteriormente por DB-001.
+STATE-OQ-001 a 008; alçadas e MFA/step-up nas ações que os exigem; concorrência de capacidade, agenda e finanças. Autenticação/sessão M1 foram fechadas por IAM-OD-001..007 e API-001 §24.1; IDs/timezone/Money/arredondamento por DB-001.
 
 ### BLOCKING BEFORE GO-LIVE
 
@@ -1591,3 +1591,76 @@ AUTH-001 deve mapear cada comando/transição a permission + resource/context + 
 - [x] nenhum detalhe físico/implementação foi introduzido.
 
 **Resultado:** STATE-001 — PASS.
+
+
+## IAM-001-CONTRACTS — UserAccount (2026-10-01)
+
+**Owner:** Identity & Access (Access). **Classificação:** PERSISTED_STATE.
+Fonte: IAM-OD-006, com credential/session em IAM-OD-002/003 e ativação/reset em
+IAM-OD-004/007. Esta máquina substitui o antigo DEFERRED somente para conta M1.
+
+| Estado | Significado | Pode autenticar/autorizar? |
+|---|---|---|
+| PENDING | criada, reativada ou em reset; sem credential ativa | não |
+| ACTIVE | ativada, credential válida; sessão e grants ainda precisam ser avaliados | sim, somente mediante todos os guards |
+| LOCKED | proteção por falhas de autenticação | não |
+| DISABLED | retirada administrativa de acesso; histórico preservado | não |
+
+| Origem | Comando/trigger e ator | Guard | Destino | Efeito atômico no owner |
+|---|---|---|---|---|
+| inexistente | CreateUserAccount por governante | username único; Person opcional validada; grants iniciais autorizados | PENDING | conta + artefato derivado/expirável; nenhuma sessão |
+| inexistente | BootstrapInitialGovernor por operador | segredo válido; singleton não consumido; sem governante ativa | PENDING | consome bootstrap + cria conta/grants Identity enumerados/artefato; uma transação |
+| PENDING | ActivateAccount pelo titular do artefato | artefato válido/não consumido; credential aceita; unicidade Person na ativação | ACTIVE | consome artefato, define credential, activatedAt e versões; login separado |
+| ACTIVE | proteção de login pelo sistema | limite de falhas da política atingido | LOCKED | lockedAt, invalidação de sessões e accessVersion; não libera automaticamente pelo relógio |
+| ACTIVE | ResetCredential por governante | permission, alvo distinto, reason, ETag | PENDING | invalida credential/artefatos/sessões, incrementa versões, novo artefato |
+| LOCKED | unlock via ResetCredential por governante | mesmos guards; nenhum unlock direto para ACTIVE | PENDING | reset controlado com nova ativação |
+| PENDING | ResetCredential por governante | mesmos guards; substituição de artefato expirado/perdido | PENDING | invalida artefato anterior e emite novo; sem nova conta |
+| PENDING/ACTIVE/LOCKED | DisableUserAccount por governante | permission, reason, ETag | DISABLED | disabledAt, invalida credential/artefatos/sessões, incrementa versões |
+| DISABLED | ReactivateUserAccount por governante | permission, reason, ETag | PENDING | novo artefato; nenhuma restauração de sessão/credential |
+
+Nenhuma transição DISABLED→ACTIVE, LOCKED→ACTIVE, ACTIVE→ACTIVE por ativação,
+reset de DISABLED ou delete operacional é permitida. Disable de DISABLED pode
+reproduzir o receipt do mesmo comando autorizado; nova tentativa não cria
+transição histórica fictícia. DISABLED não é terminal porque reativação existe.
+Mudanças de grants/logout/revoke/username não são novos estados da conta.
+Reativação não restaura grants revogados; grants existentes continuam sujeitos
+a deny, vigência e Unit atual e requerem revisão administrativa.
+
+Expiração/revogação/consumo de artefato são condições do artefato, não estados
+adicionais de UserAccount. Expirar artefato deixa a conta PENDING; falha de
+entrega não ativa nem reverte bootstrap. Encerrar sessão não muda conta ACTIVE.
+Mutações administrativas usam version/ETag (criação não tem versão anterior).
+Ativação usa CAS do artefato/conta sem ETag do titular; bootstrap usa consumo
+único e triggers de sistema usam controle interno. Todas são serializadas com
+login/reset/disable. Uma ativação concorrente com disable não
+pode deixar sessão/credential utilizável após disable. Atomicidade é local a
+Identity, sem alterar Person, Staff, Patient ou Unit.
+
+Transições preservam actor/target, origem/destino, timestamp, reason/code e
+correlation sem senha/hash/artefato. AUD-001-DESIGN define persistência da evidência;
+esta máquina não cria integration events nem Outbox/AuditRecord em Access.
+Reversibilidade: criação/consumo de artefato/bootstrap são IRREVERSIBLE;
+disable/lock/reset são COMPENSATABLE por novo fluxo controlado de ativação,
+nunca restituição da credential/sessão antiga. Testes futuros cobrem todas as
+arestas permitidas e cada aresta ausente negada, retries, artefato expirado/usado,
+concorrência de bootstrap/ativação/disable e unicidade de Person ao ativar.
+
+### Sessão M1 — condição derivada
+
+Sem enum persistido redundante: DB-001 guarda criação, expiry, lastSeenAt,
+revogação e issuedAccessVersion. REVOKED prevalece sobre EXPIRED; ACTIVE aqui
+significa apenas sessão ainda utilizável, nunca concessão implícita de permission.
+
+| Condição | Entrada / efeito | Saída permitida |
+|---|---|---|
+| ACTIVE | login válido em conta ACTIVE emite novo segredo; prazo absoluto e inatividade válidos | REVOKED por logout/revoke/terminate/disable/lock/reset/grant change; EXPIRED por prazo |
+| REVOKED | revokedAt preenchido ou accessVersion divergente; próximo request recebe 401 | nenhuma; novo login cria outra sessão |
+| EXPIRED | now >= expiresAt ou limite de inatividade atingido; próximo request recebe 401 | nenhuma para ACTIVE; revogação posterior pode registrar REVOKED sem reabrir acesso |
+
+Revoke individual não invalida outras sessões; terminate-all invalida todas,
+inclusive a corrente quando SELF. Nenhuma dessas ações muda UserAccount ACTIVE.
+Mudança de grants incrementa accessVersion e invalida as sessões anteriores.
+Sessão válida ainda exige conta ACTIVE, permissions/denies atuais e scope/policy
+da operação. Não há refresh/revive de sessão revogada ou expirada. Cookie apagado
+sem revogação server-side não satisfaz logout. Locks/counters e resets são locais
+a Identity; parâmetros operacionais não permitem LOCKED→ACTIVE pelo relógio.

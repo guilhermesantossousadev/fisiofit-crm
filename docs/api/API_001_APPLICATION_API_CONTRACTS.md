@@ -297,7 +297,7 @@ Controller/endpoint adapter não duplica domínio. Falha de dependência síncro
 
 ## 12. Authentication
 
-A API assume principal autenticado com `user identity`, conta atual e roles/permissions/scopes apropriados. Provider IAM, token/session shape, MFA, recovery e revocation mechanics permanecem deferred. Rotas de health/public callback podem ser anônimas apenas por decisão explícita; todo endpoint de negócio deste catálogo exige autenticação. Inbound webhook usa identidade técnica/assinatura, não role humana.
+A API assume principal autenticado com `user identity`, conta atual e roles/permissions/scopes apropriados. Para o M1, IAM-OD-001..007 definem username independente, credential local e sessão opaca server-side; login, ativação, recovery administrativo e revogação são concretizados em §24.1. MFA/step-up e IdP externo continuam deferred. Rotas de health/public callback podem ser anônimas apenas por decisão explícita; todo endpoint de negócio exige autenticação, exceto login e ativação explicitamente delimitados em §24.1. Inbound webhook usa identidade técnica/assinatura, não role humana.
 
 ## 13. Authorization
 
@@ -486,7 +486,240 @@ sequenceDiagram
 
 ## 24. Identity API
 
-Commands sustentados: `CreateUserAccount`, `DisableUserAccount`, `AssignRole`, `GrantPermission`, `RevokeRoleOrPermission`, `TerminateUserSessions`. Queries: `GetUserAccount`, `SearchUserAccounts`, `GetEffectiveAccess`. O target é sempre explícito; `NO_SELF_PRIVILEGE_ESCALATION` e audit security são obrigatórios. Provider, sessão, claims e step-up físico são deferred; operações privilegiadas ficam deny até esse gate, sem inventar impersonation.
+Commands sustentados: `CreateUserAccount`, `DisableUserAccount`, `AssignRole`, `GrantPermission`, `RevokeRoleOrPermission`, `TerminateUserSessions`. Queries: `GetUserAccount`, `SearchUserAccounts`, `GetEffectiveAccess`. O target é sempre explícito; `NO_SELF_PRIVILEGE_ESCALATION` e audit security são obrigatórios. A reconciliação IAM-001-CONTRACTS abaixo fecha credential, sessão e revogação do M1; step-up físico permanece gate para grants e não é satisfeito pelo login comum. Sem impersonation.
+
+### 24.1 IAM-001-CONTRACTS — M1 administrativo (2026-10-01)
+
+Reconciliação normativa de IAM-OD-001..007. Owner: Identity & Access, assembly
+Access, schema `identity`. Esta seção especializa os catálogos §§40–47 para o
+M1; os IDs CMD-001..005/CMD-119 e QRY-001..003 não são renumerados. Contratos
+adicionais usam IDs IAM-C/IAM-Q, sem declarar endpoints implementados.
+
+#### Sessão web e proteção do transporte
+
+`loginIdentifier` é username independente, obrigatório, único após trim e
+normalização Unicode canônica/case-insensitive com comparação ordinal; não é
+contato civil. A implementação deve fixar uma única rotina de normalização com
+vetores de teste antes da migration. `PasswordHasher<TUser>` verifica credential
+local e trata `SuccessRehashNeeded`; nenhuma senha/hash entra em DTO de leitura.
+Isso não adota o framework completo ASP.NET Core Identity.
+
+Browser usa cookie de sessão opaco `Secure`, `HttpOnly`, `SameSite=Strict`,
+`Path=/`, sem Domain (host-only). O segredo só sai em `Set-Cookie`, nunca em JSON
+ou URL; somente seu derivado é persistido. Login rotaciona o identificador, sem
+reutilizar sessão fornecida pelo cliente. Não há refresh token/JWT no M1.
+Frontend e API devem operar same-origin; mudar essa topologia exige revisão.
+Secure é obrigatório fora de Development; o padrão também em Development é HTTPS.
+Uma exceção local de transporte não autoriza test auth no Host normal. O cookie
+não contém permissions, roles ou dados civis. Sua expiração não excede expiresAt
+server-side; a expiração efetiva é o menor prazo entre absoluto e inatividade.
+Atividade válida pode atualizar lastSeenAt, nunca estender o prazo absoluto.
+
+Todas as respostas IAM são `Cache-Control: no-store`. Para mutações do browser,
+inclusive login/ativação, exigir Origin da aplicação e token antiforgery ligado
+à sessão (ou contexto anônimo pré-login), enviado por `X-CSRF-Token`. Falha é
+`403 CSRF_VALIDATION_FAILED`; SameSite não substitui antiforgery. O token
+antiforgery pode ser retornado pelo endpoint dedicado abaixo; não é segredo de
+sessão nem artefato de recovery. CORS não permite credentials para origem livre.
+TLS é obrigatório no ambiente de uso assistido.
+
+A cada request: lookup de sessão não expirada/revogada, conta `ACTIVE`, igualdade
+de `accessVersion`, grants/denies e Units vigentes, depois policy do owner.
+Incompatibilidade de versão invalida a sessão (`401`); claims não substituem
+consulta atual. Prazo absoluto/inatividade, artefatos de curta duração, limites
+de tentativas e janela de receipts precisam de configuração explícita e testes
+antes de habilitar o ambiente; não há fallback de duração ilimitada. São parâmetros
+operacionais, não novas decisões estruturais: janela/limite por origem e identifier,
+slowdown, limiar/janela de falhas para LOCKED, validade de artefato e limites de
+reset/unlock. Access aplica contadores/lifecycle; a borda limita abuso por origem.
+Não fixar números nesta tarefa. Expirar uma janela não faz LOCKED→ACTIVE:
+unlock usa reset autorizado e nova ativação, conforme STATE-001.
+
+#### Catálogo mínimo de comandos, queries e endpoints
+
+Todos os paths abaixo começam em `/api/v1`. Permissions são literais completos
+em AUTH-001 §49. `G` significa governante ACTIVE com permission específica,
+limite de delegação e `NO_SELF_PRIVILEGE_ESCALATION`; role nunca basta.
+`A` significa mutação administrativa: `Idempotency-Key` obrigatório e `If-Match`
+com ETag da conta alvo, salvo criação (sem versão prévia). Resultado inclui nova
+versão/ETag (em 204, somente header). Grant/deny/Unit alterations serializam pela versão da conta e
+incrementam `accessVersion` na mesma transação. Mesmo key/hash reexecuta somente
+a resposta minimizada após revalidar a autoridade atual; key diferente exige
+versão corrente. Payload/hash diferente com a mesma key dá `409 IDEMPOTENCY_CONFLICT`.
+Key ausente/inválida dá 400; If-Match ausente dá 428 e divergente dá 412.
+O replay reconhecido de key/hash não exige a versão anterior ainda corrente,
+mas sempre exige sessão e autoridade atuais; não reexecuta efeito nem entrega.
+O hash inclui operação, target e payload normalizado; segredo não entra em receipt.
+Nas respostas de mutação, id é o UserAccount alvo; grantId identifica o grant
+criado e version/ETag sempre referem-se à conta, não ao grant ou à sessão.
+Replay devolve o ETag do resultado original; antes de nova mutação, reler a conta.
+
+| ID / contrato | Método e path | Ator / permission | Input mínimo | Resultado | Retry / concorrência |
+|---|---|---|---|---|---|
+| IAM-Q01 GetCsrfContext | GET `/auth/csrf` | anônimo ou sessão atual | — | 200 antiforgery token | sem key; no-store |
+| IAM-C01 Login | POST `/auth/login` | anônimo; abuso limitado | loginIdentifier, password | 200 CurrentSession + Set-Cookie | sem key/receipt de senha; cada login bem-sucedido gera nova sessão |
+| IAM-C02 ActivateAccount | POST `/auth/activate` | posse do artefato válido | activationArtifact, newPassword | 204; depois login explícito | consumo atômico único; replay rejeitado; sem receipt do segredo |
+| IAM-C03 Logout | POST `/auth/logout` | sessão atual | — | 204 + expiração do cookie | revoga só sessão corrente; retry após revoke retorna 401 |
+| IAM-Q02 GetCurrentSession | GET `/auth/session` | sessão atual | — | 200 CurrentSession | consulta atual sem cache |
+| CMD-001 CreateUserAccount | POST `/user-accounts` | G / `identity.account.create`, e permissions de cada grant inicial | loginIdentifier, personId?, initialPermissionGrants, initialUnitGrants, reason | 201 id/status=PENDING/version + Location | A; unique username; sem senha/artefato na resposta |
+| CMD-002 DisableUserAccount | POST `/user-accounts/{id}/disable` | G / `identity.account.disable` | reason | 200 id/DISABLED/version | A; revoga todas as sessões/artefatos |
+| IAM-C04 ReactivateUserAccount | POST `/user-accounts/{id}/reactivate` | G / `identity.account.reactivate` | reason | 200 id/PENDING/version | A; somente DISABLED; nova ativação |
+| IAM-C05 ResetCredential | POST `/user-accounts/{id}/credential-reset` | G / `identity.credential.reset` | reason | 200 id/PENDING/version | A; ACTIVE/LOCKED/PENDING; invalida credential/sessões/artefatos anteriores |
+| IAM-C06 ChangeLoginIdentifier | POST `/user-accounts/{id}/login-identifier` | G / `identity.account.identifier.change` | loginIdentifier, reason | 200 id/version | A; unicidade normalizada, confirmação administrativa |
+| CMD-119 GrantPermission | POST `/user-accounts/{id}/permission-grants` | G / `identity.permission.assign` | permission, effect=ALLOW ou DENY, scopeType, unitId?, effectiveFrom, effectiveTo?, reason | 201 grantId/version | A; scope conforme AUTH §49/DB §14.1; ALLOW de negócio M1 exige UNIT |
+| CMD-004 RevokeRoleOrPermission | POST `/user-accounts/{id}/access-revocations` | G / `identity.permission.revoke` | grantId, kind=PERMISSION, reason | 200 id/version | A; revoga ALLOW ou DENY pertencente à conta; assignmentId/kind=ROLE fora do M1 |
+| IAM-C07 GrantUnitAccess | POST `/user-accounts/{id}/unit-grants` | G / `identity.unit.assign` | unitId, effectiveFrom, effectiveTo?, reason | 201 grantId/version | A; Organization valida Unit ativa |
+| IAM-C08 RevokeUnitAccess | POST `/user-accounts/{id}/unit-grants/{grantId}/revoke` | G / `identity.unit.revoke` | reason | 200 id/version | A; grant pertence à conta |
+| IAM-C09 RevokeSession | POST `/user-accounts/{id}/sessions/{sessionId}/revoke` | SELF exige `identity.session.terminate` aplicável à própria conta; outra conta exige G com a mesma permission e delegação sobre o alvo | reason obrigatório para outra conta | 204 + ETag | A; sessão deve pertencer ao alvo; revoga somente a sessão indicada |
+| CMD-005 TerminateUserSessions | POST `/user-accounts/{id}/sessions/terminate` | SELF exige `identity.session.terminate` aplicável à própria conta; outra conta exige G com a mesma permission e delegação sobre o alvo | reason obrigatório para outra conta | 204 + ETag | A; incrementa accessVersion; termina todas, inclusive a corrente quando SELF |
+| QRY-001 GetUserAccount | GET `/user-accounts/{id}` | SELF autenticado sem `identity.account.read`; outra conta exige G com `identity.account.read` e delegação sobre o alvo | id | 200 UserAccountDetails + ETag | sem key; projeções distintas abaixo |
+| QRY-002 SearchUserAccounts | GET `/user-accounts` | G / `identity.account.read` | status, personId?, page/pageSize | 200 página minimizada | regras §18; nenhum filtro por credential |
+| QRY-003 GetEffectiveAccess | GET `/user-accounts/{id}/effective-access` | SELF autenticado sem `identity.account.read`; outra conta exige G com `identity.account.read` e delegação sobre o alvo | id | 200 permissionsByUnit/version + ETag | somente estado atual; sem denies internos/grants administrativos no DTO SELF |
+
+`CurrentSession` = userAccountId, sessionId público, status=ACTIVE, expiresAt, permissionsByUnit
+(lista de unitId + permissions efetivas), displayName opcional seguro. Não contém
+cookie, hash, accessVersion interno, artefatos, credential ou denies. sessionId
+não autentica: identifica somente a sessão corrente. Revoke individual de outra
+sessão exige ID obtido por procedimento operacional autorizado; não se inventa
+listagem de sessões. Sem ID conhecido, o comando disponível é término total.
+`UserAccountDetails` governante limita-se a id, loginIdentifier, personId?,
+status, version e timestamps de lifecycle. Create retorna Location para QRY-001.
+SELF recebe somente id, loginIdentifier, status e version; Search retorna esses
+campos mais personId opcional somente para G. QRY-003 usa a mesma projeção efetiva
+de negócio de CurrentSession, acrescida da version pública da conta. permissionsByUnit
+é a interseção de ALLOW, ausência de DENY e Unit grant vigente/utilizável; não
+substitui resource policy nem dá acesso a conta alvo não ACTIVE (lista vazia para G).
+Falha ao resolver fatos atuais falha fechada, não devolve permissions em cache.
+
+Logout normal (IAM-C03) e current-session (IAM-Q02) exigem somente a própria
+sessão válida, sem permission de governança, key ou ETag. Logout não encerra outra
+sessão. IAM-C09/CMD-005 são session management: mesmo SELF exige grant explícito
+vigente de identity.session.terminate (SELF ou ACCOUNT que cubra o alvo), sem DENY,
+além de key/ETag; conhecer sessionId não concede autoridade. Se revogarem a sessão
+da chamada, limpam seu cookie. Retry com essa sessão revogada retorna 401;
+reautenticado e autorizado, o ator pode recuperar o receipt sem repetir o efeito.
+Revoke individual não incrementa accessVersion, para preservar outras sessões;
+incrementa version da conta e marca a sessão atomicamente. Terminate-all incrementa
+ambas. Revogar sessão já revogada/expirada é no-op autorizado, preservando histórico;
+sessão inexistente ou que não pertence ao alvo resulta em 404 sanitizado.
+
+initialPermissionGrants usa o mesmo shape/guards de CMD-119, sem reason por item
+(usa o reason da criação); initialUnitGrants usa IAM-C07. Arrays vazios não
+concedem acesso. scopeType é UNIT, ACCOUNT ou SELF conforme AUTH §49: UNIT exige
+unitId; ACCOUNT/SELF proíbem unitId. M1 não aceita wildcards, CLINIC ou ROLE.
+Toda concessão com unitId, inclusive permission grant, valida a Unit no owner
+Organization. Revogar grant não depende de a Unit continuar ativa, pois deve ser
+possível retirar autoridade de um escopo já inativado.
+Remover DENY é CMD-004 sobre grant de effect=DENY, com os mesmos guards/step-up;
+alterar efeito/escopo requer revogar e conceder novo registro, sem editar histórico.
+
+CMD-003 AssignRole permanece reservado/gated e fora do primeiro slice. Role
+management não é necessário para grants diretos. Criação com grants iniciais
+não contorna step-up/delegação: exige todas as permissions e guards equivalentes
+aos comandos de grant. Nenhum endpoint de bootstrap existe.
+
+#### Bootstrap, ativação e reset
+
+`IAM-C10 BootstrapInitialGovernor` é comando operacional local one-shot, não
+HTTP. Exige segredo do deployment, marcador ainda não consumido e ausência de
+governante ativa; cria PENDING + autoridade Identity explicitamente enumerada
+no perfil de provisionamento + artefato derivado, na mesma transação Identity.
+O perfil operacional é OWNER_MANAGER, sem autorização implícita pelo nome.
+Não gera CLINIC/Clinical/Finance nem Units de negócio implícitas. Segunda execução
+falha deterministicamente, mesmo se a primeira conta ainda estiver PENDING.
+Remover/rotacionar o segredo após consumo; não reabrir o marcador por disable.
+Input operacional: loginIdentifier, personId opcional, referência do perfil de
+provisionamento revisado e reason; segredo exclusivamente via deployment, nunca
+argumento de linha de comando/log. O perfil enumera os literais Identity de AUTH
+§49 e a delegação permitida; não aceita wildcard ou grants de negócio. Resultado
+minimizado: accountId, PENDING, version e consumo confirmado; artefato somente no
+canal assistido. Falha de segredo/precondição/consumo resulta em falha local
+`BOOTSTRAP_UNAVAILABLE`, sem Problem Details HTTP nem rearmar o marcador.
+
+Criar, resetar e reativar emitem artefato aleatório de uso único, expirável,
+entregue apenas pelo canal operacional aprovado; nunca em resposta HTTP, logs,
+receipts ou eventos. Retry não reemite artefato nem repete entrega. Falha de
+entrega mantém PENDING; novo reset autorizado substitui o artefato anterior.
+Ativação consome artefato, define credential e muda PENDING→ACTIVE atomicamente;
+não cria sessão automaticamente. Artefato expirado/revogado/usado ou conta fora
+de PENDING falha genericamente. Canal de entrega e sua evidência operacional
+precisam estar aprovados antes de habilitar o fluxo; sem envio por e-mail inferido.
+
+#### Erros, auditoria e boundaries
+
+| HTTP | code | Semântica |
+|---|---|---|
+| 400 | VALIDATION_ERROR | shape inválido sem ecoar senha/artefato/identifier |
+| 400 | ACTIVATION_INVALID | artefato ausente/inválido/expirado/usado ou estado incompatível; mesma resposta |
+| 401 | AUTHENTICATION_FAILED | login inválido, conta ausente/PENDING/LOCKED/DISABLED ou credential inválida; indistinguível |
+| 401 | UNAUTHORIZED | sessão ausente/expirada/revogada, accessVersion divergente ou conta não ACTIVE |
+| 403 | FORBIDDEN | sessão válida mas permission/Unit ausente, explicit deny, self escalation ou step-up não satisfeito |
+| 403 | CSRF_VALIDATION_FAILED | origem/antiforgery inválido; antes do efeito |
+| 404 | RESOURCE_NOT_FOUND | recurso administrativo inexistente ou oculto ao ator |
+| 409 | CONFLICT | identifier duplicado (somente governante autorizado) ou lifecycle incompatível |
+| 409 | IDEMPOTENCY_CONFLICT | mesma key com target/payload divergente |
+| 412 | PRECONDITION_FAILED | ETag desatualizada |
+| 428 | PRECONDITION_REQUIRED | If-Match obrigatório ausente |
+| 429 | RATE_LIMITED | abuso limitado por origem e identifier; Retry-After sem enumerar conta |
+| 503 | ACCESS_UNAVAILABLE | dependência de autenticação/autorização indisponível; fail-closed |
+
+Erros seguem RFC 9457 (`type`, `title`, `status`, `code`, `traceId`, `errors`
+quando aplicável); não revelam detalhes de autenticação. Lockout não substitui
+rate limit. Disable/reset/lock/revoke/terminate e grants serializam com login, ativação
+e decisão atual. Revogação vale para a próxima request; não desfaz commit concluído.
+Audit recebe apenas actor/target opaco, action, result/code, timestamp, correlation,
+Unit/escopo e reason sanitizado. Persistência/atomicidade é gate de AUD-001-DESIGN;
+Access não cria AuditRecord substituto nem Outbox não aprovada.
+
+Contratos públicos: `AuthorizeOperation` recebe ator autenticado pelo servidor,
+permission e Unit/recurso pretendido; retorna ALLOW/DENY/indisponível e fatos
+mínimos atuais. Não aceita scopes/claims do cliente como prova. People valida
+Person opcional e Organization valida Unit por contratos purpose-specific,
+sem consultas EF cross-context. Patients mantém sua policy de recurso e revalida
+Unit. Nenhum EF entity/DbContext/credential atravessa ModuleContracts.
+
+`ResolvePersonIdentity(personId)` (§22), usado para vínculo de conta, devolve existência/elegibilidade mínima
+e referência canônica pelo owner People, sem contatos civis. `ValidateUnitForAccessGrant(unitId)`
+devolve se a Unit está utilizável pelo owner Organization; não cria Unit nem grant.
+Nomes são contratos lógicos purpose-specific, não novos endpoints. Respostas
+negativas impedem vínculo/grant (409 sanitizado para G); indisponibilidade dá 503.
+Autenticação/current actor é resolvida no servidor; AuthorizeOperation revalida
+sessão/accessVersion, permission, deny e escopo no instante de autorizar o efeito.
+Negócio exige Unit atual; governança Identity usa target/delegação ACCOUNT/SELF,
+sem exigir um grant de Unit de negócio para logout ou administrar uma conta.
+Sem DbContext, EF entity, IQueryable ou repository interno no contrato público.
+
+#### Fatos IAM para Audit (não são integration events)
+
+DOMAIN_EVENTS §§27/36 não possui eventos IAM ADOPTED. Os nomes abaixo são rótulos
+semânticos da evidência requerida por IAM-001-DESIGN §22, não novos tipos de evento
+publicados nem mudança desse catálogo. A action usa o comando canônico e result;
+AUD-001-DESIGN fechará o envelope durável e a atomicidade de entrega.
+
+| Fato a evidenciar | Origem/action canônica e dados específicos mínimos |
+|---|---|
+| UserAccountCreated / UserAccountActivated / UserAccountDisabled | CreateUserAccount ou BootstrapInitialGovernor / ActivateAccount / DisableUserAccount; target, origem/destino |
+| LoginSucceeded / LoginFailed | Login + resultado sanitizado; sem username/senha ou distinção pública de conta inexistente |
+| SessionRevoked | Logout / RevokeSession / TerminateUserSessions ou causa disable/lock/reset; sessionId público quando aplicável, target e reason/code |
+| CredentialReset | ResetCredential; target, resultado, sem artefato |
+| PermissionGranted / PermissionRevoked / explicit deny changed | GrantPermission / RevokeRoleOrPermission; grantId, permission, effect ALLOW/DENY, escopo e vigência |
+| UnitAccessGranted / UnitAccessRevoked | GrantUnitAccess / RevokeUnitAccess; grantId, unitId e vigência |
+| BootstrapConsumed | BootstrapInitialGovernor; target e resultado do consumo, nunca segredo |
+| lock / reactivation / identifier change | proteção de login / ReactivateUserAccount / ChangeLoginIdentifier; target, transição ou code, sem valores de username |
+
+Todos incluem actor opaco (ou tentativa anônima/processo), timestamp, correlation
+e resultado. Retry do mesmo efeito não inventa novo fato de sucesso; tentativas
+podem produzir evidência distinta. Access não persiste AuditRecord e não promete
+entrega durável por log, stub ou transação distribuída. Sem AUD-001 aprovado,
+uso assistido permanece bloqueado.
+
+**Readiness:** contratos M1 reconciliados; IAM-001-IMP permanece `BLOCKED`.
+Decomposição e critérios de cada slice em IAM-001-DESIGN §29: primeiro IAM-001A,
+fundação de conta/credential/sessão com bootstrap/lifecycle/reset inseparáveis;
+depois IAM-001B, grants/denies/Units e integração Patients. AUD-001-DESIGN é o
+pré-requisito de contrato de evidência preservado para A; step-up/delegação
+concretos também bloqueiam B. AUD-001-IMP é gate de uso assistido, não requisito
+para escrever código local. Não fechar AUTH-GAP-006 integralmente.
 
 ## 25. Organization API
 
@@ -809,11 +1042,11 @@ Este catálogo define nomes e limites para impedir invenção posterior; ele nã
 
 | ID | Context | Command | Actor | Authorization | Inputs | Result | Transaction Boundary | Idempotency | Concurrency |
 |---|---|---|---|---|---|---|---|---|---|
-| CMD-001 | Identity | CreateUserAccount | IAM governor | account.create + no-self-escalation | personId, initial access refs | id/status | Identity local | key | uniqueness |
+| CMD-001 | Identity | CreateUserAccount | IAM governor | account.create + no-self-escalation | loginIdentifier, personId?, initial permission/Unit grants, reason | id/PENDING/version | Identity local | key | uniqueness; §24.1 |
 | CMD-002 | Identity | DisableUserAccount | IAM governor | account.disable + target scope | accountId, reason | id/status | Identity local | key | ETag |
 | CMD-003 | Identity | AssignRole | IAM governor | role.assign + no-self-escalation | accountId, role, scope, vigência | assignmentId | Identity local | key | ETag |
 | CMD-004 | Identity | RevokeRoleOrPermission | IAM governor | role/permission.revoke | assignment/grantId, reason | success | Identity local | key | ETag |
-| CMD-005 | Identity | TerminateUserSessions | self/governor | session.terminate | accountId, reason? | success | Identity local | key | none |
+| CMD-005 | Identity | TerminateUserSessions | SELF ou governante autorizado (§24.1) | identity.session.terminate obrigatório para ambos + target scope | accountId, reason obrigatório para outra conta | 204 + ETag | Identity local | key | ETag da conta; §24.1 |
 | CMD-006 | Organization | CreateUnit | Owner | structure.manage | clinicId, name | id/status | Organization local | optional | none |
 | CMD-007 | Organization | UpdateUnitDetails | Owner | structure.manage | unitId, name/status fields | id/version | Organization local | no | ETag |
 | CMD-008 | Organization | RegisterRoom | Owner | structure.manage | unitId, name/description | id | Organization local | no | none |
@@ -927,7 +1160,7 @@ Este catálogo define nomes e limites para impedir invenção posterior; ele nã
 | CMD-116 | Staff | UpdateProfessionalProfile | Owner/granted Secretary | profile.update | id, whitelisted professional fields | id/version | Staff local | no | ETag |
 | CMD-117 | Staff | EndProfessionalUnitAssignment | Owner | unit.assign | linkId, effectiveTo, reason | id/status | Staff local | key | ETag |
 | CMD-118 | Staff | EndProfessionalLeave | Owner/granted Secretary | leave.manage | leaveId, endedAt/reason | id/status | Staff local + event | key | ETag |
-| CMD-119 | Identity | GrantPermission | IAM governor | permission.assign + no-self-escalation | accountId, permission, scope, vigência, reason | grantId | Identity local | key | ETag; gated |
+| CMD-119 | Identity | GrantPermission | IAM governor | permission.assign + no-self-escalation | accountId, permission, effect, scopeType, unitId?, vigência, reason | grantId/version | Identity local | key | ETag; gated; §24.1 |
 | CMD-120 | CRM | InitiateContact | commercial actor | opportunity.advance | id, activity/next action | id/status/version | CRM local | key | ETag |
 | CMD-121 | CRM | QualifyOpportunity | commercial actor | opportunity.qualify | id, outcome/next action | id/status/version | CRM local | key | ETag |
 | CMD-122 | CRM | StartNegotiation | commercial actor | negotiation.start | id, proposal reference | id/status/version | CRM local | key | ETag |
@@ -953,9 +1186,9 @@ Todas as queries exigem autenticação e permission/policy indicada; `page/pageS
 
 | ID | Context | Query | Actor | Authorization | Filters | Result Model | Pagination | Sensitivity |
 |---|---|---|---|---|---|---|---|---|
-| QRY-001 | Identity | GetUserAccount | IAM/self | target access | id | UserAccountDetails | no | SEC |
-| QRY-002 | Identity | SearchUserAccounts | IAM governor | assigned scope | status, role, personId | UserAccountListItem | offset | SEC |
-| QRY-003 | Identity | GetEffectiveAccess | self/IAM | target/no self escalation | accountId, at | EffectiveAccessView | no | SEC |
+| QRY-001 | Identity | GetUserAccount | SELF ou governante | SELF sem grant de leitura; outra conta identity.account.read + target (§24.1) | id | projeção minimizada + ETag | no | SEC |
+| QRY-002 | Identity | SearchUserAccounts | IAM governor | identity.account.read + assigned scope | status, personId?, page/pageSize; role fora do M1 | UserAccountListItem (§24.1) | offset | SEC |
+| QRY-003 | Identity | GetEffectiveAccess | SELF ou governante | SELF sem grant de leitura; outra conta identity.account.read + target (§24.1) | accountId; somente estado atual M1 | permissionsByUnit/version + ETag | no | SEC |
 | QRY-004 | Organization | ListUnits | authenticated business actor | Unit scope | status, clinicId | UnitListItem | offset | STD |
 | QRY-005 | Organization | GetInstitutionalCalendar | authorized actor | calendar.read | unitId, date range | InstitutionalCalendarView | no | STD |
 | QRY-006 | People | GetPersonDetails | authorized admin/clinical minimum | person.read/policy | id | PersonDetails | no | PII |
@@ -1047,7 +1280,7 @@ Operações não listadas abaixo são `READY` apenas no sentido contratual. Cont
 
 | Operations | Gate obrigatório | Enquanto pendente |
 |---|---|---|
-| `CMD-001..005`, `CMD-119` Identity lifecycle | provider/credential/session/revocation e step-up concreto para grants | não criar fluxo permissivo ou sessão fictícia |
+| `CMD-001..005`, `CMD-119` e IAM-001-CONTRACTS §24.1 | contratos reconciliados; AUD-001-DESIGN e step-up concreto para grants ainda pendentes | IAM-001-IMP não READY; grant/deny/Unit mutations gated, sem sessão fictícia |
 | `CMD-013` sensitive branch | approval distinto + step-up | somente merge simples que satisfaça a policy aprovada; demais deny |
 | `CMD-026`, `QRY-014` | representação final de Availability | preservar apenas o contrato abstrato |
 | `CMD-042/044/045` quando self-service profissional | limites de encaixe/reagendamento/cancelamento | ator administrativo explicitamente autorizado não amplia o grant do profissional |
@@ -1495,8 +1728,8 @@ No OpenAPI file is generated by API-001.
 
 ## 53. Deferred Decisions
 
-- concrete IAM provider, credential/session/token, MFA/step-up, recovery and revocation;
-- default Unit/multi-unit grants, service identity grants and professional self-service limits;
+- MFA/step-up concreto para ações que o exigem; IdP externo e recovery self-service pós-MVP; credential local, sessão opaca e reset administrativo M1 fechados em §24.1;
+- service identity grants and professional self-service limits; Secretária M1 usa quatro permissions e grants separados por Unit (AUTH-001 §49);
 - RT/clinical authority, required fields/signature, export workflow, minors/consent, retention/legal hold;
 - discount/negotiation, reversal/refund/transfer thresholds and approvers;
 - treatment of already overdue Receivables on cancellation; concurrent precedence/reallocation;

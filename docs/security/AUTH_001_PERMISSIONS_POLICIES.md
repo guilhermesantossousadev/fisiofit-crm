@@ -25,7 +25,7 @@ Definir quem pode solicitar ou executar cada operação de negócio, sobre qual 
 
 ## 4. Fora de Escopo
 
-IAM físico, ASP.NET Identity, JWT, OAuth, OpenID Connect, provider de MFA, tokens, secrets, claims físicas, middleware, handlers, endpoints, banco, tabelas, migrations, código e UI. Também ficam fora valores de alçada ainda não aprovados, lifecycle detalhado de PrivacyRequest, retenção jurídica, algoritmo de conflito e arquitetura física.
+Implementação física de IAM, adoção do framework completo ASP.NET Core Identity, JWT, OAuth, OpenID Connect, provider de MFA, secrets concretos, claims físicas, middleware, handlers, migrations, código e UI. A reconciliação documental M1 (§§47/49) incorpora somente os mecanismos aprovados em IAM-OD-001..007; endpoints e modelo lógico são definidos por API-001/DB-001. Também ficam fora valores de alçada ainda não aprovados, lifecycle detalhado de PrivacyRequest e retenção jurídica.
 
 ## 5. Authorization Principles
 
@@ -75,13 +75,13 @@ Identidades de serviço ficam fora do role model humano: `SERVICE_IDENTITY — D
 | `ASSIGNED_CLASS` | Class/ClassOccurrence atribuída ao profissional, incluindo substituição válida | Pilates, Attendance e contexto clínico |
 | `ASSIGNED_APPOINTMENT` | Appointment atribuído ao profissional | agenda própria e contexto clínico |
 | `UNIT` | uma ou mais Units explicitamente concedidas | recepção, agenda, turmas, despesas UNIT |
-| `MULTI_UNIT` | conjunto explícito de Units; não significa toda a clínica | operação compartilhada; configuração `DEFERRED` |
+| `MULTI_UNIT` | conjunto explícito de Units; não significa toda a clínica | M1: unit_access_grant separado por Unit (§49) |
 | `CLINIC` | toda a clínica para capacidade administrativa específica | Owner/Manager quando grantado |
 | `FINANCIAL_SCOPE` | contas, categorias, operações e/ou Units financeiras explicitamente concedidas | Billing e Finance |
 | `CLINICAL_SCOPE` | pacientes/recursos autorizados pela policy clínica; nunca “todos” por role | prontuário, export e break-glass |
 | `TECHNICAL_SUPPORT_SCOPE` | sistema/ambiente/incidente autorizado, temporário quando sensível | suporte, logs sanitizados, manutenção |
 
-`OWN_CLASS` e `OWN_APPOINTMENT` são nomes de policies, não scopes globais paralelos. `MULTI_UNIT` e a abrangência padrão da Secretária são configuráveis e permanecem `BLOCKING BEFORE IMPLEMENTATION`; Owner/Manager pode receber `CLINIC` explicitamente, não por inferência do nome do papel.
+`OWN_CLASS` e `OWN_APPOINTMENT` são nomes de policies, não scopes globais paralelos. No M1, IAM-OD-005 fecha a abrangência da Secretária: grants independentes em uma ou mais Units explícitas (§49), sem CLINIC. MULTI_UNIT é a composição desses grants; grants globais ficam fora deste slice, inclusive para Owner/Manager.
 
 ## 8. Permission Model
 
@@ -107,13 +107,16 @@ Não existem `*.manage_all`, `reports.view_all`, `clinical.manage` ou `delete` g
 
 ## 9. Permission Catalog
 
+Para o recorte M1, §49 especializa os escopos e grants diretos; as capabilities
+amplas dos demais contextos não são grants default nem ampliam esse recorte.
+
 | Permission | Context | Business Meaning | Sensitivity | Scope |
 |---|---|---|---|---|
-| `identity.account.create` | Identity | criar conta vinculada a Person | SECURITY_SENSITIVE | CLINIC |
-| `identity.account.disable` | Identity | desabilitar conta e iniciar revogação | SECURITY_SENSITIVE | CLINIC |
+| `identity.account.create` | Identity | criar conta PENDING; Person opcional e validada quando informada | SECURITY_SENSITIVE | ACCOUNT no M1 (§49); CLINIC fora do M1 |
+| `identity.account.disable` | Identity | desabilitar conta e iniciar revogação | SECURITY_SENSITIVE | ACCOUNT no M1 (§49); CLINIC fora do M1 |
 | `identity.role.assign`, `identity.role.revoke` | Identity | conceder/revogar papel de outra conta | SECURITY_SENSITIVE | CLINIC |
-| `identity.permission.assign`, `identity.permission.revoke` | Identity | concessão excepcional explícita | SECURITY_SENSITIVE | CLINIC |
-| `identity.session.terminate` | Identity | encerrar sessões de conta autorizada | SECURITY_SENSITIVE | SELF/CLINIC |
+| `identity.permission.assign`, `identity.permission.revoke` | Identity | concessão excepcional explícita | SECURITY_SENSITIVE | ACCOUNT no M1 (§49); CLINIC fora do M1 |
+| `identity.session.terminate` | Identity | encerrar sessões de conta autorizada | SECURITY_SENSITIVE | SELF/ACCOUNT no M1 (§49); CLINIC fora do M1 |
 | `organization.structure.manage` | Organization | criar/alterar/inativar Clinic, Unit e Room | SENSITIVE | CLINIC |
 | `organization.calendar.read`, `organization.calendar.manage` | Organization | consultar ou alterar calendário/feriados | STANDARD/SENSITIVE | UNIT/CLINIC |
 | `people.person.create`, `people.person.read`, `people.person.update` | People | identidade administrativa | SENSITIVE | UNIT/CLINIC |
@@ -349,6 +352,9 @@ Legenda: `ALLOW` = grant base ainda sujeito a scope/estado; `CONDITIONAL` = poli
 | Operational/Financial/ClinicalReport | Reports | CONDITIONAL | operational + conditional financial | clinical conditional | DENY business data | REPORT_SOURCE_SENSITIVITY | source level | inherited |
 
 ### 26.1 Default role grants summary
+
+Matriz ampla de capabilities condicionais futuras. O default efetivo do M1 é
+exclusivamente §49; nenhuma linha abaixo provisiona permissions implicitamente.
 
 | Role | Permission families | Default | Conditions |
 |---|---|---|---|
@@ -695,10 +701,10 @@ Special checks: actor/access rules do not contradict process actors; historical 
 |---|---|---|---|
 | AUTH-GAP-001 | discount/negotiation limits and approval bands | BLOCKING BEFORE IMPLEMENTATION | deny action beyond routine payment/allocation |
 | AUTH-GAP-002 | refund/reversal thresholds and approvers | BLOCKING BEFORE IMPLEMENTATION | permission alone is insufficient |
-| AUTH-GAP-003 | Secretary/roles default Unit versus multi-unit assignments | BLOCKING BEFORE IMPLEMENTATION | explicit Unit list only |
+| AUTH-GAP-003 | Secretary M1 default Unit/multi-unit | CLOSED FOR M1 — IAM-OD-005 / §49 | quatro permissions administrativas + grants independentes por Unit; demais personas não ampliadas |
 | AUTH-GAP-004 | RT qualification and clinical alçadas | BLOCKING BEFORE IMPLEMENTATION; GO-LIVE regulatory | no RT-derived privilege |
 | AUTH-GAP-005 | clinical export requester/executor/disclosure/minors | BLOCKING BEFORE IMPLEMENTATION / GO-LIVE | deny export |
-| AUTH-GAP-006 | concrete step-up/session/revocation mechanism | BLOCKING BEFORE IMPLEMENTATION | sensitive candidate disabled |
+| AUTH-GAP-006 | sessão/revogação M1 fechadas por IAM-OD-003; step-up residual | PARTIALLY CLOSED — step-up BLOCKING BEFORE IMPLEMENTATION das ações que o exigem | login não satisfaz step-up; alterações de grants permanecem gated |
 | AUTH-GAP-007 | privacy processing roles and lifecycle | BLOCKING BEFORE GO-LIVE | create request only; processing denied |
 | AUTH-GAP-008 | service identity grants | BLOCKING BEFORE ARCHITECTURE/IMPLEMENTATION | no global automation account |
 | AUTH-GAP-009 | professional reschedule/cancel/fit-in alçada | BLOCKING BEFORE IMPLEMENTATION | deny beyond explicitly assigned routine result actions |
@@ -727,8 +733,8 @@ No `AUTH_RULE_CONFLICT` was found. DEC-025 allows Secretary and Owner/Manager to
 
 ## 45. Remaining Ambiguities
 
-- exact direct permissions versus role bundle composition;
-- default Unit assignments and multi-unit operation;
+- composição de roles fora do M1; quatro direct permissions da Secretária fechadas em §49;
+- assignments fora do M1; Secretária M1 opera somente Units explícitas em §49;
 - clinical continuity window, substitution reach and RT alçadas;
 - whether non-author clinical authority can finalize another professional's DRAFT (default deny);
 - concrete step-up strength, validity and recovery behavior;
@@ -747,10 +753,10 @@ None.
 
 ### BLOCKING BEFORE IMPLEMENTATION
 
-- define Unit/multi-unit grants and default assignments;
+- definir assignments fora do M1; Unit/multi-unit e default mínimo da Secretária M1 estão fechados em §49;
 - define RT/professional attributes and clinical alçadas;
 - define discount, negotiation, reversal, refund and transfer thresholds/approvals;
-- finalize clinical export workflow and step-up/session/revocation architecture;
+- finalizar clinical export e step-up das ações sensíveis; sessão/revogação M1 estão fechadas por IAM-OD-003 e API-001 §24.1;
 - define professional self-service limits for agenda, Attendance/Makeup exceptions and draft delegation;
 - define service identities and event-consumer permissions by purpose;
 - close remaining domain precedence issues already identified in STATE-001.
@@ -770,7 +776,15 @@ None.
 
 ARC-003 must provide a policy enforcement boundary per owner context, a current authorization decision contract, explicit permission/scope inputs, resource facts without cross-table bypass, separate sensitive audit channels, revocation propagation, and purpose-bound service identities. It must preserve resource policies for Clinical, Financial, Documents and Reports; keep Identity from becoming a business-rule god module; and keep `REQUIRES_APPROVAL/STEP_UP` as explicit workflow outcomes.
 
-No IAM technology is selected. Session lifetime, claim shape, policy handler, storage model, MFA provider and token strategy remain future decisions.
+IAM-OD-001..007 aprovam, para M1: username independente; credential local com
+`PasswordHasher<TUser>` do ASP.NET Core Identity (somente o componente, sem adotar
+o framework completo); sessão opaca server-side em cookie seguro com revalidação
+por request; bootstrap one-shot; permissions e Units explícitas; lifecycle
+PENDING/ACTIVE/LOCKED/DISABLED; e reset administrativo controlado. API-001 §24.1,
+DB-001 §14.1 e STATE-001 concretizam esses contratos. JWT, OIDC e IdP externo
+não são mecanismos selecionados. MFA/step-up das ações que o exigem segue gated;
+limites de duração, rate limit, slowdown e lockout são configurações operacionais
+validadas antes da habilitação, sem números inventados ou unlock automático.
 
 ## 48. Validation Criteria
 
@@ -793,7 +807,91 @@ No IAM technology is selected. Session lifetime, claim shape, policy handler, st
 - [x] state transitions, 37 processes and 75 rules were crossed;
 - [x] no AUTH_RULE_CONFLICT was found;
 - [x] least privilege review passed;
-- [x] no IAM technology or implementation was selected;
+- [x] mecanismos M1 refletem IAM-OD-001..007; nenhuma implementação foi criada;
 - [x] no blocker prevents ARC-003.
 
 **Result:** AUTH-001 — PASS. **ARC-003 — READY.**
+
+
+## 49. IAM-001-CONTRACTS — autorização administrativa M1
+
+Reconciliação de IAM-OD-001..007 (2026-10-01). Prevalece para o recorte
+administrativo adulto SELF sobre a matriz ampla de capabilities futuras.
+Contas, credentials, sessões, grants e denies pertencem a Access/Identity;
+Person permanece People, Unit permanece Organization e patient policy é Patients.
+
+| Persona / contexto | Permissions efetivas mínimas | Escopo e restrições |
+|---|---|---|
+| SECRETARY_RECEPTION | patients.profile.read, patients.profile.create, people.person.read, people.person.create | grant ALLOW de cada permission por Unit + unit_access_grant vigente; sem guardian.manage, Clinical, Finance ou governança IAM |
+| OWNER_MANAGER operacional | mesmas quatro permissions quando explicitamente concedidas | Units explícitas; persona não permite autoelevação nem grants globais |
+| governante IAM | permissions Identity abaixo explicitamente provisionadas/delegadas | alvo e delta dentro da delegação; alterações de acesso de outra conta, sem cadeia de autoelevação; sem direito implícito a dados de negócio |
+| Developer/IT | nenhum grant de negócio pelo papel técnico | sem impersonation, superuser, bypass por ambiente ou header |
+
+As permissions existentes identity.account.create/disable,
+identity.permission.assign/revoke e identity.session.terminate mantêm suas
+finalidades. Para M1, sua governança usa target/delegação ACCOUNT e não exige
+nem concede CLINIC de negócio. identity.role.assign/revoke continuam fora do
+slice. Acrescentam-se os seguintes literais purpose-specific:
+
+| Permission | Operação | Guard obrigatório |
+|---|---|---|
+| identity.account.read | leitura/busca administrativa e effective-access de outra conta | governança delegada; self pode ler sua projeção minimizada sem grant de governança |
+| identity.account.reactivate | DISABLED → PENDING | outra conta, reason, nova ativação |
+| identity.account.identifier.change | alterar username independente | outra conta, reason, confirmação, unicidade; não editar People |
+| identity.credential.reset | ACTIVE/LOCKED/PENDING → PENDING | outra conta, reason; revogação total e nova ativação |
+| identity.unit.assign | conceder Unit grant | outra conta; Unit ativa confirmada por Organization; dentro da delegação |
+| identity.unit.revoke | revogar Unit grant | outra conta, grant pertencente ao alvo, reason |
+
+Criar DENY exige identity.permission.assign; remover DENY exige
+identity.permission.revoke e os mesmos limites de delegação/step-up de ALLOW:
+remover restrição pode elevar privilégio. Identificar-se como OWNER_MANAGER não
+satisfaz nenhuma dessas permissions. Bootstrap é a exceção operacional única à
+necessidade de governante anterior: marcador atômico + segredo de deployment,
+sem endpoint; provisiona grants Identity enumerados, nunca wildcard. Não há
+exceção reutilizável à policy de autoelevação.
+
+Ordem de avaliação para operações de negócio por Unit: sessão válida + conta ACTIVE + accessVersion atual →
+explicit DENY vigente aplicável → ALLOW vigente da permission → grant de Unit
+vigente e Unit utilizável → policy do owner. Sem qualquer requisito, negar.
+ACCOUNT deny aplica a permission em todas as Units, UNIT deny somente à Unit
+indicada. Hints/roles não vencem deny. Vigência é [início, fim), revogação tem
+efeito imediato. Alterações de permission/deny/Unit incrementam accessVersion;
+a sessão anterior é recusada na próxima request. Logout revoga só a corrente;
+disable/reset/lock/terminate-all invalidam todas. PENDING/LOCKED/DISABLED não
+autenticam nem autorizam; reativação/unlock exigem PENDING e nova ativação.
+Para governança Identity, substitui-se o requisito de Unit de negócio pela
+validação de target/delegação ACCOUNT ou SELF; os demais guards continuam.
+SELF limita-se à própria conta. ACCOUNT exige alvo coberto pela delegação atual;
+não equivale a CLINIC. scopeType/unitId devem ser consistentes: UNIT requer Unit;
+ACCOUNT/SELF não a carregam. ALLOW de negócio M1 só admite UNIT; DENY ACCOUNT
+nega aquela permission em qualquer Unit; SELF é aplicável à gestão de sessões
+próprias, sem autorizar governança de outra conta. Negação Identity aplicável
+também precede concessão SELF/ACCOUNT; não existe wildcard novo.
+
+Login/ativação são anônimos delimitados por API-001 §24.1, sem autoridade de
+negócio. Logout normal/current-session exigem a sessão corrente válida, sem
+identity.session.terminate nem identity.account.read. SELF em GetUserAccount e
+GetEffectiveAccess também dispensa identity.account.read, retornando somente
+as projeções minimizadas de API-001 §24.1; leitura de outra conta exige essa
+permission mais target/delegação. Essas leituras nunca autorizam mudar grants.
+SELF em RevokeSession/TerminateUserSessions exige identity.session.terminate
+vigente no escopo SELF ou ACCOUNT que cubra a própria conta, e ausência de deny.
+Para outra conta exige governante com a mesma permission e delegação sobre o alvo.
+O ID da sessão deve pertencer à conta alvo; key/ETag são obrigatórios nesses dois
+comandos, inclusive SELF. Logout normal não exige key/ETag. A matriz de quatro
+permissions de negócio não inclui governança IAM por conveniência.
+
+**AUTH-GAP-003:** fechado para M1. **AUTH-GAP-006:** sessão/revogação fechadas;
+MFA/step-up permanece pendente para ações sensíveis. A aprovação de credential
+local não autoriza trocar step-up por login comum. Assign/revoke de permission,
+deny ou Unit, e criação contendo esses grants, permanecem gated até mecanismo
+aprovado/testado. O bootstrap one-shot aprovado não libera grants HTTP. Não há
+necessidade de reabrir as sete decisões nem presumir MFA obrigatório em toda
+rotina administrativa; o bloqueio se aplica à ação que o requer.
+
+Testes de implementação exigidos: quatro permissions por Unit; ausência de
+permission ou Unit; deny global da permission versus allow Unit; vigência;
+revogação na próxima request; sessão expirada/stale; no-self-escalation direto e
+circular; impossibilidade de bootstrap repetido; conta não ACTIVE; headers de
+teste rejeitados no Host normal; step-up pendente nunca permissivo. Audit durável
+e canal de entrega assistido continuam dependências antes do uso real.

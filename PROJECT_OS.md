@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: iam_001_decisions_pass_contract_reconciliation_needed_assisted_use_blocked
+  status: iam_001_contracts_pass_implementation_blocked_assisted_use_blocked
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: IAM-001-DECISIONS — Identity & Access — DONE / PASS; próxima ação: IAM-001-CONTRACTS
+  current_priority: IAM-001-CONTRACTS — DONE / PASS; próxima ação: AUD-001-DESIGN
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,15 +39,16 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** IAM-001-DECISIONS concluído como decisão documental; nenhum slice IAM funcional iniciado.
+**FASE ATUAL:** IAM-001-CONTRACTS concluído como reconciliação documental; nenhum slice IAM funcional iniciado.
 **MARCO CONCLUÍDO:** IMP-003A — GUARDIAN LINKS FOR EXISTING PERSONS — `DONE / PASS`
 **PRÓXIMO MARCO:** M1 — Administrative Access; não iniciar implementação sem design IAM/Audit aprovado.
-**ÚLTIMA TAREFA CONCLUÍDA:** IAM-001-DECISIONS — fechamento das decisões de Identity & Access — `DONE / PASS` (2026-10-01, documental).
-**PRÓXIMA TAREFA:** `IAM-001-CONTRACTS` — reconciliar API-001, DB-001, AUTH-001 e STATE-001 com as decisões aprovadas; não iniciar IAM-001-IMP nem AUD-001.
+**ÚLTIMA TAREFA CONCLUÍDA:** IAM-001-CONTRACTS — continuação corretiva e fechamento — `DONE / PASS` (2026-10-01, documental).
+**PRÓXIMA TAREFA:** `AUD-001-DESIGN` — contrato de evidência durável mínima, atomicidade e falhas; não iniciar implementação IAM/Audit.
 
 **IAM-001-DESIGN STATUS:** `PASS / DONE` — ownership, boundaries, modelo mínimo, threats, testes e gates estão documentados em `docs/implementation/IAM_001_MINIMUM_ADMIN_ACCESS_DESIGN.md`.
-**IMPLEMENTATION READINESS:** `NEEDS_CONTRACT_RECONCILIATION` — IAM-OD-001..007 foram aprovadas em `docs/decisions/IAM_001_DECISIONS.md`; API-001, DB-001, AUTH-001 e STATE-001 ainda precisam ser reconciliados. AUD-001-DESIGN continua gate para uso assistido.
-**ASSISTED-USE READINESS:** `BLOCKED` — exige IAM-001-IMP, AUD-001-IMP, WEB-001 e gates operacionais do roadmap; este PASS não libera piloto nem produção.
+**IMPLEMENTATION READINESS:** `BLOCKED` — API-001/DB-001/AUTH-001/STATE-001 reconciliados. IAM-001A depende do contrato de evidência de AUD-001-DESIGN; IAM-001B depende de A e step-up/delegação concretos. AUD-001-IMP é gate de uso assistido, não de escrita de código local. Slices e critérios em IAM-001-DESIGN §29.
+**ASSISTED-USE READINESS:** `BLOCKED` — exige IAM-001A/B, AUD-001-IMP, WEB-001 e gates operacionais do roadmap; este PASS não libera piloto.
+**PRODUCTION READINESS:** `BLOCKED` — sem implementação IAM/Audit e validação operacional; nenhum PASS documental declara produção pronta.
 
 | Domínio | Status |
 |---|---|
@@ -446,7 +447,7 @@ Nenhum blocker conhecido. DOM-011 a DOM-018 estão aprovados para Context Map, O
 ### BLOCKERS BEFORE IMPLEMENTATION
 
 - definir valores/aprovadores das alçadas ainda abertas de desconto, negociação, reversal, refund e transferência;
-- fechar mecanismo concreto de autenticação, MFA/step-up, sessão, revogação e recuperação antes de implementar Identity/autorização;
+- IAM M1: contratos de autenticação/sessão/revogação/reset fechados; AUD-001-DESIGN precede IAM-001A, step-up/delegação das mutations de grants precede IAM-001B;
 - definir o tratamento de Receivables vencidos no cancelamento: não presumir perdão automático;
 - definir alçadas e limites de desconto/negociação; perdão arbitrário não é permitido;
 - definir o efeito da pausa sobre disponibilidade e expiração de MakeupCredits, sem prolongar o Contract;
@@ -654,7 +655,7 @@ ARC-003 aprovado. ADR-001 a ADR-007 estão aceitas; DB-001 fechou as estruturas 
 - [x] Role model conceitual;
 - [x] Permission model conceitual;
 - [x] resource-level policies conceituais;
-- [x] escopo por unidade definido conceitualmente; atribuição default permanece aberta;
+- [x] escopo por unidade e default mínimo da Secretária M1 fechados por IAM-OD-005/AUTH-001 §49;
 - [x] escopo por profissional;
 - [x] escopo por paciente;
 - [x] acesso Clinical conceitual;
@@ -935,7 +936,9 @@ Administration; M3 Staff Foundation; M4 Scheduling Core; M5 Pilates Operational
 Flow; M6 Assisted Clinic Pilot. Isto é proposta de ordenação, não promoção de
 implementações futuras a `READY`.
 
-Blockers preservados: IAM físico e Audit durável para uso assistido; definição de
+> Histórico da proposta ROADMAP-MVP-001 em 2026-09-30; estado IAM atual nas seções seguintes.
+
+Blockers preservados naquele marco: IAM físico e Audit durável para uso assistido; definição de
 bootstrap/recovery e scope padrão de Secretária; Staff/Scheduling não implementados;
 decisão de Enrollment antes de membership Pilates; menores, payer diferente,
 responsável administrativo, contato de emergência, retroatividade/correção
@@ -959,7 +962,7 @@ recovery administrativo. Audit continua boundary futuro, não tabela substituta 
 Access.
 
 **DESIGN STATUS:** `PASS / DONE`. **IMPLEMENTATION READINESS:**
-`NEEDS_CONTRACT_RECONCILIATION` por API-001/DB-001/AUTH-001/STATE-001. **ASSISTED-USE READINESS:** `BLOCKED` por
+`BLOCKED` pelos gates residuais de §29 do design; contratos reconciliados. **ASSISTED-USE READINESS:** `BLOCKED` por
 IAM-001-IMP, AUD-001-IMP, WEB-001 e gates operacionais; não declarar produção.
 
 ## IAM-001-DECISIONS — Fechamento de Identity & Access
@@ -970,9 +973,40 @@ IAM-001-IMP, AUD-001-IMP, WEB-001 e gates operacionais; não declarar produção
 
 Documento canônico: `docs/decisions/IAM_001_DECISIONS.md`. Todos os
 IAM-OD-001..007 estão `APPROVED`; não há decisão IAM aberta que altere a semântica
-do M1. A próxima tarefa única é `IAM-001-CONTRACTS`, para reconciliar API-001,
-DB-001, AUTH-001 e STATE-001. Nenhuma migration, rota, código ou AUD-001 foi
-iniciado por este fechamento.
+do M1. A reconciliação subsequente IAM-001-CONTRACTS foi concluída abaixo.
+Nenhuma migration, rota implementada, código ou AUD-001 foi iniciado pelo
+fechamento das decisões; elas permanecem APPROVED.
+
+---
+
+## IAM-001-CONTRACTS — Continuação corretiva e fechamento
+
+| ID | Tarefa | Prioridade | Status |
+|---|---|---:|---|
+| IAM-001-CONTRACTS | Reconciliar contratos IAM-OD-001..007 em API/DB/AUTH/STATE | P0 | DONE — PASS (documental, 2026-10-01) |
+| IAM-001-IMP | Implementação IAM M1, composta pelos slices abaixo | P0 | BLOCKED |
+| IAM-001A | Account, Credential & Session Foundation | P0 | BLOCKED — AUD-001-DESIGN |
+| IAM-001B | Administrative Grants & Unit Access | P0 | BLOCKED — A e step-up/delegação |
+
+API-001 §24.1 separa logout/current-session de gestão de sessões: revoke/terminate
+exigem identity.session.terminate inclusive SELF. AUTH-001 §§47/49 refletem as
+sete decisões e seus escopos, DB-001 §14.1 mantém persistência owner-local sem FK
+externa, e STATE-001 formaliza conta e condições derivadas de sessão. Nomes de
+fatos IAM são evidência para Audit, não eventos ADOPTED ou Outbox em Access.
+
+Revisão documental validou contratos, lifecycle, cookie/CSRF, erros, idempotência,
+concorrência, ownership, boundaries e gates. `git diff --check`: PASS. Nenhum
+build/test executado; nenhum código, migration, commit, push ou merge.
+Os quatro diffs parciais da execução interrompida foram preservados e corrigidos.
+IAM-001-DESIGN §29 define escopo e critérios de cada slice, sem fragmentar
+bootstrap/ativação/recuperação da fundação de autenticação. Parâmetros de abuso,
+expiração e receipts são configuração operacional, não decisões estruturais novas.
+
+Próxima tarefa única: **AUD-001-DESIGN**. Uso assistido depende ainda de IAM A+B,
+Audit implementado, WEB-001, canal assistido/perfil de bootstrap e procedimento de
+recovery aprovados, HTTPS/configuração, backup/restore e validação do piloto.
+Produção permanece BLOCKED. AUTH-GAP-006 continua parcialmente aberto para step-up;
+nenhuma das decisões IAM-OD-001..007 foi reaberta.
 
 ---
 
@@ -1584,19 +1618,62 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. próxima tarefa: revisão do roadmap para MVP operacional, sem iniciar outro slice;
-2. reorganizar as entregas para autenticação real, interface administrativa, pacientes, profissionais, agenda, turmas e operação assistida da clínica;
-3. preservar/documentar as dependências de GuardianLink, cadastro de menores e pagador diferente, além dos gates de IAM de produção, Audit durável, ativação externa, retenção definitiva dos receipts e retroatividade/correção histórica; nenhum desses fluxos está READY.
+1. executar exclusivamente `AUD-001-DESIGN`, com fatos IAM de API-001 §24.1;
+2. definir evidência durável, atomicidade e tratamento de falhas sem AuditRecord em Access;
+3. reavaliar readiness de IAM-001A após esse design; não iniciar implementação automaticamente.
 
 ## Em seguida
 
-4. desenhar IMP-003B, resolução/criação purpose-specific de Person para relacionamentos, sem busca global improvisada;
-5. fechar IAM/Audit e decisões legais necessárias antes de desenhar/ativar cadastro de menores;
-6. desenhar payer, administrative responsible e emergency contact em slices próprias, respeitando seus blockers canônicos.
+IAM-001B exige A validado e step-up/delegação aprovados. Uso assistido continua
+bloqueado por implementação IAM/Audit, WEB-001 e gates operacionais. Menores,
+non-self payer, outros relacionamentos e Clinical/Finance permanecem fora deste
+recorte e dependem de seus designs/decisões próprios.
 
 ---
 
 # 24. ÚLTIMO HANDOFF
+
+## HANDOFF — 2026-10-01 — IAM-001-CONTRACTS
+
+### Resultado validado
+
+DONE / PASS exclusivamente documental. Branch `docs/iam-001-contracts`;
+trabalho parcial conhecido preservado. API-001, DB-001, AUTH-001 e STATE-001
+reconciliados com IAM-OD-001..007, sem reabrir decisões. Corrigidas a ambiguidade
+SELF em session management e as afirmações antigas de tecnologia IAM não escolhida.
+
+### Evidências e limites
+
+- revisão dos contratos M1 de login/ativação/sessão/conta/grants/deny/Units/bootstrap/reset;
+- logout normal distinto de revoke/terminate; permissions, ETag, retry e projeções SELF explícitos;
+- FKs apenas Identity; Person/Unit opacos; Audit fora de Access; test auth somente em API tests;
+- `git diff --check`: PASS; diff restrito a sete documentos autorizados;
+- nenhum build/test, código, migration, commit, push ou merge nesta tarefa.
+
+### Arquivos alterados
+
+API-001, DB-001, AUTH-001, STATE-001, PROJECT_OS e ajustes de referências/readiness
+em IAM-001-DESIGN/IAM-001-DECISIONS. DOMAIN_EVENTS foi consultado e preservado;
+fatos de evidência não foram promovidos a integration events.
+
+### Readiness e próximos passos
+
+IAM-001-IMP: BLOCKED. Primeiro slice IAM-001A reúne conta, credential, sessão,
+bootstrap, lifecycle e reset; depende do contrato de evidência AUD-001-DESIGN.
+Segundo slice IAM-001B entrega grants/deny/Units e integração Patients após A e
+step-up/delegação aprovados. AUD-001-IMP bloqueia uso assistido, não escrita local.
+Uso assistido e produção: BLOCKED. Não criar fallback de Audit, seed/backdoor,
+login por headers de teste ou unlock que contorne ativação.
+
+Próxima tarefa única: **AUD-001-DESIGN**. Os valores de rate/slowdown/lockout e
+expiração são operacionais; não inventar thresholds como regra de domínio.
+Canal assistido, perfil de bootstrap e recuperação da única governante precisam
+de procedimento aprovado antes da habilitação, sem reabrir bootstrap consumido.
+
+### Histórico anterior
+
+Os handoffs abaixo preservam o estado de suas respectivas datas; este handoff e
+§0.1 prevalecem para readiness e próxima ação atuais.
 
 ## HANDOFF — 2026-10-01 — IAM-001-DECISIONS
 
