@@ -1040,3 +1040,10 @@ Implementation remains gated by API-001 and the explicit security/business detai
 - [x] API-001 readiness is READY; implementation readiness is conditional on deferred details.
 
 **Result: DB-001 — PASS. Next task: API-001 — Application / API Contracts.**
+
+
+## 52. AUD-001 durable audit supplement (2026-10-01)
+
+AUD-001-DESIGN approves one owner-local table, audit.audit_record, for Privacy & Audit. It holds audit_record_id, evidence_id (unique), occurred_at UTC, recorded_at UTC, actor_kind, actor_user_account_id nullable, action, resource_type/resource_id, unit_id nullable, result, source_context, correlation_id, trace_id nullable, reason_code nullable, allowlisted versioned metadata and schema_version. All external IDs are opaque; there is no cross-schema FK, navigation or cascade.
+
+Indexes are unique evidence_id; actor_user_account_id+occurred_at; action+occurred_at; resource_type/resource_id+occurred_at; partial unit_id+occurred_at; correlation_id; occurred_at. The table is logically append-only: no operational UPDATE/DELETE; correction is a compensating evidence with a reference in validated metadata. Retention duration/legal hold remain deferred and block go-live, not AUD-001A. This does not create SQL, migration or EF mapping.

@@ -723,3 +723,8 @@ ARC-003 e etapas físicas recebem um catálogo sem dependência de tecnologia. D
 - [x] não existe blocker para AUTH-001.
 
 **Resultado:** EVT-001 — PASS. **AUTH-001 — READY.**
+
+
+## 47. AUD-001 evidence relation supplement (2026-10-01)
+
+AUD-001-DESIGN preserves the catalog decision: durable AuditRecord is not a domain event and AuditLogCreated is not an integration event. A canonical producer fact may later feed minimal evidence only through a purpose-specific contract/approved delivery pattern; no event is promoted merely to make an audit trail. IAM evidence M1 is synchronous application evidence, not public Identity integration events. Clinical/Finance existing adopted events keep their approved eventual Audit relation and payload minimization.

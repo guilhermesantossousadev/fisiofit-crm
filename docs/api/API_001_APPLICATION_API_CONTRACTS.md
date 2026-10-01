@@ -1888,3 +1888,10 @@ Resultado: **29 SUPPORTED, 7 PARTIAL, 1 DEFERRED, 0 GAP**. `PARTIAL/DEFERRED` po
 - [x] async reactions do not imply distributed rollback or command authority.
 
 **Result: API-001 — PASS. BOOT-001 — READY_WITH_DEFERRED_DETAILS.**
+
+
+## 57. AUD-001 application contract supplement (2026-10-01)
+
+Privacy & Audit will expose a purpose-specific public application contract in ModuleContracts/PrivacyAudit for recording administrative evidence. It accepts a closed evidence shape (actor, action catalog code, opaque target/Unit IDs, result, UTC time, correlation/optional trace, reason code, versioned allowlisted metadata and evidenceId) and confirms recorded/alreadyRecorded plus AuditRecord ID. It exposes neither AuditDbContext, EF entity nor arbitrary object/JSON.
+
+Identity uses this contract synchronously for IAM actions classified AUDIT REQUIRED, after local result is known and before a success response. Audit failure is fail-closed for that external conclusion; unknown outcome is sanitized and reconciled by operation/evidence ID, never retried as a blind IAM mutation. This is not an HTTP endpoint, domain event or distributed transaction. Query API is deferred to AUD-001C.
