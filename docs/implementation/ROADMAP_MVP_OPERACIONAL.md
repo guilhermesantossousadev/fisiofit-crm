@@ -221,9 +221,10 @@ relaxar esse contrato para acelerar o piloto.
 | ID sugerido | Tipo / status | Objetivo, escopo e dependências | Aceite, testes e demonstração |
 |---|---|---|---|
 | IAM-001-DESIGN | DESIGN / NEEDS_DESIGN | IAM mínimo do M1: conta, vínculo Person, credencial/sessão aprovada, grants/Unit/deny/revogação, bootstrap, enumeração e recovery mínimo. Fontes: AUTH-001, API-001, DB-001, ARC-003. Fora: provider externo/MFA completo. | contrato e modelo aprovados, ameaças e testes definidos; demonstração é specification revisável |
-| AUD-001-DESIGN | DESIGN / NEEDS_DESIGN | Audit durável mínimo e atomicidade com ações M1/M2. Fontes: AUTH-001, DB-001, ARC-003, STATE-001. Fora: retenção jurídica definitiva. Depende de decidir fronteira IAM. | schema/eventos, campos proibidos, falha e testes de integridade aprovados |
-| IAM-001-IMP | IMPLEMENTATION / BLOCKED | materializar somente IAM aprovado, login/logout, sessão/revogação e bootstrap seguro. Depende de IAM-001-DESIGN e AUD-001-DESIGN. | testes unit/integration/API de enumeração, deny, Unit, desativação e revogação; login real demonstrável |
-| AUD-001-IMP | IMPLEMENTATION / BLOCKED | persistir AuditRecord mínimo e integrá-lo às ações selecionadas. Depende de AUD-001-DESIGN. | testes de persistência/atomicidade, sanitização PII e correlação; evidência consultável restrita |
+| AUD-001-DESIGN | DESIGN / DONE / PASS | Audit durável mínimo, ownership Privacy & Audit, evidência IAM, atomicidade/falha e testes aprovados em AUD-001-DESIGN. Retenção jurídica definitiva permanece fora. | foundation AUD-001A READY |
+| AUD-001A | IMPLEMENTATION / READY | Durable Administrative Audit Foundation: AuditRecord owner-local, contrato fechado, persistência/idempotência/redaction e IAM evidence requerida. | testes PostgreSQL/arquitetura/segurança e fail-closed IAM |
+| IAM-001-IMP | IMPLEMENTATION / BLOCKED | materializar IAM aprovado; o primeiro slice IAM-001A só inicia após AUD-001A validado. | testes unit/integration/API de enumeração, deny, Unit, desativação e revogação; login real demonstrável |
+| AUD-001B | IMPLEMENTATION / BLOCKED | integrar evidência Patients (criação e GuardianLink) após foundation, sem transação distribuída. | delivery/reconciliação e testes de minimização |
 | WEB-001-ADMIN | IMPLEMENTATION / BLOCKED | Login, shell, logout, guard, Unit visível e estados de erro. Depende de IAM-001-IMP. Fora: produto completo. | testes de UI/E2E críticos; usuário entra e só vê o escopo autorizado |
 | WEB-002-PATIENTS | IMPLEMENTATION / BLOCKED | lista, detalhe e cadastro adulto/self-payer sobre APIs existentes. Depende de WEB-001, IAM/Audit. | E2E busca→detalhe→cadastro e erros/duplicidade; secretária demonstra fluxo permitido |
 | STF-006-DESIGN | DESIGN / READY | corte Staff para profissional, EmploymentLink/Unit/vigência, Availability e inativação. Fontes: MODEL-001, AUTH-001, API-001, STATE-001. Fora: conta automática. | contratos, invariantes, audit e testes aprovados |
@@ -240,9 +241,8 @@ relaxar esse contrato para acelerar o piloto.
 modelos/estados/policies suficientes, mas só deve iniciar após M1/M2 conforme a
 priorização. A recomendação imediata abaixo é DESIGN, não READY de implementação.
 
-**NEEDS_DESIGN:** IAM-001-DESIGN, AUD-001-DESIGN e AGD-008-DESIGN. AUTH-001
-explicitamente exclui IAM físico; não há decisão de tecnologia, lifecycle ou
-schema para implementá-los.
+**NEEDS_DESIGN:** AGD-008-DESIGN. IAM-001-DESIGN e AUD-001-DESIGN estão PASS;
+AUD-001A está READY e IAM-001A continua posterior à sua validação.
 
 **BLOCKED:** todas as implementações M1+ dependem de seus designs; UI depende de
 IAM real; turma depende de Staff/Scheduling e da decisão de Enrollment. Menores,

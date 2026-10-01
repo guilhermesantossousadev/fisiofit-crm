@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: iam_001_contracts_pass_implementation_blocked_assisted_use_blocked
+  status: aud_001_design_pass_aud_001a_ready_iam_001a_after_aud_001a_assisted_use_blocked
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: IAM-001-CONTRACTS — DONE / PASS; próxima ação: AUD-001-DESIGN
+  current_priority: AUD-001-DESIGN — DONE / PASS; próxima ação: AUD-001A
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,15 +39,16 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** IAM-001-CONTRACTS concluído como reconciliação documental; nenhum slice IAM funcional iniciado.
+**FASE ATUAL:** AUD-001-DESIGN concluído como design documental; nenhum slice funcional iniciado.
 **MARCO CONCLUÍDO:** IMP-003A — GUARDIAN LINKS FOR EXISTING PERSONS — `DONE / PASS`
 **PRÓXIMO MARCO:** M1 — Administrative Access; não iniciar implementação sem design IAM/Audit aprovado.
-**ÚLTIMA TAREFA CONCLUÍDA:** IAM-001-CONTRACTS — continuação corretiva e fechamento — `DONE / PASS` (2026-10-01, documental).
-**PRÓXIMA TAREFA:** `AUD-001-DESIGN` — contrato de evidência durável mínima, atomicidade e falhas; não iniciar implementação IAM/Audit.
+**ÚLTIMA TAREFA CONCLUÍDA:** AUD-001-DESIGN — Audit durável mínimo — `DONE / PASS` (2026-10-01, documental).
+**PRÓXIMA TAREFA:** `AUD-001A` — Durable Administrative Audit Foundation; somente foundation + IAM evidence aprovada.
 
 **IAM-001-DESIGN STATUS:** `PASS / DONE` — ownership, boundaries, modelo mínimo, threats, testes e gates estão documentados em `docs/implementation/IAM_001_MINIMUM_ADMIN_ACCESS_DESIGN.md`.
-**IMPLEMENTATION READINESS:** `BLOCKED` — API-001/DB-001/AUTH-001/STATE-001 reconciliados. IAM-001A depende do contrato de evidência de AUD-001-DESIGN; IAM-001B depende de A e step-up/delegação concretos. AUD-001-IMP é gate de uso assistido, não de escrita de código local. Slices e critérios em IAM-001-DESIGN §29.
-**ASSISTED-USE READINESS:** `BLOCKED` — exige IAM-001A/B, AUD-001-IMP, WEB-001 e gates operacionais do roadmap; este PASS não libera piloto.
+**AUD-001-DESIGN STATUS:** `PASS / DONE` — ownership, evidence model, fail-closed IAM, PII, idempotência e slice em `docs/implementation/AUD_001_DURABLE_AUDIT_DESIGN.md`.
+**IMPLEMENTATION READINESS:** `AUD-001A READY`; IAM-001A é `READY AFTER AUD-001A`. IAM-001B continua dependente de A e step-up/delegação concretos.
+**ASSISTED-USE READINESS:** `BLOCKED` — exige AUD-001A, IAM-001A/B aplicáveis, AUD-001B para evidência de criação Patients, WEB-001 e gates operacionais; este PASS não libera piloto.
 **PRODUCTION READINESS:** `BLOCKED` — sem implementação IAM/Audit e validação operacional; nenhum PASS documental declara produção pronta.
 
 | Domínio | Status |
@@ -1618,9 +1619,9 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 
 ## Agora
 
-1. executar exclusivamente `AUD-001-DESIGN`, com fatos IAM de API-001 §24.1;
-2. definir evidência durável, atomicidade e tratamento de falhas sem AuditRecord em Access;
-3. reavaliar readiness de IAM-001A após esse design; não iniciar implementação automaticamente.
+1. executar `AUD-001A`, limitado à foundation Audit e evidências IAM aprovadas;
+2. validar persistência append-only, redaction, idempotência, indisponibilidade/unknown outcome e boundaries;
+3. só então iniciar IAM-001A; não iniciar AUD-001B, Patients, UI ou step-up automaticamente.
 
 ## Em seguida
 
@@ -1632,6 +1633,36 @@ recorte e dependem de seus designs/decisões próprios.
 ---
 
 # 24. ÚLTIMO HANDOFF
+
+## HANDOFF — 2026-10-01 — AUD-001-DESIGN
+
+### Resultado validado
+
+DONE / PASS exclusivamente documental. O design em
+`docs/implementation/AUD_001_DURABLE_AUDIT_DESIGN.md` define AuditRecord owner
+Privacy & Audit, catálogo IAM mínimo, PII/redaction, retenção pendente,
+append-only, idempotência e consulta futura sem implementar código ou migration.
+
+### Decisão e gates
+
+- Audit é evidência persistida, não ILogger; nenhum módulo de negócio possui ou
+  escreve AuditRecord diretamente, e não há FK/DbContext/transação distribuída.
+- IAM com ação AUDIT REQUIRED usa chamada síncrona purpose-specific e FAIL CLOSED
+  para a conclusão externa; commit incerto é sanitizado e reconciliável, sem
+  retry cego da mutação. Login falho é security telemetry only no M1.
+- AUD-001A está READY para foundation + IAM evidence. IAM-001A está READY AFTER
+  AUD-001A. Uso assistido continua BLOCKED por AUD/IAM implementados, AUD-001B
+  para criação Patients, WEB-001 e gates operacionais; produção também depende de
+  retenção/legal hold, acesso sensível e operação de backup/restore.
+
+### Próxima tarefa
+
+`AUD-001A — Durable Administrative Audit Foundation`: schema/DbContext e
+migration owner-local, contrato público fechado, catálogo/redaction, persistência
+append-only/idempotente, índices e integração IAM necessária, com testes. Não
+incluir Patients, query/dashboard, outbox, step-up/delegação ou UI.
+
+### Histórico anterior
 
 ## HANDOFF — 2026-10-01 — IAM-001-CONTRACTS
 

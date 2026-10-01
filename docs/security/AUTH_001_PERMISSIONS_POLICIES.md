@@ -895,3 +895,10 @@ revogação na próxima request; sessão expirada/stale; no-self-escalation dire
 circular; impossibilidade de bootstrap repetido; conta não ACTIVE; headers de
 teste rejeitados no Host normal; step-up pendente nunca permissivo. Audit durável
 e canal de entrega assistido continuam dependências antes do uso real.
+
+
+## 50. AUD-001 evidence and query supplement (2026-10-01)
+
+Identity actions classified AUDIT REQUIRED by AUD-001-DESIGN require durable evidence; technical ILogger/trace is insufficient. Required M1 facts are bootstrap consumption, account create/lifecycle, successful login, session revoke/terminate, credential reset, permission/deny and Unit-access grant changes. Login failure is security telemetry only in M1 to avoid identifier enumeration. Secret, credential, token, authorization header and unnecessary PII are forbidden from evidence.
+
+No role grants Audit read implicitly. privacy.audit.view is required for future ordinary evidence query; privacy.audit.view_sensitive additionally requires assigned scope and purpose, and the sensitive query itself is auditable. Secretary, Developer/IT and Owner/Manager remain denied unless this explicit grant and policy are satisfied. Audit has no edit/delete business permission.
