@@ -64,6 +64,19 @@ public sealed class AssemblyDependencyTests
         }
     }
 
+    [Fact]
+    public void AuditPersistence_RemainsOwnerLocal_AndContractsExposeNoEntityFramework()
+    {
+        var root = RepositoryRoot();
+        var auditProject = Path.Combine(root, "src", "backend", "Modules", "Fisiofit.Modules.Audit", "Fisiofit.Modules.Audit.csproj");
+        Assert.DoesNotContain(ProjectReferences(auditProject), reference => reference.Contains("Fisiofit.Modules.Access", StringComparison.Ordinal) || reference.Contains("Fisiofit.Modules.Registry", StringComparison.Ordinal));
+        var contracts = File.ReadAllText(Path.Combine(root, "src", "backend", "Fisiofit.ModuleContracts", "Audit", "AdministrativeEvidenceContracts.cs"));
+        Assert.DoesNotContain("DbContext", contracts, StringComparison.Ordinal);
+        Assert.DoesNotContain("IQueryable", contracts, StringComparison.Ordinal);
+        Assert.DoesNotContain("Dictionary", contracts, StringComparison.Ordinal);
+        Assert.DoesNotContain("object", contracts, StringComparison.Ordinal);
+    }
+
     private static string[] ModuleProjectPaths() => Directory
         .EnumerateFiles(Path.Combine(RepositoryRoot(), "src", "backend", "Modules"), "*.csproj", SearchOption.AllDirectories)
         .ToArray();

@@ -48,7 +48,7 @@ builder.Services
     .AddRevenueModule()
     .AddCommunicationModule()
     .AddDocumentsModule()
-    .AddAuditModule()
+    .AddAuditModule(builder.Configuration)
     .AddReportsModule();
 
 var app = builder.Build();
