@@ -14,14 +14,14 @@
 ```yaml
 project:
   name: Fisiofit CRM 2.0
-  status: iam_001_design_pass_implementation_and_assisted_use_blocked
+  status: iam_001_decisions_pass_contract_reconciliation_needed_assisted_use_blocked
   architecture_direction: modular_monolith
   frontend: React + TypeScript
   backend: ASP.NET Core + C#
   database: PostgreSQL
   infra: Docker + CI/CD
   automation: n8n somente como orquestrador de borda
-  current_priority: IAM-001-DESIGN — Identity & Access mínimo para uso administrativo assistido — DONE / PASS; próxima ação: decidir IAM-OD-001..005 e desenhar AUD-001-DESIGN
+  current_priority: IAM-001-DECISIONS — Identity & Access — DONE / PASS; próxima ação: IAM-001-CONTRACTS
 
 control:
   single_operational_source_of_truth: PROJECT_OS.md
@@ -39,14 +39,14 @@ control:
 
 ## 0.1 MARCO ATUAL
 
-**FASE ATUAL:** IAM-001-DESIGN concluído como análise documental; nenhum slice IAM funcional iniciado.
+**FASE ATUAL:** IAM-001-DECISIONS concluído como decisão documental; nenhum slice IAM funcional iniciado.
 **MARCO CONCLUÍDO:** IMP-003A — GUARDIAN LINKS FOR EXISTING PERSONS — `DONE / PASS`
 **PRÓXIMO MARCO:** M1 — Administrative Access; não iniciar implementação sem design IAM/Audit aprovado.
-**ÚLTIMA TAREFA CONCLUÍDA:** IAM-001-DESIGN — Identity & Access mínimo para uso administrativo assistido — `DONE / PASS` (2026-09-30, documental).
-**PRÓXIMA TAREFA:** decidir IAM-OD-001..005 e executar AUD-001-DESIGN; não iniciar IAM-001-IMP enquanto credential, sessão/revogação, bootstrap e escopo da Secretária estiverem abertos.
+**ÚLTIMA TAREFA CONCLUÍDA:** IAM-001-DECISIONS — fechamento das decisões de Identity & Access — `DONE / PASS` (2026-10-01, documental).
+**PRÓXIMA TAREFA:** `IAM-001-CONTRACTS` — reconciliar API-001, DB-001, AUTH-001 e STATE-001 com as decisões aprovadas; não iniciar IAM-001-IMP nem AUD-001.
 
 **IAM-001-DESIGN STATUS:** `PASS / DONE` — ownership, boundaries, modelo mínimo, threats, testes e gates estão documentados em `docs/implementation/IAM_001_MINIMUM_ADMIN_ACCESS_DESIGN.md`.
-**IMPLEMENTATION READINESS:** `BLOCKED` — IAM-OD-001 (login identifier), IAM-OD-002 (credential), IAM-OD-003 (session/revocation), IAM-OD-004 (bootstrap) e IAM-OD-005 (grants/Unit padrão da Secretária), além de AUD-001-DESIGN.
+**IMPLEMENTATION READINESS:** `NEEDS_CONTRACT_RECONCILIATION` — IAM-OD-001..007 foram aprovadas em `docs/decisions/IAM_001_DECISIONS.md`; API-001, DB-001, AUTH-001 e STATE-001 ainda precisam ser reconciliados. AUD-001-DESIGN continua gate para uso assistido.
 **ASSISTED-USE READINESS:** `BLOCKED` — exige IAM-001-IMP, AUD-001-IMP, WEB-001 e gates operacionais do roadmap; este PASS não libera piloto nem produção.
 
 | Domínio | Status |
@@ -951,14 +951,28 @@ histórica e retenção definitiva de receipts. Próximo handoff recomendado:
 
 Documento canônico do slice: `docs/implementation/IAM_001_MINIMUM_ADMIN_ACCESS_DESIGN.md`.
 O design mantém Access owner de conta/credential/sessão/grants, sem FK ou escrita
-cross-context. `UserAccount` é separado de Person e ProfessionalProfile. Não
-seleciona silenciosamente login identifier, credential/provider, sessão/token ou
-bootstrap: IAM-OD-001..005 são blockers de `IAM-001-IMP`. Audit é boundary futuro,
-não tabela substituta em Access.
+cross-context. `UserAccount` é separado de Person e ProfessionalProfile. As
+decisões IAM-OD-001..007 foram aprovadas em
+`docs/decisions/IAM_001_DECISIONS.md`: username independente, credential local
+madura, sessão opaca, bootstrap one-shot, grants mínimos por Unit, lifecycle e
+recovery administrativo. Audit continua boundary futuro, não tabela substituta em
+Access.
 
-**DESIGN STATUS:** `PASS / DONE`. **IMPLEMENTATION READINESS:** `BLOCKED` por
-IAM-OD-001..005 e AUD-001-DESIGN. **ASSISTED-USE READINESS:** `BLOCKED` por
+**DESIGN STATUS:** `PASS / DONE`. **IMPLEMENTATION READINESS:**
+`NEEDS_CONTRACT_RECONCILIATION` por API-001/DB-001/AUTH-001/STATE-001. **ASSISTED-USE READINESS:** `BLOCKED` por
 IAM-001-IMP, AUD-001-IMP, WEB-001 e gates operacionais; não declarar produção.
+
+## IAM-001-DECISIONS — Fechamento de Identity & Access
+
+| ID | Tarefa | Prioridade | Status |
+|---|---|---:|---|
+| IAM-001-DECISIONS | Fechar identifier, credential, sessão, bootstrap, grants, lifecycle e recovery do M1 | P0 | DONE — PASS (decisão documental, 2026-10-01) |
+
+Documento canônico: `docs/decisions/IAM_001_DECISIONS.md`. Todos os
+IAM-OD-001..007 estão `APPROVED`; não há decisão IAM aberta que altere a semântica
+do M1. A próxima tarefa única é `IAM-001-CONTRACTS`, para reconciliar API-001,
+DB-001, AUTH-001 e STATE-001. Nenhuma migration, rota, código ou AUD-001 foi
+iniciado por este fechamento.
 
 ---
 
@@ -1583,6 +1597,41 @@ Pode existir protótipo isolado antes disso, mas não deve ser confundido com ba
 ---
 
 # 24. ÚLTIMO HANDOFF
+
+## HANDOFF — 2026-10-01 — IAM-001-DECISIONS
+
+### Objetivo e resultado
+
+Fechar formalmente as decisões abertas do design IAM sem alterar código,
+migration, frontend, backend, contratos HTTP, AUD-001, commit, push ou merge.
+Resultado: `IAM-OD-001..007 — APPROVED` em
+`docs/decisions/IAM_001_DECISIONS.md`.
+
+### Decisões aprovadas
+
+- username independente de Person/e-mail, único após normalização;
+- credential local com `PasswordHasher<TUser>` do ASP.NET Core Identity, com
+  rehash e defesas de abuso no slice futuro;
+- sessão opaca server-side em cookie seguro, com lookup atual e revogação na
+  próxima request;
+- bootstrap one-shot protegido por segredo de deployment, sem seed ou backdoor;
+- Secretária com quatro permissions administrativas mínimas e Unit grants
+  explícitos, independentes das permissions; deny prevalece;
+- lifecycle `PENDING/ACTIVE/LOCKED/DISABLED` e reset administrativo controlado;
+- self-service recovery permanece pós-MVP.
+
+### Estado e blockers
+
+- IAM-001-DESIGN: `DONE / PASS`.
+- IAM-001-IMP: `NEEDS_CONTRACT_RECONCILIATION`, não `READY`; API-001, DB-001,
+  AUTH-001 e STATE-001 ainda não refletem as escolhas aprovadas.
+- Uso assistido: `BLOCKED` por IAM-001-IMP, AUD-001-DESIGN/IMP, WEB-001 e gates
+  operacionais. AUD-001 não foi iniciado.
+
+### Próxima tarefa única
+
+`IAM-001-CONTRACTS` — reconciliar os documentos canônicos API/DB/AUTH/STATE com
+as decisões, sem implementação.
 
 ## HANDOFF — 2026-09-30 — IAM-001-DESIGN
 

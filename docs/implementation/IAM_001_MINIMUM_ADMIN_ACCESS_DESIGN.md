@@ -1,10 +1,10 @@
 # IAM-001-DESIGN — Identity & Access mínimo para uso administrativo assistido
 
 **Status:** PASS (design documental)  
-**Implementation readiness:** BLOCKED — decisões IAM-OD-001 a IAM-OD-005 e o design AUD-001 são pré-requisitos.  
+**Implementation readiness:** NEEDS_CONTRACT_RECONCILIATION — IAM-OD-001..007 estão aprovadas; reconciliar API-001/DB-001/AUTH-001/STATE-001 antes de IAM-001-IMP.
 **Assisted-use readiness:** BLOCKED — IAM implementado/validado, Audit durável e WEB-001 ainda são necessários.  
 **Data:** 2026-09-30  
-**Fontes:** `PROJECT_OS.md`, `ROADMAP_MVP_OPERACIONAL.md`, AUTH-001, API-001, DB-001, ARC-003, Context/Ownership Map, MODEL-001/005, STATE-001 e código atual.
+**Fontes:** `PROJECT_OS.md`, `ROADMAP_MVP_OPERACIONAL.md`, AUTH-001, API-001, DB-001, ARC-003, Context/Ownership Map, MODEL-001/005, STATE-001, `docs/decisions/IAM_001_DECISIONS.md` e código atual.
 
 ## 1. Objetivo
 
@@ -42,38 +42,25 @@ People continua owner de `Person`; Staff de `ProfessionalProfile`; Organization 
 
 Campos mínimos: `userAccountId`, `status`, `personId?`, `loginIdentifier` normalizado, `createdAt`, `activatedAt?`, `disabledAt?`, `credentialState`, `securityStamp`/`accessVersion`, `version` de concorrência e metadados de última autenticação/fracasso somente se a estratégia escolhida os exigir. Nunca retornar credential, hash, token ou identificador de recovery.
 
-Não há catálogo canônico de estados. A opção mínima proposta é `PENDING` (provisionada sem credential ativada), `ACTIVE`, `DISABLED` e `LOCKED`; `LOCKED` só entra se o mecanismo de defesa selecionado o tornar necessário. Transições: `PENDING → ACTIVE`; `ACTIVE → DISABLED`; `LOCKED → ACTIVE` por procedimento controlado; `DISABLED` não autentica nem autoriza. Reativação de `DISABLED` é decisão posterior, não assumida. A escolha e a semântica final são IAM-OD-006.
+O lifecycle aprovado em IAM-OD-006 é `PENDING`, `ACTIVE`, `LOCKED` e `DISABLED`: criação, reativação e reset entram em `PENDING`; ativação válida leva a `ACTIVE`; a defesa pode levar a `LOCKED`; disable vence qualquer estado; reativação/unlock exigem novo fluxo controlado de ativação. A matriz completa está em `IAM_001_DECISIONS.md`; `DISABLED` nunca autentica ou autoriza e não há delete operacional.
 
 ## 7. Credential
 
-Nenhum documento seleciona credential local, IdP externo, ASP.NET Identity, algoritmo, JWT ou OIDC. Portanto IAM-001-DESIGN não escolhe um. A implementação fica bloqueada por IAM-OD-002 até que se escolha uma das alternativas:
-
-1. credential local, owned por Access;
-2. IdP externo com referência de sujeito e lifecycle/claims compatíveis;
-3. outro mecanismo aprovado com autenticação e revogação demonstráveis.
-
-Se local, a decisão deve exigir derivação segura sem senha em texto, parâmetros versionados, comparação em tempo constante, rehash futuro, limitação/lockout ou slowdown de tentativas e segredo fora do repositório. Se externo, deve definir como `DISABLED`, logout, revogação e mudança de grants têm efeito atual, sem aceitar claims indefinidamente stale. Licença/registro profissional não é credential de acesso.
+IAM-OD-002 aprova credential local owned por Access via `PasswordHasher<TUser>` do ASP.NET Core Identity, sem adotar o framework inteiro como owner. Seu formato versionado e `SuccessRehashNeeded` sustentam rehash futuro sem algoritmo manual fixado aqui. Senha nunca é texto persistido/logado; rate limiting, lockout, reset, TLS, segredos externos e efeitos atuais de disable/revogação continuam obrigatórios. IdP externo não foi selecionado para o piloto.
 
 ## 8. Login identifier
 
-Não há identificador de login aprovado. Email não pode ser adotado silenciosamente porque `Person.Email`/contato civil pertence a People e pode ter finalidade distinta. O identificador deve ser próprio de Access, único após normalização, mutável somente por comando privilegiado/auditável e não exposto em respostas administrativas comuns. IAM-OD-001 deve escolher entre email independente, username ou outro identificador, sua normalização e regra de alteração. Até lá não há implementação segura do login.
+IAM-OD-001 aprova username independente, próprio de Access, único após trim/normalização case-insensitive Unicode e sem derivação de e-mail, CPF ou PersonId. Mudança só ocorre por comando privilegiado/auditável; editar contato civil não o muda. Respostas externas não enumeram conta/identifier.
 
 ## 9. Authentication
 
-Contrato conceitual de login: receber apenas `loginIdentifier` e prova de credential; normalizar, aplicar limite de abuso antes/depois da verificação, localizar a conta, verificar status e credential, criar/rotacionar a sessão conforme a decisão de IAM-OD-003 e retornar apenas a representação pública da sessão. Conta ausente, identifier inválido, credential inválida, `PENDING`, `DISABLED` e `LOCKED` retornam resposta externa indistinguível, sem revelar a existência da conta. PII, senha, hash, token e header de autenticação não vão para logs.
+Contrato conceitual de login: receber username e prova de credential; normalizar, aplicar limite de abuso antes/depois da verificação, localizar a conta, verificar status e credential, criar/rotacionar a sessão opaca aprovada e retornar apenas a representação pública da sessão. Conta ausente, identifier inválido, credential inválida, `PENDING`, `DISABLED` e `LOCKED` retornam resposta externa indistinguível, sem revelar a existência da conta. PII, senha, hash, token e header de autenticação não vão para logs.
 
 API-001 não publica login/logout/current-session: somente lifecycle administrativo de `UserAccount` e `TerminateUserSessions`. A reconciliação de API-001 é obrigatória antes do código; nenhuma rota definitiva é inventada aqui.
 
 ## 10. Session/token
 
-AUTH-001 e ARC-003 exigem que revogação crítica não dependa indefinidamente de claims stale, mas deixam provider, formato de claims e sessão deferred. IAM-OD-003 bloqueia a escolha entre sessão server-side/opaca, access token curto com estado de sessão revalidável, ou outro mecanismo que prove:
-
-- expiração, logout, múltiplas sessões e revogação por sessão/conta;
-- revalidação de `UserAccount` e `accessVersion` a cada request sensível;
-- invalidação após disable, compromise e mudança crítica de acesso;
-- proteção contra fixation/theft, sem vazar token ao frontend/logs.
-
-JWT autoportante sem verificação atual de revogação não satisfaz este slice. Para web, se a decisão usar cookie, exigirá Secure, HttpOnly, SameSite apropriado e CSRF; se usar bearer, exige armazenamento e proteção XSS definidos pelo contrato frontend. Mobile é futuro e não justifica escolher token agora.
+IAM-OD-003 aprova sessão opaca server-side para web, identificada por cookie `Secure`/`HttpOnly`/`SameSite` apropriado e proteção CSRF a definir no contrato web. O servidor guarda somente derivado do segredo, expiry, revogação e `accessVersion`; cada request resolve sessão, conta, grants, denies e Units atuais. JWT autoportante sem verificação atual de revogação é rejeitado. Expiração, logout, múltiplas sessões, revogação por sessão/conta e proteção contra fixation/theft são obrigatórios.
 
 ## 11. Logout/revocation
 
@@ -100,9 +87,9 @@ Os nomes abaixo são perfis operacionais, não autorização implícita.
 | Perfil | Grants candidatos do primeiro fluxo | Unit scope | Proibido por padrão |
 |---|---|---|---|
 | `OWNER_MANAGER` | quatro permissions de Patients/People acima; `patients.guardian.manage` apenas se necessário | lista explícita, não inferida de propriedade | Clinical, financeiro, developer, superuser, grants próprios |
-| `SECRETARY_RECEPTION` | mesmas quatro permissions somente se o provisionamento aprovado permitir; guardian apenas por decisão | lista explícita; multi-unit é IAM-OD-005 | Clinical completo, financeiro, developer, superuser, grants próprios |
+| `SECRETARY_RECEPTION` | `patients.profile.read/create` e `people.person.read/create`; guardian não é default | uma ou mais Units por grants explícitos separados | Clinical completo, financeiro, developer, superuser, grants próprios |
 
-O catálogo exato/grant padrão da Secretária é deliberadamente IAM-OD-005; AUTH-GAP-003 impede inferi-lo. Explicit denies podem restringir qualquer uma dessas permissões por Unit.
+IAM-OD-005 fecha o padrão mínimo: nenhuma permissão global/CLINIC, exatamente as quatro permissions acima e uma ou mais Units explicitamente concedidas. Permission e Unit grant são independentes; explicit deny aplicável prevalece.
 
 ## 16. Developer/IT
 
@@ -114,11 +101,11 @@ O primeiro MVP administrativo funciona antes de `ProfessionalProfile`. No futuro
 
 ## 18. Bootstrap
 
-Não há estratégia aprovada. IAM-OD-004 bloqueia a implementação e deve escolher explicitamente entre comando de bootstrap com segredo de deployment de uso único, convite controlado ou operação manual controlada. Qualquer opção deve ser limitada a uma primeira conta, exigir segredo externo/rotação ou identidade de operador, ser idempotente contra execução dupla, registrar evidência futura, permitir desligamento após consumo e nunca criar senha fixa, admin automático ou bypass permanente. Migration seed é rejeitada para este slice.
+IAM-OD-004 aprova comando administrativo one-shot com segredo de deployment de uso único. Quando não há governante ativa, o comando consome atomicamente o marcador, cria a conta `PENDING` e artefato de ativação aleatório derivado/expirável; segunda execução falha. O segredo não é registrado e deve ser removido/rotacionado após uso. Não há seed, senha padrão, admin hardcoded, endpoint de bootstrap ou bypass permanente.
 
 ## 19. Recovery
 
-Para piloto assistido, o mínimo candidato é reset administrativo controlado: operador autorizado inicia reset, invalida credential/sessões e entrega um artefato de ativação de uso único por canal aprovado; a nova credential é definida pelo usuário. Senha em texto é proibida. Recovery por e-mail e self-service podem ser pós-MVP. Se token for persistido, guardar apenas valor derivado, com expiração, uso único, finalidade e revogação. A autoridade, canal e lifecycle são IAM-OD-004/007.
+IAM-OD-007 aprova reset administrativo controlado: governante autorizada invalida credential/sessões, muda a conta para `PENDING` e entrega por canal operacional aprovado um artefato de ativação aleatório, curto, de uso único e persistido apenas derivado. A pessoa define nova senha na ativação. Senha em texto é proibida; self-service por e-mail, SMS, MFA e recovery federada são pós-MVP.
 
 ## 20. Security controls
 
@@ -134,7 +121,7 @@ AUD-001 é owner de `AuditRecord`; Access não cria um substituto local. IAM dev
 
 ## 23. Persistence model
 
-No schema owner `identity`, preservar as tabelas canônicas DB-001: `user_account`, `permission`, `permission_grant`, `role`/`role_permission`/`user_role_assignment` somente se selecionadas, e `command_receipt` para comandos críticos. Acrescentar apenas após IAM-OD-002/003/004 as estruturas de credential, session/revocation e recovery necessárias; seus nomes não são aprovados por este documento. `permission_grant` deve representar ALLOW/DENY, permission, scope/Unit opaca, vigência, concedente/revogador e concurrency. `unit_access_grant` pode ser tabela específica ou scope tipado de grant, decisão física a fechar sem alterar sua semântica.
+No schema owner `identity`, preservar as tabelas canônicas DB-001 e reconciliá-las com as decisões: `user_account`, `credential`, `session`, artefato de activation/recovery, `permission`, `permission_grant`, `unit_access_grant`, marker de bootstrap e `command_receipt`. `permission_grant` deve representar ALLOW/DENY, permission, scope/Unit opaca, vigência, concedente/revogador e concurrency. Os nomes/campos físicos finais pertencem a IAM-001-CONTRACTS, sem alterar a semântica aprovada.
 
 Índices mínimos futuros: login identifier normalizado único; uma conta interna ativa por `person_id` quando não nulo; grants ativos por account/permission/Unit/vigência; sessões válidas por account/expiry/revocation; e constraint/idempotency para bootstrap. FKs somente internas ao schema Identity; referências `person_id`/`unit_id` são sem FK. Versionamento otimista protege UserAccount e grants; sessões/revogação devem ter atualização atômica.
 
@@ -162,7 +149,7 @@ Login retorna problema genérico equivalente para identifier/credential inválid
 
 ## 29. Implementation slice
 
-**Candidato: IAM-001-IMP — Local Administrative Access Foundation.** Só pode iniciar após resolver IAM-OD-001..005 e concluir AUD-001-DESIGN.
+**Candidato: IAM-001-IMP — Local Administrative Access Foundation.** Só pode iniciar após IAM-001-CONTRACTS e AUD-001-DESIGN.
 
 **In scope:** Access schema/DbContext owner-local; uma estratégia de credential/session aprovada; login/logout/current-session; lifecycle; grants/denies/Unit; bootstrap/recovery mínimo; adaptação do actor de Patients para decisão atual; contratos/API reconciliados; migrations e testes. **Out:** MFA, Staff, UI, roles como fonte implícita, Clinical/Finance, provider não decidido, impersonation e AuditRecord.
 
@@ -176,22 +163,20 @@ Login retorna problema genérico equivalente para identifier/credential inválid
 - **Architecture:** test auth ausente do Host normal; sem headers mágicos; Access não referencia persistence People/Organization/Staff; sem FK cross-context; ModuleContracts sem EF entities.
 - **Security:** nenhum segredo/hash/token em resposta, evento ou log; cookie/header e CSRF conforme a decisão; TLS/configuração/secret validation; session fixation/theft boundaries.
 
-## 31. Open decisions
+## 31. Closed decisions
 
-| ID | Pergunta e alternativas | Evidência | Impacto / blocker | Menor decisão |
-|---|---|---|---|---|
-| IAM-OD-001 | identifier: email próprio, username ou outro | DB-001/API-001 deferred; Person é owner de contato | login e unique index; bloqueia IAM-001-IMP | escolher tipo, normalização e alteração |
-| IAM-OD-002 | credential local, IdP externo ou outro | AUTH-001/ARC-003 não escolhem provider | auth/storage/segurança; bloqueia IAM-001-IMP | selecionar mecanismo e requisitos de derivação/revogação |
-| IAM-OD-003 | sessão server-side, token revalidável ou outro | AUTH-GAP-006; revogação atual é mandatória | login/logout/revoke/frontend; bloqueia IAM-001-IMP | selecionar modelo, TTL, renew e revalidação |
-| IAM-OD-004 | bootstrap e recovery: secret único, convite ou operação controlada | ROADMAP §15 | primeira conta/recovery; bloqueia M1 | definir operador, segredo/canal, uso único e desabilitação |
-| IAM-OD-005 | grants padrão e multi-Unit da secretária | AUTH-GAP-003 | provisioning piloto; bloqueia assisted use | aprovar matriz mínima por Unit |
-| IAM-OD-006 | lifecycle final, em especial `LOCKED` e reativação | STATE-001 UserAccount deferred | account controls; bloqueia detalhe do IMP | aprovar transições mínimas |
-| IAM-OD-007 | recovery token/canal e força de troca | recovery deferred | reset seguro; bloqueia recovery, não o design | aprovar fluxo administrativo do piloto |
+`docs/decisions/IAM_001_DECISIONS.md` fecha IAM-OD-001..007 como `APPROVED`:
+username independente; credential local via `PasswordHasher<TUser>` do ASP.NET
+Core Identity; sessão opaca server-side para web; bootstrap one-shot com segredo
+de deployment; grants administrativos mínimos da Secretária por Unit explícita;
+lifecycle `PENDING/ACTIVE/LOCKED/DISABLED`; e reset administrativo controlado.
+O documento registra alternativas, critérios de segurança/operação/revogação e
+o impacto preciso. Ele não altera API-001, DB-001, AUTH-001 ou STATE-001.
 
 ## 32. Gates
 
-Design: PASS porque ownership, lifecycle candidato, auth boundary, blockers de credential/session/bootstrap, grants/deny/Unit, test boundary, Audit boundary, persistence, contracts, security, slice e testes estão explícitos. Implementação: BLOCKED por IAM-OD-001..005 e AUD-001-DESIGN. Uso assistido: BLOCKED adicionalmente por IAM-001-IMP, AUD-001-IMP, WEB-001, HTTPS/operação, migrations, backup/restore e validação de piloto. Produção pública/regulatória não é declarada.
+Design: PASS porque ownership, lifecycle, auth boundary, credential/session/bootstrap, grants/deny/Unit, test boundary, Audit boundary, persistence, contracts, security, slice e testes estão explícitos. Implementação: NEEDS_CONTRACT_RECONCILIATION por API-001/DB-001/AUTH-001/STATE-001; AUD-001-DESIGN continua pré-requisito do uso assistido. Uso assistido: BLOCKED adicionalmente por IAM-001-IMP, AUD-001-IMP, WEB-001, HTTPS/operação, migrations, backup/restore e validação de piloto. Produção pública/regulatória não é declarada.
 
 ## 33. Next action
 
-Obter as menores decisões IAM-OD-001 a IAM-OD-005 e desenhar AUD-001-DESIGN. Só então reconciliar API-001 e planejar IAM-001-IMP; não iniciar código, migration, frontend ou AUD-001 nesta tarefa.
+Executar exclusivamente `IAM-001-CONTRACTS` para reconciliar API-001, DB-001, AUTH-001 e STATE-001 com as decisões aprovadas. Não iniciar código, migration, frontend ou AUD-001 nesta tarefa.
